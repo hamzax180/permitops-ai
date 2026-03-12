@@ -4,222 +4,226 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
-  CheckCircle2, Circle, Clock, AlertCircle, TrendingUp, 
-  ShieldCheck, ArrowRight, MapPin, Calendar, FileText, 
-  Activity, Cpu, Upload, RefreshCw, ExternalLink, ChevronDown
+  CheckCircle2, Clock, Circle, AlertCircle, TrendingUp,
+  ShieldCheck, ArrowRight, MapPin, Calendar, FileText,
+  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw
 } from 'lucide-react';
 
 type Status = 'completed' | 'in-progress' | 'pending';
 
-interface Step {
-  title:    string;
-  status:   Status;
-  date:     string;
-  shortDesc: string;
-  longDesc:  string;
-  docs:     string[];
+interface PermitStep {
+  title: string;
+  status: Status;
+  date: string;
+  summary: string;
+  detail: string;
+  docs: string[];
 }
 
-const steps: Step[] = [
+const steps: PermitStep[] = [
   {
-    title:     'Intake & Registration',
-    status:    'completed',
-    date:      'Mar 10, 2024',
-    shortDesc: 'Documents submitted & verified.',
-    longDesc:  'AI verified 12 corporate documents against Beşiktaş Municipality requirements. Business registration number BŞK-2024-4221 assigned.',
-    docs:      ['business_registration.pdf', 'tax_certificate.pdf', 'identity_copy.pdf'],
+    title: 'Intake & Registration',
+    status: 'completed',
+    date: 'Mar 10, 2024',
+    summary: '12 documents verified. Business number assigned.',
+    detail: 'AI verified 12 corporate documents against Beşiktaş Municipality requirements. Business registration number BŞK-2024-4221 assigned. Tax registration confirmed with GİB.',
+    docs: ['business_registration.pdf', 'tax_certificate.pdf', 'identity_copy.pdf'],
   },
   {
-    title:     'Permit Classification',
-    status:    'completed',
-    date:      'Mar 11, 2024',
-    shortDesc: 'License types identified.',
-    longDesc:  'System identified 3 required permits: (1) İşyeri Açma ve Çalışma Ruhsatı, (2) Yangın Uygunluk Belgesi, (3) Gıda Satış Ruhsatı. Classification model confidence: 97%.',
-    docs:      ['permit_classification_report.json'],
+    title: 'Permit Classification',
+    status: 'completed',
+    date: 'Mar 11, 2024',
+    summary: '3 permit types identified. Classification confidence: 97%.',
+    detail: 'System identified 3 permits required: İşyeri Açma ve Çalışma Ruhsatı, Yangın Uygunluk Belgesi, and Gıda Satış Ruhsatı. Path approved by ComplianceAgent.',
+    docs: ['permit_classification_report.json'],
   },
   {
-    title:     'Fire Safety Inspection',
-    status:    'in-progress',
-    date:      'In Review',
-    shortDesc: 'Awaiting fire department sign-off.',
-    longDesc:  'Physical site inspection completed Mar 13. Ventilation schematic for kitchen exhaust system is under review by İtfaiye (fire dept). Awaiting digital certificate upload.',
-    docs:      ['fire_inspection_request.pdf'],
+    title: 'Fire Safety Inspection',
+    status: 'in-progress',
+    date: 'In Review',
+    summary: 'Physical inspection done. Certificate pending.',
+    detail: 'Site inspection completed Mar 13. Kitchen exhaust ventilation schematic is under review by İtfaiye. Upload the fire safety drawing to expedite approval.',
+    docs: ['fire_inspection_request.pdf'],
   },
   {
-    title:     'Workplace License Issuance',
-    status:    'pending',
-    date:      'Estimated Mar 18',
-    shortDesc: 'Awaiting fire certificate first.',
-    longDesc:  'Municipality will issue the final Çalışma Ruhsatı once the fire safety certificate is received. Expected processing time: 2–3 business days.',
-    docs:      [],
+    title: 'Workplace License Issuance',
+    status: 'pending',
+    date: 'Est. Mar 18',
+    summary: 'Awaiting fire certificate. Municipality processing in 2–3 days.',
+    detail: 'Municipality will issue İşyeri Açma ve Çalışma Ruhsatı once fire certificate arrives. Estimated 2–3 business days after submission.',
+    docs: [],
   },
 ];
 
 const agents = [
-  { name: 'PlannerAgent',    role: 'Determines permit path',     status: 'idle' },
-  { name: 'ValidatorAgent',  role: 'Checks document compliance', status: 'active' },
-  { name: 'TrackerAgent',    role: 'Monitors workflow state',    status: 'active' },
+  { name: 'PlannerAgent',   desc: 'Determines permit path',      active: false },
+  { name: 'ValidatorAgent', desc: 'Checks document compliance',  active: true },
+  { name: 'TrackerAgent',   desc: 'Monitors workflow state',     active: true },
 ];
 
-function StatusIcon({ status }: { status: Status }) {
-  if (status === 'completed')  return <CheckCircle2 size={20} className="text-emerald-400" />;
-  if (status === 'in-progress') return <Clock size={20} className="text-blue-400" />;
-  return <Circle size={20} className="text-slate-600" />;
+function StepBadge({ status }: { status: Status }) {
+  if (status === 'completed')   return <span className="status-done">Completed</span>;
+  if (status === 'in-progress') return <span className="status-active">In Progress</span>;
+  return <span className="status-pending">Pending</span>;
 }
 
-function StatusBadge({ status }: { status: Status }) {
-  if (status === 'completed')  return <span className="badge badge-green">Completed</span>;
-  if (status === 'in-progress') return <span className="badge badge-blue">In Progress</span>;
-  return <span className="badge" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#475569' }}>Pending</span>;
+function StepIcon({ status }: { status: Status }) {
+  if (status === 'completed')   return <CheckCircle2 size={18} className="text-emerald-400" />;
+  if (status === 'in-progress') return <Clock size={18} className="text-blue-400" />;
+  return <Circle size={18} className="text-slate-600" />;
 }
 
 export default function Dashboard() {
-  const [expanded, setExpanded] = useState<number | null>(2); // fire inspection open by default
+  const [expanded, setExpanded] = useState<number | null>(2);
 
-  const completedCount = steps.filter(s => s.status === 'completed').length;
-  const progress = Math.round((completedCount / steps.length) * 100);
+  const done     = steps.filter(s => s.status === 'completed').length;
+  const progress = Math.round((done / steps.length) * 100);
 
   return (
-    <main className="pt-28 pb-24 min-h-screen">
-      <div className="max-w-6xl mx-auto px-6 space-y-8">
+    <main className="min-h-screen pt-24 pb-20 px-6">
+      <div className="max-w-6xl mx-auto space-y-7">
 
-        {/* ── Page Header ── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <span className="badge badge-blue">
-                <Activity size={11} className="animate-pulse" />
-                Live Session • #IST-BŞK-4221
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">Permit Dashboard</h1>
-            <p className="text-sm text-slate-400 flex items-center gap-3">
-              <MapPin size={13} className="text-blue-400" /> Beşiktaş Restaurant, Istanbul
+        {/* ── Header ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ease: 'easeOut', duration: 0.4 }}
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-5"
+        >
+          <div className="space-y-1.5">
+            <span className="badge badge-blue">
+              <Activity size={10} className="animate-pulse" />
+              Live Session · #IST-BŞK-4221
+            </span>
+            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Permit Dashboard</h1>
+            <p className="text-sm text-slate-500 flex items-center gap-3 flex-wrap">
+              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-blue-400" /> Beşiktaş Restaurant, Istanbul</span>
               <span className="h-3 w-px bg-slate-700" />
-              <Calendar size={13} className="text-blue-400" /> Started Mar 10, 2024
+              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-400" /> Started Mar 10, 2024</span>
             </p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-2.5 shrink-0">
             <Link href="/chat">
-              <button className="btn-ghost !py-2.5 !px-5 !text-sm">
+              <button className="btn btn-outline !py-2 !px-4 !text-sm">
                 <RefreshCw size={14} /> Ask AI
               </button>
             </Link>
-            <button className="btn-primary !py-2.5 !px-5 !text-sm">
+            <button className="btn btn-blue !py-2 !px-4 !text-sm">
               <Upload size={14} /> Upload Docs
             </button>
           </div>
         </motion.div>
 
-        {/* ── Stats Row ── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, ease: 'easeOut', duration: 0.5 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* ── Stats ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ease: 'easeOut', duration: 0.4, delay: 0.07 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        >
           {[
-            { label: 'Compliance Score', value: '94.8%', color: 'text-emerald-400', icon: ShieldCheck },
-            { label: 'Steps Complete',   value: `${completedCount}/${steps.length}`, color: 'text-blue-400', icon: CheckCircle2 },
-            { label: 'Days Remaining',   value: '8 days',                color: 'text-amber-400',   icon: Clock },
-            { label: 'AI Agents Active', value: '2 running',             color: 'text-purple-400',  icon: Cpu },
-          ].map((stat, i) => (
-            <div key={i} className="card p-5 flex items-start gap-4">
-              <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center flex-shrink-0">
-                <stat.icon size={16} className={stat.color} />
+            { label: 'Compliance Score', value: '94.8%',    color: 'text-emerald-400', icon: ShieldCheck },
+            { label: 'Steps Complete',   value: `${done}/4`, color: 'text-blue-400',    icon: CheckCircle2 },
+            { label: 'Est. Days Left',   value: '8 days',   color: 'text-amber-400',   icon: Clock },
+            { label: 'Active AI Agents', value: '2 running',color: 'text-violet-400',  icon: Cpu },
+          ].map((s, i) => (
+            <div key={i} className="card p-4 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <s.icon size={16} className={s.color} />
               </div>
-              <div>
-                <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">{stat.label}</p>
-                <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
+              <div className="min-w-0">
+                <p className="text-[11px] text-slate-500 font-medium truncate">{s.label}</p>
+                <p className={`text-lg font-bold leading-tight ${s.color}`}>{s.value}</p>
               </div>
             </div>
           ))}
         </motion.div>
 
         {/* ── Progress Bar ── */}
-        <div className="card p-5 flex items-center gap-4">
-          <span className="text-sm font-semibold text-slate-400 whitespace-nowrap">Overall Progress</span>
-          <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+        <div className="card p-4 flex items-center gap-4">
+          <span className="text-sm font-medium text-slate-400 whitespace-nowrap shrink-0">Overall Progress</span>
+          <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
-              className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full"
+              transition={{ duration: 1.0, ease: 'easeOut', delay: 0.3 }}
+              className="h-full rounded-full bg-blue-500"
             />
           </div>
-          <span className="text-sm font-bold text-white whitespace-nowrap">{progress}%</span>
+          <span className="text-sm font-bold text-white shrink-0">{progress}%</span>
         </div>
 
         {/* ── Main Grid ── */}
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid lg:grid-cols-12 gap-5">
 
-          {/* Workflow Steps — Accordion */}
-          <div className="lg:col-span-8 space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 px-1">Workflow Steps</h2>
-            {steps.map((step, i) => (
+          {/* Workflow Steps */}
+          <div className="lg:col-span-8 space-y-2.5">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 px-0.5">Workflow Steps</h2>
+            {steps.map((s, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className={`card overflow-hidden cursor-pointer ${step.status === 'in-progress' ? 'border-blue-500/30 shadow-[0_0_30px_rgba(37,99,235,0.1)]' : ''}`}
+                transition={{ delay: i * 0.06, ease: 'easeOut', duration: 0.4 }}
+                className={`card overflow-hidden cursor-pointer transition-colors ${
+                  s.status === 'in-progress' ? 'border-blue-500/30' : ''
+                }`}
                 onClick={() => setExpanded(expanded === i ? null : i)}
               >
-                {/* Header Row */}
-                <div className="p-5 flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                    step.status === 'completed' ? 'step-done' :
-                    step.status === 'in-progress' ? 'step-active' : 'step-pending'
-                  }`}>
-                    <StatusIcon status={step.status} />
+                <div className="p-4 flex items-center gap-4">
+                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.status === 'completed'  ? 'bg-emerald-500/10 border border-emerald-500/20' :
+                    s.status === 'in-progress' ? 'bg-blue-500/10 border border-blue-500/25' :
+                    'border border-white/5'
+                  }`} style={s.status === 'pending' ? { background: 'rgba(255,255,255,0.03)' } : {}}>
+                    <StepIcon status={s.status} />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="font-bold text-white text-[15px]">{step.title}</h3>
-                      <StatusBadge status={step.status} />
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h3 className="font-semibold text-white text-[15px]">{s.title}</h3>
+                      <StepBadge status={s.status} />
                     </div>
-                    <p className="text-sm text-slate-500 mt-0.5">{step.shortDesc}</p>
+                    <p className="text-sm text-slate-500 mt-0.5 truncate">{s.summary}</p>
                   </div>
 
-                  <div className="flex items-center gap-4 flex-shrink-0">
-                    <span className="text-xs font-semibold text-slate-500 hidden sm:block">{step.date}</span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs text-slate-600 hidden sm:block font-medium">{s.date}</span>
                     <ChevronDown
-                      size={16}
-                      className={`text-slate-500 transition-transform ${expanded === i ? 'rotate-180' : ''}`}
+                      size={15}
+                      className={`text-slate-600 transition-transform duration-200 ${expanded === i ? 'rotate-180' : ''}`}
                     />
                   </div>
                 </div>
 
-                {/* Expanded Details */}
                 <AnimatePresence>
                   {expanded === i && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="px-5 pb-5 pt-2 border-t border-white/5 space-y-4">
-                        <p className="text-sm text-slate-300 leading-relaxed">{step.longDesc}</p>
+                      <div className="px-4 pb-4 pt-3 border-t border-white/5 space-y-4">
+                        <p className="text-sm text-slate-300 leading-relaxed">{s.detail}</p>
 
-                        {step.docs.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Attached Documents</p>
-                            <div className="flex flex-wrap gap-2">
-                              {step.docs.map((doc) => (
-                                <div key={doc} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs text-slate-300 font-medium">
-                                  <FileText size={12} className="text-blue-400" />
-                                  {doc}
-                                  <ExternalLink size={10} className="text-slate-600 cursor-pointer hover:text-white transition-colors" />
-                                </div>
-                              ))}
-                            </div>
+                        {s.docs.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {s.docs.map(doc => (
+                              <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <FileText size={11} className="text-blue-400 shrink-0" />
+                                {doc}
+                                <ExternalLink size={10} className="text-slate-600" />
+                              </div>
+                            ))}
                           </div>
                         )}
 
-                        {step.status === 'in-progress' && (
-                          <button className="btn-primary !py-2 !px-5 !text-sm">
-                            <Upload size={14} />
-                            Upload Required Document
+                        {s.status === 'in-progress' && (
+                          <button className="btn btn-blue !py-2 !px-4 !text-sm">
+                            <Upload size={13} /> Upload Required Document
                           </button>
                         )}
                       </div>
@@ -231,74 +235,66 @@ export default function Dashboard() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-5">
+          <div className="lg:col-span-4 space-y-4">
 
-            {/* Critical Action */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="card p-6 space-y-4 border-amber-500/25 bg-[rgba(245,158,11,0.05)]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
-                  <AlertCircle size={18} />
+            {/* Action Required */}
+            <div className="card p-5 space-y-4 border-amber-500/20" style={{ background: 'rgba(245,158,11,0.04)' }}>
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
+                  <AlertCircle size={15} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">Action Required</p>
-                  <p className="text-sm font-bold text-white">Upload fire safety plans</p>
+                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Action Required</p>
+                  <p className="text-sm font-semibold text-white mt-0.5">Upload fire safety plan</p>
                 </div>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Kitchen exhaust ventilation schematic must be uploaded by <strong className="text-white">Mar 14, 18:00 IST</strong> to avoid delays.
+              <p className="text-[13px] text-slate-400 leading-relaxed">
+                Kitchen exhaust ventilation schematic must be submitted by <strong className="text-white">Mar 14, 18:00 IST</strong> to avoid permit delay.
               </p>
-              <button className="btn-primary !py-2.5 w-full !text-sm justify-center">
-                <Upload size={14} /> Upload Drawing
+              <button className="btn btn-blue w-full !py-2.5 !text-sm justify-center">
+                <Upload size={13} /> Upload drawing
               </button>
-            </motion.div>
+            </div>
 
-            {/* AI Agent Monitor */}
-            <div className="card p-6 space-y-4">
+            {/* AI Agents */}
+            <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">AI Agents</p>
-                <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative rounded-full h-1.5 w-1.5 bg-emerald-500" />
-                  </span>
-                  Live
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">AI Agents</p>
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
+                  <span className="live-dot w-2 h-2 relative shrink-0" />
+                  2 active
                 </span>
               </div>
               <div className="space-y-2">
                 {agents.map((a, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 group hover:border-blue-500/20 transition-all">
-                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center border flex-shrink-0 ${
-                      a.status === 'active' ? 'bg-blue-600/20 border-blue-500/30 text-blue-400' : 'bg-slate-800 border-white/5 text-slate-600'
-                    }`}>
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl transition-colors" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${a.active ? 'text-blue-400' : 'text-slate-600'}`}
+                         style={{ background: a.active ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)', border: `1px solid ${a.active ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
                       <Cpu size={13} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white">{a.name}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{a.role}</p>
+                      <p className="text-[13px] font-semibold text-white">{a.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{a.desc}</p>
                     </div>
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${
-                      a.status === 'active' ? 'text-blue-400' : 'text-slate-700'
-                    }`}>{a.status}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${a.active ? 'text-blue-400' : 'text-slate-700'}`}>
+                      {a.active ? 'Running' : 'Idle'}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Next Step */}
-            <div className="card p-6 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Next Step</p>
-              <p className="text-sm font-semibold text-white leading-relaxed">
-                Once fire safety certificate is received, your <strong className="text-blue-400">Workplace License (İşyeri Ruhsatı)</strong> will be automatically requested.
+            <div className="card p-5 space-y-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">What's next</p>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                After the fire certificate is submitted, your <span className="text-blue-400 font-medium">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
               </p>
-              <Link href="/chat" className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
-                Ask AI about this step <ArrowRight size={12} />
+              <Link href="/chat" className="text-sm font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 transition-colors">
+                Ask AI about this step <ArrowRight size={13} />
               </Link>
             </div>
+
           </div>
         </div>
       </div>

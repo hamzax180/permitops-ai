@@ -2,177 +2,160 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Globe, Info, FileText, Hash, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Hash, Globe, FileText, Shield } from 'lucide-react';
 
 type Role = 'assistant' | 'user';
-interface Message { role: Role; content: string; id: number; }
+interface Msg { id: number; role: Role; content: string; }
 
-const QUICK_QUESTIONS = [
+const QUICK_Q = [
   'What permits do I need for a restaurant in Istanbul?',
   'How long does the fire safety inspection take?',
   'What is İşyeri Açma ve Çalışma Ruhsatı?',
-  'What documents are required for Beşiktaş?',
+  'What documents does Beşiktaş Municipality require?',
+  'What is the cost of a fire safety certificate?',
 ];
 
+let _id = 1;
+
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      role: 'assistant',
-      content: `Merhaba! I'm your PermitOps AI Advisor 🇹🇷\n\nI specialize in Turkish business permits — restaurants, cafes, retail, and more. I'm synchronized with the latest Beşiktaş Municipality protocols (2024-B).\n\nHow can I help you today? You can ask me about:\n• Required permits for your business\n• Document checklists\n• Timelines and costs\n• Municipality-specific requirements`,
-    }
+  const [msgs, setMsgs] = useState<Msg[]>([
+    { id: 0, role: 'assistant', content: "Merhaba! I'm PermitOps AI — your Turkish business permit specialist.\n\nI'm synchronized with Beşiktaş Municipality protocols (2024-B). Ask me anything about:\n\n• Permit requirements for your business type\n• Required documents and checklists\n• Timeline and cost estimates\n• Municipality-specific regulations" }
   ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [input, setInput]   = useState('');
+  const [busy,  setBusy]    = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
-  let idCounter = useRef(1);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, loading]);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [msgs, busy]);
 
-  const sendMessage = async (text?: string) => {
-    const content = (text ?? input).trim();
-    if (!content || loading) return;
-
+  const send = async (text?: string) => {
+    const q = (text ?? input).trim();
+    if (!q || busy) return;
     setInput('');
-    const userMsg: Message = { id: idCounter.current++, role: 'user', content };
-    setMessages(prev => [...prev, userMsg]);
-    setLoading(true);
+
+    const userMsg: Msg = { id: _id++, role: 'user', content: q };
+    setMsgs(p => [...p, userMsg]);
+    setBusy(true);
 
     try {
-      const res = await fetch('http://localhost:8000/agent/query', {
+      const res  = await fetch('http://localhost:8000/agent/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: content }),
+        body: JSON.stringify({ query: q }),
       });
-
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.ok) throw new Error();
       const data = await res.json();
-
-      setMessages(prev => [...prev, {
-        id: idCounter.current++,
-        role: 'assistant',
-        content: data.content ?? data.answer ?? data.response ?? 'Received.',
-      }]);
-    } catch (err) {
-      setMessages(prev => [...prev, {
-        id: idCounter.current++,
-        role: 'assistant',
-        content: `⚠️ Backend is offline or unreachable.\n\nTo connect the AI:\n1. Start the FastAPI server: \`cd backend && python main.py\`\n2. Ensure it runs on http://localhost:8000\n\n*Demo mode: I can still answer questions based on my training.*`,
+      setMsgs(p => [...p, { id: _id++, role: 'assistant', content: data.content ?? data.answer ?? data.response ?? 'Done.' }]);
+    } catch {
+      setMsgs(p => [...p, {
+        id: _id++, role: 'assistant',
+        content: "⚠️ Backend is currently offline.\n\nTo connect live AI:\n1. Run `cd backend && python main.py`\n2. Ensure it's running on http://localhost:8000\n\nIn the meantime, feel free to browse the permit dashboard or ask general questions.",
       }]);
     } finally {
-      setLoading(false);
+      setBusy(false);
       inputRef.current?.focus();
     }
   };
 
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  };
-
   return (
-    <main className="h-screen flex flex-col pt-20 pb-0 overflow-hidden">
-      <div className="flex-1 flex max-w-6xl mx-auto w-full px-4 gap-6 min-h-0 py-6">
+    <main className="h-screen flex flex-col overflow-hidden pt-16">
+      <div className="flex flex-1 min-h-0 max-w-6xl mx-auto w-full px-4 py-4 gap-4">
 
         {/* ── Sidebar ── */}
-        <aside className="hidden lg:flex flex-col w-72 gap-4 flex-shrink-0">
+        <aside className="hidden lg:flex flex-col gap-4 w-64 xl:w-72 shrink-0">
 
-          {/* Status Card */}
-          <div className="card p-5 space-y-4">
+          {/* Agent Card */}
+          <div className="card p-4 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 flex-shrink-0">
+              <div className="relative h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/25 shrink-0">
                 <Bot size={20} />
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 border-2 border-[var(--navy)]" />
+                <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-[#0a0f1e]" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">PermitOps AI</p>
-                <p className="text-[11px] text-emerald-400 font-semibold">Online · Session #PX-982</p>
+                <p className="text-[14px] font-semibold text-white">PermitOps AI</p>
+                <p className="text-[11px] text-emerald-400 font-medium">Online</p>
               </div>
             </div>
-            <div className="text-[11px] text-slate-500 leading-relaxed space-y-1">
-              <p className="flex items-center gap-2"><Globe size={11} className="text-blue-400" /> Istanbul Municipal v2.4</p>
-              <p className="flex items-center gap-2"><FileText size={11} className="text-blue-400" /> 14 permit types loaded</p>
+            <div className="space-y-1.5 text-[12px] text-slate-500">
+              <div className="flex items-center gap-2"><Globe size={11} className="text-blue-400 shrink-0" /> Istanbul v2.4 Protocol</div>
+              <div className="flex items-center gap-2"><FileText size={11} className="text-blue-400 shrink-0" /> 14 permit types indexed</div>
+              <div className="flex items-center gap-2"><Shield size={11} className="text-blue-400 shrink-0" /> Municipal data updated Mar 12</div>
             </div>
           </div>
 
           {/* Quick Questions */}
-          <div className="card p-5 space-y-3 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Common Questions</p>
-            <div className="space-y-2">
-              {QUICK_QUESTIONS.map((q, i) => (
+          <div className="card p-4 flex-1 space-y-3 overflow-y-auto slim-scroll">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">Common questions</p>
+            <div className="space-y-1.5">
+              {QUICK_Q.map((q, i) => (
                 <button
                   key={i}
-                  onClick={() => sendMessage(q)}
-                  disabled={loading}
-                  className="w-full text-left text-xs text-slate-300 hover:text-white bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-blue-500/20 rounded-xl p-3 transition-all disabled:opacity-40"
+                  onClick={() => send(q)}
+                  disabled={busy}
+                  className="w-full text-left text-[12px] text-slate-400 hover:text-white rounded-lg px-3 py-2.5 transition-colors disabled:opacity-40 hover:bg-white/5"
+                  style={{ border: '1px solid rgba(255,255,255,0.04)' }}
                 >
-                  <span className="text-blue-500 mr-1.5">#</span>{q}
+                  <Hash size={10} className="inline text-blue-500 mr-1.5" />{q}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Info Box */}
-          <div className="card p-4 border-blue-500/15 bg-blue-600/[0.05] flex items-start gap-3">
-            <Info size={14} className="text-blue-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Start the <strong className="text-white">FastAPI backend</strong> on port 8000 for live AI responses.
-            </p>
-          </div>
         </aside>
 
-        {/* ── Chat Area ── */}
-        <div className="flex-1 flex flex-col card min-h-0 overflow-hidden">
+        {/* ── Chat Panel ── */}
+        <div className="flex-1 card flex flex-col min-h-0 overflow-hidden">
 
-          {/* Chat Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <div className="h-8 w-8 rounded-xl bg-blue-600/15 border border-blue-500/25 flex items-center justify-center text-blue-400">
                 <Bot size={16} />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">AI Permit Advisor</p>
-                <p className="text-[10px] text-slate-500">Turkish Business Permit Specialist</p>
+                <p className="text-[14px] font-semibold text-white">AI Permit Advisor</p>
+                <p className="text-[11px] text-slate-500">Turkish Business Permit Specialist</p>
               </div>
             </div>
             <span className="badge badge-blue">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
-              {loading ? 'Thinking...' : 'Ready'}
+              <span className={`h-1.5 w-1.5 rounded-full ${busy ? 'bg-amber-400 animate-pulse' : 'bg-blue-400'}`} />
+              {busy ? 'Thinking...' : 'Ready'}
             </span>
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto slim-scroll p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto slim-scroll px-5 py-5 space-y-5">
             <AnimatePresence>
-              {messages.map((m) => (
+              {msgs.map(m => (
                 <motion.div
                   key={m.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
                   className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
-                  {/* Avatar */}
-                  <div className={`h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 ${
+                  <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                     m.role === 'assistant'
-                      ? 'bg-blue-600/20 border border-blue-500/30 text-blue-400'
-                      : 'bg-slate-700 border border-white/10 text-slate-300'
-                  }`}>
-                    {m.role === 'assistant' ? <Bot size={16} /> : <User size={16} />}
+                      ? 'text-blue-400 border border-blue-500/20'
+                      : 'text-slate-400 border border-white/8'
+                  }`} style={{ background: m.role === 'assistant' ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)' }}>
+                    {m.role === 'assistant' ? <Bot size={15} /> : <User size={15} />}
                   </div>
 
-                  {/* Bubble */}
-                  <div className={`max-w-[78%] space-y-1 ${m.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
-                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider px-1">
+                  <div className={`flex flex-col gap-1 max-w-[78%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider px-1">
                       {m.role === 'assistant' ? 'PermitOps AI' : 'You'}
                     </span>
-                    <div className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                       m.role === 'assistant'
-                        ? 'bg-white/[0.05] border border-white/8 text-slate-200 rounded-tl-md'
-                        : 'bg-blue-600 text-white rounded-tr-md shadow-lg shadow-blue-600/25'
-                    }`}>
+                        ? 'text-slate-200 rounded-tl-sm'
+                        : 'text-white rounded-tr-sm'
+                    }`} style={m.role === 'assistant'
+                      ? { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }
+                      : { background: '#2563eb', boxShadow: '0 4px 14px rgba(37,99,235,0.3)' }
+                    }>
                       {m.content}
                     </div>
                   </div>
@@ -180,57 +163,50 @@ export default function ChatPage() {
               ))}
             </AnimatePresence>
 
-            {/* Loading Indicator */}
-            {loading && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut' }} className="flex gap-3">
-                <div className="h-8 w-8 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 flex-shrink-0">
-                  <Bot size={16} />
+            {busy && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
+                <div className="h-8 w-8 rounded-xl flex items-center justify-center text-blue-400 shrink-0" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                  <Bot size={15} />
                 </div>
-                <div className="px-5 py-4 bg-white/[0.05] border border-white/8 rounded-2xl rounded-tl-md">
-                  <div className="loading-dots">
-                    <span /><span /><span />
-                  </div>
+                <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="dots"><span /><span /><span /></div>
                 </div>
               </motion.div>
             )}
+            <div ref={bottomRef} />
           </div>
 
           {/* Input Area */}
-          <div className="flex-shrink-0 p-4 border-t border-white/5 space-y-3">
-            {/* Quick Tag Row (mobile) */}
-            <div className="flex gap-2 overflow-x-auto slim-scroll pb-1">
-              {['Fire Permit', 'Zoning', 'Cost Estimate', 'Timeline'].map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => sendMessage(tag)}
-                  disabled={loading}
-                  className="flex-shrink-0 flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 hover:border-blue-500/20 rounded-lg px-3 py-1.5 transition-all disabled:opacity-40"
-                >
-                  <Hash size={10} className="text-blue-500" />{tag}
+          <div className="shrink-0 px-4 py-4 border-t border-white/5 space-y-3">
+            {/* Mobile quick questions */}
+            <div className="lg:hidden flex gap-2 overflow-x-auto slim-scroll pb-0.5">
+              {['Fire Permit', 'Timeline', 'Documents', 'Costs'].map(t => (
+                <button key={t} onClick={() => send(t)} disabled={busy}
+                  className="shrink-0 text-[11px] font-semibold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {t}
                 </button>
               ))}
             </div>
 
-            {/* Text Input */}
-            <div className="flex gap-3">
-              <div className="flex-1 relative group">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKey}
-                  disabled={loading}
-                  placeholder="Ask about permits, documents, timelines..."
-                  className="w-full bg-[var(--navy-100)] border border-white/10 focus:border-blue-500/50 rounded-xl px-5 py-3.5 text-sm font-medium text-white placeholder:text-slate-600 focus:outline-none transition-all disabled:opacity-50"
-                />
-              </div>
+            <div className="flex gap-2.5">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
+                disabled={busy}
+                placeholder="Ask about permits, documents, timelines in Turkey..."
+                className="flex-1 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-all focus-ring disabled:opacity-50 font-medium"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              />
               <button
-                onClick={() => sendMessage()}
-                disabled={loading || !input.trim()}
-                className="btn-primary !py-3 !px-4 !rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => send()}
+                disabled={busy || !input.trim()}
+                className="btn btn-blue !py-3 !px-4 !rounded-xl disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                {busy ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
               </button>
             </div>
           </div>
