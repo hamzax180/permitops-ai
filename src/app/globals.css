@@ -1,26 +1,152 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core Palette — Deep Gov Navy + Amber Accent */
+  --navy:       #05091a;
+  --navy-100:   #0c1433;
+  --navy-200:   #111d47;
+  --brand:      #2563eb;   /* professional government blue */
+  --brand-glow: rgba(37,99,235,0.25);
+  --amber:      #f59e0b;   /* Turkish flag gold */
+  --amber-light:#fde68a;
+  --rose:       #e11d48;
+  --emerald:    #10b981;
+  --border:     rgba(255,255,255,0.08);
+  --surface:    rgba(12,20,51,0.7);
+  --card-r:     20px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+* { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--navy);
+  color: #f0f4ff;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(37,99,235,0.18), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(245,158,11,0.06), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 80%, rgba(16,185,129,0.04), transparent);
+  background-attachment: fixed;
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── Utility Classes ─── */
+@layer components {
+
+  /* Glass Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-r);
+    backdrop-filter: blur(20px) saturate(160%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card:hover {
+    border-color: rgba(37,99,235,0.35);
+    box-shadow: 0 0 40px rgba(37,99,235,0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Pill Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-blue  { background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.3); color: #93c5fd; }
+  .badge-green { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+  .badge-amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fde68a; }
+  .badge-rose  { background: rgba(225,29,72,0.12); border: 1px solid rgba(225,29,72,0.3); color: #fda4af; }
+
+  /* Primary Button */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: var(--brand);
+    color: white;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.35);
+  }
+  .btn-primary:hover  { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 12px 32px rgba(37,99,235,0.5); }
+  .btn-primary:active { transform: scale(0.97); }
+
+  /* Ghost Button */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: transparent;
+    color: #c7d2fe;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .btn-ghost:hover { border-color: rgba(37,99,235,0.4); background: rgba(37,99,235,0.07); color: white; }
+
+  /* Step Status Indicators */
+  .step-done    { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
+  .step-active  { background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.5); color: #60a5fa; box-shadow: 0 0 20px rgba(37,99,235,0.2); }
+  .step-pending { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #475569; }
+
+  /* Scrollbar */
+  .slim-scroll::-webkit-scrollbar { width: 4px; }
+  .slim-scroll::-webkit-scrollbar-track { background: transparent; }
+  .slim-scroll::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.25); border-radius: 99px; }
+
+  /* Loading dots */
+  .loading-dots { display: flex; gap: 4px; align-items: center; }
+  .loading-dots span {
+    width: 6px; height: 6px; background: #93c5fd; border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--emerald);
+  animation: pulse-ring 1.8s ease-out infinite;
 }

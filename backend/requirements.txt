@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic-ai
+langgraph
+pydantic
+sqlalchemy
+pgvector
+boto3
+python-dotenv
+httpx
