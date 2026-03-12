@@ -75,12 +75,38 @@ function StepIcon({ status }: { status: Status }) {
 
 export default function Dashboard() {
   const [expanded, setExpanded] = useState<number | null>(2);
+  const [uploading, setUploading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
-  const done     = steps.filter(s => s.status === 'completed').length;
+  const done = steps.filter(s => s.status === 'completed').length;
   const progress = Math.round((done / steps.length) * 100);
 
+  const handleUpload = () => {
+    setUploading(true);
+    setTimeout(() => {
+      setUploading(false);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    }, 1500);
+  };
+
   return (
-    <main className="min-h-screen pt-24 pb-20 px-6">
+    <main className="min-h-screen pt-24 pb-20 px-6 relative">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="fixed top-24 left-1/2 z-50 rounded-lg shadow-xl shadow-black/50 border border-emerald-500/30 px-5 py-3 flex items-center gap-3 bg-emerald-500/10 backdrop-blur-md"
+          >
+            <CheckCircle2 size={18} className="text-emerald-400" />
+            <span className="text-sm font-semibold text-emerald-200">Document uploaded and processed successfully!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-6xl mx-auto space-y-7">
 
         {/* ── Header ── */}
@@ -109,8 +135,8 @@ export default function Dashboard() {
                 <RefreshCw size={14} /> Ask AI
               </button>
             </Link>
-            <button className="btn btn-blue !py-2 !px-4 !text-sm">
-              <Upload size={14} /> Upload Docs
+            <button onClick={handleUpload} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
+              <Upload size={14} /> {uploading ? 'Processing...' : 'Upload Docs'}
             </button>
           </div>
         </motion.div>
@@ -222,8 +248,8 @@ export default function Dashboard() {
                         )}
 
                         {s.status === 'in-progress' && (
-                          <button className="btn btn-blue !py-2 !px-4 !text-sm">
-                            <Upload size={13} /> Upload Required Document
+                          <button onClick={handleUpload} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
+                            <Upload size={13} /> {uploading ? 'Checking...' : 'Upload Required Document'}
                           </button>
                         )}
                       </div>
@@ -251,8 +277,8 @@ export default function Dashboard() {
               <p className="text-[13px] text-slate-400 leading-relaxed">
                 Kitchen exhaust ventilation schematic must be submitted by <strong className="text-white">Mar 14, 18:00 IST</strong> to avoid permit delay.
               </p>
-              <button className="btn btn-blue w-full !py-2.5 !text-sm justify-center">
-                <Upload size={13} /> Upload drawing
+              <button onClick={handleUpload} disabled={uploading} className="btn btn-blue w-full !py-2.5 !text-sm justify-center disabled:opacity-50">
+                <Upload size={13} /> {uploading ? 'Verifying AI...' : 'Upload drawing'}
               </button>
             </div>
 

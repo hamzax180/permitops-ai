@@ -5,6 +5,15 @@ import uuid
 
 app = FastAPI(title="PermitOps AI Backend")
 
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # In-memory store for workflows (Production would use PostgreSQL)
 workflows = {}
 
