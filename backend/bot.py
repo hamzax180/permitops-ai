@@ -26,10 +26,10 @@ async def run_edevlet_bot(tckn: str, password: str, docs: list) -> dict:
         await page.wait_for_selector('input[name="tridField"]', timeout=30000)
 
         print("[RPA Bot] Typing TCKN character by character...")
-        await page.type('input[name="tridField"]', tckn, delay=150)
+        await page.type('input[name="tridField"]', tckn, delay=400)
         
         print("[RPA Bot] Typing Password character by character...")
-        await page.type('input[name="egpField"]', password, delay=150)
+        await page.type('input[name="egpField"]', password, delay=400)
         
         print("[RPA Bot] Login info typed. Checking if already logged in or waiting for 'Giris Yap'...")
         
@@ -63,7 +63,7 @@ async def run_edevlet_bot(tckn: str, password: str, docs: list) -> dict:
         await page.click('input#searchField')
         # Type the name "name by name" precisely
         target_name = "Beşiktaş Belediyesi İş Yeri Açma"
-        await page.type('input#searchField', target_name, delay=100)
+        await page.type('input#searchField', target_name, delay=300)
         
         print("[RPA Bot] Search entered. Selecting result...")
         await asyncio.sleep(2) # Brief pause for result list to appear
