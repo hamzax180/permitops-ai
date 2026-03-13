@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
   ArrowRight, CheckCircle, Bot, Globe, Database,
-  Clock, Building2, FileText, ShieldCheck
+  Clock, Building2, FileText, ShieldCheck,
+  ChevronDown, Search, Sparkles
 } from 'lucide-react';
 import type { Variants } from 'framer-motion';
 
@@ -37,10 +38,10 @@ const logos = ['Beşiktaş', 'Kadıköy', 'Şişli', 'Üsküdar', 'Ataşehir', '
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#0e0e0e] text-[#e3e3e3] flex flex-col items-center justify-center px-6 transition-colors duration-500">
+    <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center px-6 transition-colors duration-500 overflow-hidden">
       
       {/* ═══════════════ GEMINI STYLE CONTENT ═══════════════ */}
-      <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 py-20">
+      <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 py-20 relative">
         
         {/* Animated Header Group */}
         <motion.div 
@@ -51,12 +52,12 @@ export default function Home() {
         >
           <div className="flex items-center justify-center gap-3 mb-2">
              <div className="w-6 h-6 animate-pulse bg-gradient-to-tr from-[#4285f4] via-[#9b72cb] to-[#d96570] rounded-full blur-[2px] opacity-80" />
-             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8ab4f8] to-[#9b72cb] font-semibold text-lg">
+             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-[#8ab4f8] dark:to-[#9b72cb] font-semibold text-lg">
                Hi Hamza
              </span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-white leading-tight">
+          <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[var(--text)] leading-tight">
             Hello there.
           </h1>
           
@@ -64,7 +65,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 1 }}
-            className="text-3xl md:text-4xl text-gray-400 font-light"
+            className="text-3xl md:text-4xl text-[var(--muted)] font-light"
           >
             How can I help with Istanbul permits today?
           </motion.h2>
@@ -73,7 +74,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 2 }}
-            className="text-xl md:text-2xl text-gray-500 font-light italic"
+            className="text-xl md:text-2xl text-[var(--muted)] font-light italic opacity-60"
           >
             Where should we start?
           </motion.p>
@@ -86,23 +87,23 @@ export default function Home() {
           transition={{ delay: 1.8, duration: 0.5 }}
           className="w-full max-w-2xl relative group"
         >
-          <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl group-hover:bg-white/10 transition-all duration-300 -z-10" />
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 flex flex-col gap-4 text-left shadow-2xl">
+          <div className="absolute inset-0 bg-[var(--accent)]/5 rounded-2xl blur-xl group-hover:bg-[var(--accent)]/10 transition-all duration-300 -z-10" />
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 flex flex-col gap-4 text-left shadow-xl dark:shadow-2xl">
             <input 
               type="text" 
               placeholder="Ask PermitOps AI..." 
-              className="bg-transparent border-none outline-none text-xl text-white placeholder-gray-600 w-full"
+              className="bg-transparent border-none outline-none text-xl text-[var(--text)] placeholder-[var(--muted)] w-full"
             />
             <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-4 text-gray-500">
-                <FileText size={20} className="hover:text-white cursor-pointer transition-colors" />
-                <Bot size={20} className="hover:text-white cursor-pointer transition-colors" />
+              <div className="flex items-center gap-4 text-[var(--muted)]">
+                <FileText size={20} className="hover:text-[var(--text)] cursor-pointer transition-colors" />
+                <Bot size={20} className="hover:text-[var(--text)] cursor-pointer transition-colors" />
               </div>
               <div className="flex items-center gap-3">
-                 <span className="text-xs text-gray-600 font-medium">Fast v2.4</span>
+                 <span className="text-xs text-[var(--muted)] font-medium">Fast v2.4</span>
                  <Link href="/chat">
-                    <button className="bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors">
-                      <ArrowRight size={18} className="text-blue-400" />
+                    <button className="bg-[var(--surface-2)] hover:bg-[var(--border-2)] p-2 rounded-full transition-colors border border-[var(--border)]">
+                      <ArrowRight size={18} className="text-blue-500" />
                     </button>
                  </Link>
               </div>
@@ -118,14 +119,14 @@ export default function Home() {
           className="flex flex-wrap items-center justify-center gap-3 pt-4"
         >
           {[
-            { label: 'Upload documents', icon: FileText, color: 'text-blue-400' },
-            { label: 'Check status', icon: Clock, color: 'text-purple-400' },
-            { label: 'Beşiktaş protocols', icon: Building2, color: 'text-rose-400' },
-            { label: 'Fire safety guide', icon: ShieldCheck, color: 'text-emerald-400' },
+            { label: 'Upload documents', icon: FileText, color: 'text-blue-500' },
+            { label: 'Check status', icon: Clock, color: 'text-purple-500' },
+            { label: 'Beşiktaş protocols', icon: Building2, color: 'text-rose-500' },
+            { label: 'Fire safety guide', icon: ShieldCheck, color: 'text-emerald-500' },
           ].map((item, i) => (
             <button 
               key={i}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1a1a1a] border border-white/5 hover:border-white/20 hover:bg-[#252525] transition-all text-sm font-medium text-gray-300"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--border-2)] hover:bg-[var(--surface-2)] transition-all text-sm font-medium text-[var(--text)] shadow-sm"
             >
               <item.icon size={14} className={item.color} />
               {item.label}
@@ -133,31 +134,70 @@ export default function Home() {
           ))}
         </motion.div>
 
+        {/* Scroll Down Arrow */}
+        <motion.div
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           transition={{ delay: 2.8, duration: 1 }}
+           className="pt-16 flex flex-col items-center gap-2 cursor-pointer group"
+           onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">How it works</span>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            className="text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors"
+          >
+            <ChevronDown size={24} />
+          </motion.div>
+        </motion.div>
+
       </section>
 
-      {/* ═══════════════ PROMO SLIDE ═══════════════ */}
-      <motion.div 
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 3, duration: 0.8 }}
-        className="fixed bottom-10 w-full max-w-lg px-6"
-      >
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4 flex items-center justify-between shadow-2xl">
-          <div className="flex items-center gap-3">
-             <div className="bg-red-500/10 text-red-500 p-2 rounded-lg">
-                <FileText size={16} />
-             </div>
-             <div>
-                <p className="text-xs font-semibold text-white">Sharper insights, better permits.</p>
-                <p className="text-[10px] text-gray-500">Meet Nano Banana 2.4 Edition.</p>
-             </div>
-          </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-4 py-1.5 rounded-lg transition-colors">
-            Try it
-          </button>
+      {/* ═══════════════ HOW IT WORKS SECTION ═══════════════ */}
+      <section id="how-it-works" className="w-full max-w-6xl mx-auto py-32 px-6">
+        <div className="text-center mb-16 space-y-4">
+           <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-blue-500">The Process</h3>
+           <h2 className="text-3xl md:text-5xl font-medium">Getting permits shouldn't be a mystery.</h2>
         </div>
-      </motion.div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          {[
+            {
+              title: "1. Describe",
+              desc: "Enter your business type or permit requirement in plain Turkish or English. Our AI understands municipal nuance.",
+              icon: Search
+            },
+            {
+              title: "2. Analyze",
+              desc: "PermitOps AI cross-references 450+ municipal protocols to determine your exact path and required files.",
+              icon: Sparkles
+            },
+            {
+              title: "3. Automate",
+              desc: "Our RPA bot handles the heavy lifting on e-Devlet, filling forms and tracking status while you focus on business.",
+              icon: Bot
+            }
+          ].map((step, i) => (
+            <motion.div
+              key={i}
+              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.2 }}
+              className="bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-8 space-y-6 hover:shadow-xl transition-shadow dark:hover:border-white/10"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                 <step.icon size={24} />
+              </div>
+              <h4 className="text-xl font-semibold">{step.title}</h4>
+              <p className="text-[var(--muted)] leading-relaxed">
+                {step.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

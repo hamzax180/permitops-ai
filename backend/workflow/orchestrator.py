@@ -1,8 +1,8 @@
 from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
-from backend.models.schemas import PermitState, CombinedPermitResult
-from backend.agents.core_agents import permit_agent
-from backend.utils.rate_limiter import throttled_run
+from models.schemas import PermitState, CombinedPermitResult
+from agents.core_agents import permit_agent
+from utils.rate_limiter import throttled_run
 
 class GraphState(TypedDict):
     state: PermitState
@@ -14,7 +14,7 @@ async def permit_node(state: GraphState):
     combined: CombinedPermitResult = result.data
     state['state'].combined_result = combined
     # Also populate legacy fields so the dashboard still works
-    from backend.models.schemas import PermitPlan, ExecutionPlan
+    from models.schemas import PermitPlan, ExecutionPlan
     state['state'].permit_plan = PermitPlan(
         permits=combined.permits,
         agencies=combined.agencies,

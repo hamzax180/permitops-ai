@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pydantic_ai import Agent
-from backend.models.schemas import CombinedPermitResult
+from models.schemas import CombinedPermitResult
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 

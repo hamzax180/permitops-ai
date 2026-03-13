@@ -2,8 +2,21 @@
 
 @import "tailwindcss";
 
-/* ─── Gemini Design Tokens ─── */
+/* ─── Flexible Theme Tokens ─── */
 :root {
+  --bg:          #ffffff;
+  --surface:     #ffffff;
+  --surface-2:   #f8fafc;
+  --border:      rgba(0, 0, 0, 0.06);
+  --border-2:    rgba(0, 0, 0, 0.12);
+  --accent:      #3b82f6;
+  --text:        #1f2937;
+  --muted:       #6b7280;
+  --radius:      16px;
+  --nav-bg:      rgba(255, 255, 255, 0.8);
+}
+
+.dark {
   --bg:          #0e0e0e;
   --surface:     #1a1a1a;
   --surface-2:   #2a2a2a;
@@ -12,11 +25,11 @@
   --accent:      #8ab4f8;
   --text:        #e3e3e3;
   --muted:       #9aa0a6;
-  --radius:      16px;
-  --gemini-gradient: linear_gradient(74deg, #4285f4 0, #9b72cb 9%, #d96570 20%, #d96570 24%, #9b72cb 35%, #4285f4 44%, #9b72cb 50%, #d96570 56%, #d96570 61%, #9b72cb 71%, #4285f4 80%, #9b72cb 89%, #d96570 100%);
+  --nav-bg:      rgba(14, 14, 14, 0.8);
 }
 
 html { scroll-behavior: smooth; }
+html, body { min-height: 100vh; }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -28,12 +41,16 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 
-  /* Premium Gemini Gloom */
+  /* Premium Gloom for dark mode only via class */
+  background-image: none;
+}
+
+.dark body {
   background-image: 
-    radial-gradient(circle at 50% 120%, rgba(66, 133, 244, 0.15), transparent 40%),
-    radial-gradient(circle at 10% 20%, rgba(155, 114, 203, 0.05), transparent 30%);
+    radial-gradient(circle at 50% 120%, rgba(66, 133, 244, 0.1), transparent 40%),
+    radial-gradient(circle at 10% 20%, rgba(155, 114, 203, 0.03), transparent 30%);
 }
 
 /* ─── Utility Components ─── */
