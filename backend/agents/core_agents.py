@@ -17,7 +17,7 @@ Given a user query about opening a business in Turkey, output a complete, accura
 - All required permits (e.g. Workplace License, Fire Safety Certificate)
 - The government agencies responsible for each permit
 - All documents the owner needs to prepare
-- Clear ordered steps the owner must take
+- Clear ordered steps (Always start with 'Get a Tax Number' for foreigners if applicable)
 - A realistic timeline in days
 - A friendly one-paragraph plain-language summary
 

@@ -20,9 +20,14 @@ async def permit_node(state: GraphState):
         agencies=combined.agencies,
         documents=combined.documents,
     )
+    # Ensure 'Get a Tax Number' is Step 1 as requested
+    all_steps = combined.steps
+    if not any("Tax Number" in s for s in all_steps):
+        all_steps = ["Get a Tax Number"] + all_steps
+    
     state['state'].execution_plan = ExecutionPlan(
-        steps=combined.steps,
-        assigned_agents=["PermitOps AI"] * len(combined.steps),
+        steps=all_steps,
+        assigned_agents=["PermitOps AI"] * len(all_steps),
     )
     return state
 
