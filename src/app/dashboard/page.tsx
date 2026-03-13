@@ -165,8 +165,6 @@ export default function Dashboard() {
         >
           <source src="/dashboard_bg.mp4" type="video/mp4" />
         </video>
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-black/40 dark:bg-black/60 z-[5]" />
         {/* Subtle gradient to blend with edges */}
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
