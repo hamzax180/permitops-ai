@@ -23,7 +23,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  if (pathname === '/chat') return null;
+
 
   return (
     <header
