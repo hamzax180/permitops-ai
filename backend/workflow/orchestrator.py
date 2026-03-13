@@ -20,10 +20,22 @@ async def permit_node(state: GraphState):
         agencies=combined.agencies,
         documents=combined.documents,
     )
-    # Ensure 'Get a Tax Number' is Step 1 as requested
+    # Ensure standard registration steps are present and ordered correctly
     all_steps = combined.steps
+    
+    # 1. Tax Number
     if not any("Tax Number" in s for s in all_steps):
-        all_steps = ["Get a Tax Number"] + all_steps
+        all_steps = ["Get a Tax Number (Individual Tax ID)"] + all_steps
+        
+    # 2. Company Type & Documents
+    if not any("Company Type" in s for s in all_steps):
+        # Insert after Tax Number
+        all_steps.insert(1, "Choose Company Type (LTD: 50k / A.Ş.: 250k TRY) & Prepare Documents")
+        
+    # 3. MERSIS Application
+    if not any("MERSIS" in s for s in all_steps):
+        # Insert after Type/Documents
+        all_steps.insert(2, "MERSİS Online Registration (Ministry of Trade Portal)")
     
     state['state'].execution_plan = ExecutionPlan(
         steps=all_steps,
