@@ -23,24 +23,26 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
 gemini_model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
-    system_instruction="""You are PermitOps AI, a Turkish business permit expert for Istanbul/Beşiktaş.
-
-When a user asks about opening a business, always respond with these clearly formatted sections:
-📋 **Permits Required** — list each permit
-🏛️ **Relevant Agencies** — government bodies involved
-📄 **Documents to Prepare** — full document list
-✅ **Steps to Follow** — numbered step-by-step guide
-⏱️ **Estimated Timeline** — total days
-💬 **Summary** — one friendly paragraph
-
-Be specific, practical and warm."""
+    system_instruction="""You are PermitOps AI. Provide concise, high-density Turkish permit advice.
+Always include:
+📋 Permits (Agency)
+📄 Required Documents
+✅ Action Steps
+💬 Summary (Ends with: "Go to the Dashboard to start working with the Permit AI Agent.")
+Keep it short and professional."""
 )
 
 app = FastAPI(title="PermitOps AI Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://[::1]:3000",
+        "https://localhost:3000",
+        "https://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,6 +107,23 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer", "email": db_user.email}
 
+import uuid
+
+@app.get("/chat/sessions")
+async def get_chat_sessions(token: str, db: Session = Depends(get_db)):
+    user = await get_current_user(token, db)
+    sessions = db.query(ChatSession).filter(ChatSession.user_id == user.id).order_by(ChatSession.created_at.desc()).all()
+    return [{"id": s.id, "title": s.title or "New Chat", "created_at": s.created_at} for s in sessions]
+
+@app.post("/chat/sessions")
+async def create_chat_session(token: str, db: Session = Depends(get_db)):
+    user = await get_current_user(token, db)
+    session_id = str(uuid.uuid4())
+    new_session = ChatSession(id=session_id, user_id=user.id, title="New Chat")
+    db.add(new_session)
+    db.commit()
+    return {"id": session_id, "title": "New Chat"}
+
 
 async def _run_with_agents(query: str) -> str:
     """Run the full pydantic-ai + langgraph pipeline in a thread to avoid deadlock."""
@@ -132,12 +151,11 @@ async def _run_with_agents(query: str) -> str:
     combined = state.combined_result
     if combined:
         return (
-            f"{combined.summary}\n\n"
-            f"📋 **Permits Required:** {', '.join(combined.permits)}\n\n"
-            f"🏛️ **Relevant Agencies:** {', '.join(combined.agencies)}\n\n"
-            f"📄 **Documents to Prepare:**\n- " + "\n- ".join(combined.documents) +
-            f"\n\n✅ **Steps to Follow:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(combined.steps)) +
-            f"\n\n⏱️ **Estimated Timeline:** {combined.timeline_days} days"
+            f"💬 {combined.summary}\n\n"
+            f"📋 **Permits (Agencies):** {', '.join(combined.permits)}\n"
+            f"📄 **Required Docs:** {', '.join(combined.documents[:6])}...\n"
+            f"✅ **Action Steps:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(combined.steps)) +
+            f"\n\n⏱️ **Timeline:** {combined.timeline_days} days"
         )
     elif state.permit_plan:
         p = state.permit_plan
@@ -175,6 +193,9 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
                 db_session = ChatSession(id=session_id, user_id=user.id, title=query.query[:50])
                 db.add(db_session)
                 db.commit()
+            elif db_session.title == "New Chat":
+                db_session.title = query.query[:50]
+                db.commit()
             
             # Save user message
             user_msg = ChatMessage(session_id=session_id, role="user", content=query.query)
@@ -207,13 +228,24 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
 @app.get("/chat/history/{session_id}")
 async def get_chat_history(session_id: str, token: str, db: Session = Depends(get_db)):
     user = await get_current_user(token, db)
-    messages = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).all()
+    # Ensure user owns the session
+    session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+    if not session:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    messages = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).order_by(ChatMessage.timestamp.asc()).all()
     return [{"role": m.role, "content": m.content, "id": m.id} for m in messages]
 
 @app.delete("/chat/history/{session_id}")
 async def clear_chat_history(session_id: str, token: str, db: Session = Depends(get_db)):
     user = await get_current_user(token, db)
+    # Ensure user owns the session
+    session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+    if not session:
+        raise HTTPException(status_code=403, detail="Access denied")
+        
     db.query(ChatMessage).filter(ChatMessage.session_id == session_id).delete()
+    db.query(ChatSession).filter(ChatSession.id == session_id).delete()
     db.commit()
     return {"status": "success"}
 
