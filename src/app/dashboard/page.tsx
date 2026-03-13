@@ -162,21 +162,18 @@ export default function Dashboard() {
       <div className="absolute inset-0 z-0 w-full h-full">
         <motion.video
           initial={{ opacity: 0 }}
-          animate={{ opacity: videoEnded ? 0 : 1 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
           autoPlay
           muted
           playsInline
-          onEnded={() => setVideoEnded(true)}
           className="w-full h-full object-cover"
         >
           <source src="/dashboard_bg.mp4" type="video/mp4" />
         </motion.video>
         
-        {/* Watermark Patch - Hides the "Ve" corner without scaling */}
-        {!videoEnded && (
-          <div className="absolute bottom-4 right-4 w-24 h-12 bg-black/20 blur-xl z-20 pointer-events-none" />
-        )}
+        {/* Watermark Patch - Fixed position for full-screen */}
+        <div className="absolute bottom-0 right-0 w-32 h-20 bg-gradient-to-br from-transparent to-[var(--bg)] blur-md z-10 pointer-events-none opacity-80" />
 
         {/* Subtle gradient to blend with edges */}
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
