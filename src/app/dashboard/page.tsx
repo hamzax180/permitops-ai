@@ -108,8 +108,8 @@ export default function Dashboard() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center pt-24">
-        <div className="flex flex-col items-center gap-4 text-slate-400">
-          <Activity size={32} className="animate-pulse text-blue-500" />
+        <div className="flex flex-col items-center gap-4 text-gray-500">
+          <Activity size={32} className="animate-pulse text-blue-600" />
           <p className="text-sm font-medium">Synchronizing with Beşiktaş Municipality...</p>
         </div>
       </main>
@@ -125,10 +125,10 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: -20, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: -20, x: '-50%' }}
-            className="fixed top-24 left-1/2 z-50 rounded-lg shadow-xl shadow-black/50 border border-emerald-500/30 px-5 py-3 flex items-center gap-3 bg-emerald-500/10 backdrop-blur-md"
+            className="fixed top-24 left-1/2 z-50 rounded-lg shadow-xl shadow-black/5 border border-emerald-500/20 px-5 py-3 flex items-center gap-3 bg-emerald-50 backdrop-blur-md"
           >
-            <CheckCircle2 size={18} className="text-emerald-400" />
-            <span className="text-sm font-semibold text-emerald-200">Document uploaded and processed successfully!</span>
+            <CheckCircle2 size={18} className="text-emerald-600" />
+            <span className="text-sm font-semibold text-emerald-800">Document uploaded and processed successfully!</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -147,11 +147,11 @@ export default function Dashboard() {
               <Activity size={10} className="animate-pulse" />
               Live Session · #IST-BŞK-4221
             </span>
-            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Permit Dashboard</h1>
-            <p className="text-sm text-slate-500 flex items-center gap-3 flex-wrap">
-              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-blue-400" /> {data?.business_profile?.raw_query || 'Beşiktaş Restaurant'}, Istanbul</span>
-              <span className="h-3 w-px bg-slate-700" />
-              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-400" /> {data?.last_updated ? `Updated ${new Date(data.last_updated).toLocaleDateString()}` : 'No active session'}</span>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Permit Dashboard</h1>
+            <p className="text-sm text-gray-500 flex items-center gap-3 flex-wrap">
+              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-blue-600" /> {data?.business_profile?.raw_query || 'Beşiktaş Restaurant'}, Istanbul</span>
+              <span className="h-3 w-px bg-gray-300" />
+              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-600" /> {data?.last_updated ? `Updated ${new Date(data.last_updated).toLocaleDateString()}` : 'No active session'}</span>
             </p>
           </div>
 
@@ -179,17 +179,17 @@ export default function Dashboard() {
           className="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
           {[
-            { label: 'Compliance Score', value: `${progress > 0 ? progress : '0'}%`,    color: 'text-emerald-400', icon: ShieldCheck },
-            { label: 'Steps Complete',   value: `${done}/${steps.length}`, color: 'text-blue-400',    icon: CheckCircle2 },
-            { label: 'Est. Days Left',   value: `${Math.max(0, steps.length * 2 - done * 2)} days`,   color: 'text-amber-400',   icon: Clock },
-            { label: 'Active AI Agents', value: `${data?.execution_plan?.assigned_agents.length || 0} active`, color: 'text-violet-400',  icon: Cpu },
+            { label: 'Compliance Score', value: `${progress > 0 ? progress : '0'}%`,    color: 'text-emerald-600', icon: ShieldCheck },
+            { label: 'Steps Complete',   value: `${done}/${steps.length}`, color: 'text-blue-600',    icon: CheckCircle2 },
+            { label: 'Est. Days Left',   value: `${Math.max(0, steps.length * 2 - done * 2)} days`,   color: 'text-amber-500',   icon: Clock },
+            { label: 'Active AI Agents', value: `${data?.execution_plan?.assigned_agents.length || 0} active`, color: 'text-violet-600',  icon: Cpu },
           ].map((s, i) => (
             <div key={i} className="card p-4 flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
                 <s.icon size={16} className={s.color} />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] text-slate-500 font-medium truncate">{s.label}</p>
+                <p className="text-[11px] text-gray-500 font-medium truncate">{s.label}</p>
                 <p className={`text-lg font-bold leading-tight ${s.color}`}>{s.value}</p>
               </div>
             </div>
@@ -198,16 +198,16 @@ export default function Dashboard() {
 
         {/* ── Progress Bar ── */}
         <div className="card p-4 flex items-center gap-4">
-          <span className="text-sm font-medium text-slate-400 whitespace-nowrap shrink-0">Overall Progress</span>
-          <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <span className="text-sm font-medium text-gray-500 whitespace-nowrap shrink-0">Overall Progress</span>
+          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 1.0, ease: 'easeOut', delay: 0.3 }}
-              className="h-full rounded-full bg-blue-500"
+              className="h-full rounded-full bg-blue-600"
             />
           </div>
-          <span className="text-sm font-bold text-white shrink-0">{progress}%</span>
+          <span className="text-sm font-bold text-gray-900 shrink-0">{progress}%</span>
         </div>
 
         {/* ── Main Grid ── */}
@@ -215,7 +215,7 @@ export default function Dashboard() {
 
           {/* Workflow Steps */}
           <div className="lg:col-span-8 space-y-2.5">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 px-0.5">Workflow Steps</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 px-0.5">Workflow Steps</h2>
             {steps.map((s, i) => (
               <motion.div
                 key={i}
@@ -229,26 +229,26 @@ export default function Dashboard() {
               >
                 <div className="p-4 flex items-center gap-4">
                   <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    s.status === 'completed'  ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                    s.status === 'in-progress' ? 'bg-blue-500/10 border border-blue-500/25' :
-                    'border border-white/5'
-                  }`} style={s.status === 'pending' ? { background: 'rgba(255,255,255,0.03)' } : {}}>
+                    s.status === 'completed'  ? 'bg-emerald-50 border border-emerald-200' :
+                    s.status === 'in-progress' ? 'bg-blue-50 border border-blue-200' :
+                    'border border-gray-200'
+                  }`} style={s.status === 'pending' ? { background: 'rgba(0,0,0,0.02)' } : {}}>
                     <StepIcon status={s.status} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="font-semibold text-white text-[15px]">{s.title}</h3>
+                      <h3 className="font-semibold text-gray-900 text-[15px]">{s.title}</h3>
                       <StepBadge status={s.status} />
                     </div>
-                    <p className="text-sm text-slate-500 mt-0.5 truncate">{s.summary}</p>
+                    <p className="text-sm text-gray-600 mt-0.5 truncate">{s.summary}</p>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs text-slate-600 hidden sm:block font-medium">{s.date}</span>
+                    <span className="text-xs text-gray-500 hidden sm:block font-medium">{s.date}</span>
                     <ChevronDown
                       size={15}
-                      className={`text-slate-600 transition-transform duration-200 ${expanded === i ? 'rotate-180' : ''}`}
+                      className={`text-gray-500 transition-transform duration-200 ${expanded === i ? 'rotate-180' : ''}`}
                     />
                   </div>
                 </div>
@@ -262,16 +262,16 @@ export default function Dashboard() {
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="px-4 pb-4 pt-3 border-t border-white/5 space-y-4">
-                        <p className="text-sm text-slate-300 leading-relaxed">{s.detail}</p>
+                      <div className="px-4 pb-4 pt-3 border-t border-gray-100 space-y-4">
+                        <p className="text-sm text-gray-700 leading-relaxed">{s.detail}</p>
 
                         {s.docs.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {s.docs.map(doc => (
-                              <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <FileText size={11} className="text-blue-400 shrink-0" />
+                              <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
+                                <FileText size={11} className="text-blue-600 shrink-0" />
                                 {doc}
-                                <ExternalLink size={10} className="text-slate-600" />
+                                <ExternalLink size={10} className="text-gray-500" />
                               </div>
                             ))}
                           </div>
@@ -294,18 +294,18 @@ export default function Dashboard() {
           <div className="lg:col-span-4 space-y-4">
 
             {/* Action Required */}
-            <div className="card p-5 space-y-4 border-amber-500/20" style={{ background: 'rgba(245,158,11,0.04)' }}>
+            <div className="card p-5 space-y-4 border-amber-200" style={{ background: 'rgba(245,158,11,0.04)' }}>
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
+                <div className="h-8 w-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
                   <AlertCircle size={15} />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Action Required</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">{steps[1]?.title || 'Awaiting Information'}</p>
+                  <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Action Required</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-0.5">{steps[1]?.title || 'Awaiting Information'}</p>
                 </div>
               </div>
-              <p className="text-[13px] text-slate-400 leading-relaxed">
-                Please provide details or documents for <strong className="text-white">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
+              <p className="text-[13px] text-gray-600 leading-relaxed">
+                Please provide details or documents for <strong className="text-gray-900">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
               </p>
               <button onClick={handleUpload} disabled={uploading || !data} className="btn btn-blue w-full !py-2.5 !text-sm justify-center disabled:opacity-50">
                 <Upload size={13} /> {uploading ? 'Verifying AI...' : 'Upload information'}
@@ -315,24 +315,24 @@ export default function Dashboard() {
             {/* AI Agents */}
             <div className="card p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">AI Agents</p>
-                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">AI Agents</p>
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600">
                   <span className="live-dot w-2 h-2 relative shrink-0" />
                   {data?.execution_plan?.assigned_agents.length || 0} active
                 </span>
               </div>
               <div className="space-y-2">
                 {(data?.execution_plan?.assigned_agents || ['Planner', 'Classifier']).map((name: string, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl transition-colors" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-blue-400"
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl transition-colors" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                    <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-blue-600"
                          style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
                       <Cpu size={13} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white">{name}</p>
-                      <p className="text-[11px] text-slate-500 truncate">Agent processing workflow</p>
+                      <p className="text-[13px] font-semibold text-gray-900">{name}</p>
+                      <p className="text-[11px] text-gray-500 truncate">Agent processing workflow</p>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
                       Running
                     </span>
                   </div>
@@ -342,11 +342,11 @@ export default function Dashboard() {
 
             {/* Next Step */}
             <div className="card p-5 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">What&apos;s next</p>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                After the fire certificate is submitted, your <span className="text-blue-400 font-medium">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">What&apos;s next</p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                After the fire certificate is submitted, your <span className="text-blue-600 font-medium">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
               </p>
-              <Link href="/chat" className="text-sm font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 transition-colors">
+              <Link href="/chat" className="text-sm font-semibold text-blue-600 hover:text-blue-500 flex items-center gap-1.5 transition-colors">
                 Ask AI about this step <ArrowRight size={13} />
               </Link>
             </div>
