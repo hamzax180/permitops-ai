@@ -8,9 +8,11 @@ import { Shield, Menu, X, FileCheck, Sun, Moon } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, logout, isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -67,16 +69,30 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           <LanguageSwitcher />
           <ThemeToggle />
-          <Link href="/dashboard">
-            <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
-              {t('navbar_dashboard')}
-            </button>
-          </Link>
-          <Link href="/chat">
-            <button className="bg-white text-black hover:bg-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-lg transition-all active:scale-95">
-              {t('navbar_get_started')}
-            </button>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{user?.email}</span>
+              <button 
+                onClick={logout}
+                className="px-4 py-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                  Login
+                </button>
+              </Link>
+              <Link href="/signup">
+                <button className="bg-white text-black hover:bg-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-lg transition-all active:scale-95">
+                  Sign Up
+                </button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -107,11 +123,20 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          <div className="pt-3 border-t border-white/5">
-            <Link href="/chat" onClick={() => setOpen(false)}>
-              <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">Get Started</button>
-            </Link>
-          </div>
+          {isAuthenticated ? (
+            <button onClick={logout} className="w-full py-2.5 rounded-full font-bold text-sm text-red-500 border border-red-500/20">
+              Logout
+            </button>
+          ) : (
+            <div className="pt-3 border-t border-white/5 flex flex-col gap-2">
+              <Link href="/login" onClick={() => setOpen(false)}>
+                <button className="text-white w-full py-2.5 rounded-full font-bold text-sm border border-white/10">Login</button>
+              </Link>
+              <Link href="/signup" onClick={() => setOpen(false)}>
+                <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">Sign Up</button>
+              </Link>
+            </div>
+          )}
         </motion.div>
       )}
     </header>

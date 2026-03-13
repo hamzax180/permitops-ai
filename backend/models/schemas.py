@@ -43,3 +43,17 @@ class PermitState(BaseModel):
 class UserQuery(BaseModel):
     query: str
     context: Optional[Dict] = None
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    full_name: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    email: str

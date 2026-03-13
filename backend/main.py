@@ -1,11 +1,21 @@
 import os
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import google.generativeai as genai
 from dotenv import load_dotenv
+
+from database import engine, Base, get_db
+from models.user import User as DBUser
+from models.chat import ChatSession, ChatMessage
+from models.schemas import UserCreate, UserLogin, Token, UserQuery
+from utils.auth import get_password_hash, verify_password, create_access_token, decode_access_token
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -30,7 +40,7 @@ app = FastAPI(title="PermitOps AI Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,6 +66,44 @@ class UserQuery(BaseModel):
 class UserCredentials(BaseModel):
     tckn: str
     password: str
+
+# --- Auth Dependency ---
+async def get_current_user(token: str, db: Session = Depends(get_db)):
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    email: str = payload.get("sub")
+    if email is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(DBUser).filter(DBUser.email == email).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+# --- Auth Endpoints ---
+@app.post("/auth/register", response_model=Token)
+async def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(DBUser).filter(DBUser.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_pwd = get_password_hash(user.password)
+    new_user = DBUser(email=user.email, hashed_password=hashed_pwd, full_name=user.full_name)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    access_token = create_access_token(data={"sub": new_user.email})
+    return {"access_token": access_token, "token_type": "bearer", "email": new_user.email}
+
+@app.post("/auth/login", response_model=Token)
+async def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(DBUser).filter(DBUser.email == user.email).first()
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    
+    access_token = create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email}
 
 
 async def _run_with_agents(query: str) -> str:
@@ -110,34 +158,64 @@ async def _run_direct_gemini(query: str) -> str:
 
 
 @app.post("/agent/query")
-async def agent_query(query: UserQuery):
+async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session = Depends(get_db)):
+    user = None
+    if token:
+        try:
+            user = await get_current_user(token, db)
+        except:
+            pass
+
     try:
+        # Get or create session
+        session_id = query.context.get("session_id") if query.context else "default"
+        if user:
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if not db_session:
+                db_session = ChatSession(id=session_id, user_id=user.id, title=query.query[:50])
+                db.add(db_session)
+                db.commit()
+            
+            # Save user message
+            user_msg = ChatMessage(session_id=session_id, role="user", content=query.query)
+            db.add(user_msg)
+            db.commit()
+
         if _agents_available:
             try:
                 answer = await _run_with_agents(query.query)
-                return {"role": "assistant", "content": answer}
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
-                if "429" in str(agent_err):
-                    print("[Fallback] Agent hit 429 quota. Trying direct gemini-2.5-flash fallback...")
-                    # Immediate fallback to bypass pydantic-ai overhead
-                    fallback_model = genai.GenerativeModel("gemini-2.5-flash")
-                    fallback_response = await asyncio.to_thread(fallback_model.generate_content, query.query)
-                    return {"role": "assistant", "content": fallback_response.text}
-                
-                print("[Fallback] Defaulting to direct gemini-2.5-flash...")
+                fallback_model = genai.GenerativeModel("gemini-2.5-flash")
+                fallback_response = await asyncio.to_thread(fallback_model.generate_content, query.query)
+                answer = fallback_response.text
+        else:
+            answer = await _run_direct_gemini(query.query)
+        
+        if user:
+            # Save assistant message
+            assistant_msg = ChatMessage(session_id=session_id, role="assistant", content=answer)
+            db.add(assistant_msg)
+            db.commit()
 
-        answer = await _run_direct_gemini(query.query)
         return {"role": "assistant", "content": answer}
 
     except Exception as e:
-        err = str(e)
-        print(f"[AgentQuery ERROR] {err}")
-        if "429" in err or ("quota" in err.lower() and "exceeded" in err.lower()):
-            return {"role": "assistant", "content": "⚠️ Quota exceeded (429). Please wait a minute, then try again."}
-        elif "api_key" in err.lower() or ("invalid" in err.lower() and "key" in err.lower()):
-            return {"role": "assistant", "content": "🚨 Invalid API key. Check `backend/.env`"}
-        return {"role": "assistant", "content": f"Error: {err}"}
+        print(f"[AgentQuery ERROR] {e}")
+        return {"role": "assistant", "content": f"Error: {str(e)}"}
+
+@app.get("/chat/history/{session_id}")
+async def get_chat_history(session_id: str, token: str, db: Session = Depends(get_db)):
+    user = await get_current_user(token, db)
+    messages = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).all()
+    return [{"role": m.role, "content": m.content, "id": m.id} for m in messages]
+
+@app.delete("/chat/history/{session_id}")
+async def clear_chat_history(session_id: str, token: str, db: Session = Depends(get_db)):
+    user = await get_current_user(token, db)
+    db.query(ChatMessage).filter(ChatMessage.session_id == session_id).delete()
+    db.commit()
+    return {"status": "success"}
 
 
 @app.get("/workflow/latest")

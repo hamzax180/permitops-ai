@@ -6,12 +6,15 @@ import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic } from 'l
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 type Role = 'assistant' | 'user';
 interface Msg { id: number; role: Role; content: string; }
 
 export default function ChatPage() {
   const { t, isRTL } = useLanguage();
+  const { token, isAuthenticated } = useAuth();
+  const sessionId = "default-session";
   const QUICK_Q = [
     t('chat_q1'),
     t('chat_q2'),
@@ -26,29 +29,47 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const msgIdRef = useRef(1);
 
-  // Load from localStorage on mount
+  // Load from backend if authenticated, else localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('permitops_chat_history');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          setMsgs(parsed);
-          msgIdRef.current = Math.max(...parsed.map((m: Msg) => m.id)) + 1;
+    const loadHistory = async () => {
+      if (isAuthenticated && token) {
+        try {
+          const res = await fetch(`http://localhost:8003/chat/history/${sessionId}?token=${token}`);
+          if (res.ok) {
+            const data = await res.json();
+            setMsgs(data);
+            if (data.length > 0) {
+              msgIdRef.current = Math.max(...data.map((m: Msg) => m.id)) + 1;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch history from backend", e);
         }
-      } catch (e) {
-        console.error("Failed to parse chat history", e);
+      } else {
+        const saved = localStorage.getItem('permitops_chat_history');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+              setMsgs(parsed);
+              msgIdRef.current = Math.max(...parsed.map((m: Msg) => m.id)) + 1;
+            }
+          } catch (e) {
+            console.error("Failed to parse local chat history", e);
+          }
+        }
       }
-    }
-    setIsLoaded(true);
-  }, []);
+      setIsLoaded(true);
+    };
+    loadHistory();
+  }, [token, isAuthenticated]);
 
-  // Save to localStorage whenever msgs change
+  // Save to localStorage only if NOT authenticated
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && !isAuthenticated) {
       localStorage.setItem('permitops_chat_history', JSON.stringify(msgs));
     }
-  }, [msgs, isLoaded]);
+  }, [msgs, isLoaded, isAuthenticated]);
 
   // Scroll to bottom
   useEffect(() => {
@@ -65,10 +86,13 @@ export default function ChatPage() {
     setBusy(true);
 
     try {
-      const res = await fetch('http://localhost:8003/agent/query', {
+      const res = await fetch(`http://localhost:8003/agent/query${token ? `?token=${token}` : ''}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify({ 
+            query: q,
+            context: { session_id: sessionId }
+        }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -83,7 +107,14 @@ export default function ChatPage() {
     }
   };
 
-  const clearChat = () => {
+  const clearChat = async () => {
+    if (isAuthenticated && token) {
+      try {
+        await fetch(`http://localhost:8003/chat/history/${sessionId}?token=${token}`, { method: 'DELETE' });
+      } catch (e) {
+        console.error("Failed to clear history on backend", e);
+      }
+    }
     localStorage.removeItem('permitops_chat_history');
     setMsgs([]);
     msgIdRef.current = 1;
