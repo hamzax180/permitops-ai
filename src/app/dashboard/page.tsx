@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   CheckCircle2, Clock, Circle, AlertCircle,
   ShieldCheck, ArrowRight, MapPin, Calendar, FileText,
-  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw
+  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock
 } from 'lucide-react';
 
 type Status = 'completed' | 'in-progress' | 'pending';
@@ -38,6 +38,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Document uploaded successfully!");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [tckn, setTckn] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     async function fetchState() {
@@ -96,13 +103,40 @@ export default function Dashboard() {
   const done = steps.filter(s => s.status === 'completed').length;
   const progress = steps.length > 0 ? Math.round((done / steps.length) * 100) : 0;
 
-  const handleUpload = () => {
+  const handleUploadClick = () => {
+    setShowModal(true);
+  };
+
+  const submitEDevlet = async () => {
     setUploading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch('http://localhost:8003/api/submit-edevlet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tckn, password })
+      });
+
+      const json = await res.json();
+      
+      if (json.status === "success") {
+        setToastType("success");
+        setToastMessage(json.message || "Submitted successfully via e-Devlet bot.");
+        setShowModal(false);
+        refresh(); // refetch state
+      } else {
+        setToastType("error");
+        setToastMessage(json.message || "Failed to submit.");
+      }
+    } catch (e) {
+      setToastType("error");
+      setToastMessage("Network error communicating with backend.");
+    } finally {
       setUploading(false);
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-    }, 1500);
+      setTimeout(() => setShowToast(false), 4000);
+    }
   };
 
   if (loading) {
@@ -125,11 +159,94 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: -20, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: -20, x: '-50%' }}
-            className="fixed top-24 left-1/2 z-50 rounded-lg shadow-xl shadow-black/5 border border-emerald-500/20 px-5 py-3 flex items-center gap-3 bg-emerald-50 backdrop-blur-md"
+            className={`fixed top-24 left-1/2 z-50 rounded-lg shadow-xl shadow-black/5 border px-5 py-3 flex items-center gap-3 backdrop-blur-md ${
+              toastType === 'success' ? 'border-emerald-500/20 bg-emerald-50' : 'border-red-500/20 bg-red-50'
+            }`}
           >
-            <CheckCircle2 size={18} className="text-emerald-600" />
-            <span className="text-sm font-semibold text-emerald-800">Document uploaded and processed successfully!</span>
+            {toastType === 'success' ? <CheckCircle2 size={18} className="text-emerald-600" /> : <AlertCircle size={18} className="text-red-600" />}
+            <span className={`text-sm font-semibold ${toastType === 'success' ? 'text-emerald-800' : 'text-red-800'}`}>{toastMessage}</span>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* e-Devlet Login Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
+                       <ShieldCheck size={20} className="text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">e-Devlet Integration</h3>
+                      <p className="text-xs text-gray-500">Secure AI Automation Bot</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                  Our RPA bot requires your credentials to log into turkiye.gov.tr and automatically submit the verified documents to Beşiktaş Municipality on your behalf.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-widest mb-1.5 ml-0.5">T.C. Kimlik No</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Fingerprint size={16} className="text-gray-400" />
+                      </div>
+                      <input 
+                        type="text" 
+                        maxLength={11}
+                        value={tckn}
+                        onChange={(e) => setTckn(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        placeholder="11-digit ID number"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-widest mb-1.5 ml-0.5">e-Devlet Password</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Lock size={16} className="text-gray-400" />
+                      </div>
+                      <input 
+                        type="password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                        placeholder="••••••••••••"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8">
+                  <button 
+                    onClick={submitEDevlet}
+                    disabled={uploading || !tckn || !password}
+                    className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                  >
+                    {uploading ? <Activity size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
+                    {uploading ? 'Bot Navigating Portal...' : 'Approve Bot Submission'}
+                  </button>
+                  <p className="text-[10px] text-center text-gray-400 mt-3 font-medium">Your credentials are used solely for this session and are NEVER logged into our database.</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -165,7 +282,7 @@ export default function Dashboard() {
                 <ArrowRight size={14} /> Ask AI
               </button>
             </Link>
-            <button onClick={handleUpload} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
+            <button onClick={handleUploadClick} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
               <Upload size={14} /> {uploading ? 'Processing...' : 'Upload Docs'}
             </button>
           </div>
@@ -278,7 +395,7 @@ export default function Dashboard() {
                         )}
 
                         {s.status === 'in-progress' && (
-                          <button onClick={handleUpload} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
+                          <button onClick={handleUploadClick} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
                             <Upload size={13} /> {uploading ? 'Checking...' : 'Upload Required Document'}
                           </button>
                         )}
@@ -307,7 +424,7 @@ export default function Dashboard() {
               <p className="text-[13px] text-gray-600 leading-relaxed">
                 Please provide details or documents for <strong className="text-gray-900">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
               </p>
-              <button onClick={handleUpload} disabled={uploading || !data} className="btn btn-blue w-full !py-2.5 !text-sm justify-center disabled:opacity-50">
+              <button onClick={handleUploadClick} disabled={uploading || !data} className="btn btn-blue w-full !py-2.5 !text-sm justify-center disabled:opacity-50">
                 <Upload size={13} /> {uploading ? 'Verifying AI...' : 'Upload information'}
               </button>
             </div>

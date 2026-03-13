@@ -53,6 +53,10 @@ class UserQuery(BaseModel):
     query: str
     context: Optional[dict] = None
 
+class UserCredentials(BaseModel):
+    tckn: str
+    password: str
+
 
 async def _run_with_agents(query: str) -> str:
     """Run the full pydantic-ai + langgraph pipeline in a thread to avoid deadlock."""
@@ -175,6 +179,30 @@ async def get_latest():
 async def business_intake(query: UserQuery):
     return await agent_query(query)
 
+
+@app.post("/api/submit-edevlet")
+async def submit_edevlet(creds: UserCredentials):
+    try:
+        from backend.bot import run_edevlet_bot
+        # Simulate passing the required documents to the bot based on latest workflow
+        docs_to_upload = ["lease_agreement.pdf", "tax_certificate.pdf"]
+        
+        # Run playwright bot in a background thread to prevent blocking FastAPI
+        result = await asyncio.to_thread(
+            asyncio.run,
+            run_edevlet_bot(creds.tckn, creds.password, docs_to_upload)
+        )
+        
+        if result["status"] == "success":
+            # Update the mock workflow state to show progression
+            if "execution_plan" in latest_workflow:
+                if len(latest_workflow["execution_plan"]["steps"]) > 1:
+                    latest_workflow["execution_plan"]["steps"][1] = "Completed: " + latest_workflow["execution_plan"]["steps"][1]
+            latest_workflow["last_updated"] = "Just now"
+
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
