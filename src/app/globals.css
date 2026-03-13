@@ -4,15 +4,15 @@
 
 /* ─── Design Tokens ─── */
 :root {
-  --bg:        #0a0f1e;
-  --surface:   #111827;
-  --surface-2: #1a2235;
-  --border:    rgba(255,255,255,0.07);
-  --border-2:  rgba(255,255,255,0.12);
+  --bg:        #ffffff;
+  --surface:   #ffffff;
+  --surface-2: #f8fafc;
+  --border:    rgba(0,0,0,0.06);
+  --border-2:  rgba(0,0,0,0.12);
   --blue:      #3b82f6;
   --blue-dark: #2563eb;
-  --text:      #f1f5f9;
-  --muted:     #64748b;
+  --text:      #1f2937;
+  --muted:     #6b7280;
   --radius:    12px;
 }
 
@@ -31,8 +31,8 @@ body {
 
   /* Subtle page-level gradient */
   background-image:
-    radial-gradient(ellipse 900px 600px at 50% -100px, rgba(59,130,246,0.13), transparent),
-    radial-gradient(ellipse 600px 400px at 100% 80%, rgba(99,102,241,0.06), transparent);
+    radial-gradient(ellipse 900px 600px at 50% -100px, rgba(59,130,246,0.08), transparent),
+    radial-gradient(ellipse 600px 400px at 100% 80%, rgba(99,102,241,0.04), transparent);
   background-attachment: fixed;
 }
 
@@ -50,7 +50,7 @@ body {
   }
   .card-hover:hover {
     border-color: var(--border-2);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
     transform: translateY(-2px);
   }
 
@@ -80,10 +80,10 @@ body {
 
   .btn-outline {
     background: transparent;
-    color: #cbd5e1;
+    color: #475569;
     border: 1px solid var(--border-2);
   }
-  .btn-outline:hover { background: rgba(255,255,255,0.04); color: #fff; border-color: rgba(255,255,255,0.2); }
+  .btn-outline:hover { background: rgba(0,0,0,0.03); color: #0f172a; border-color: rgba(0,0,0,0.15); }
 
   /* ----- Badge ----- */
   .badge {
@@ -97,15 +97,15 @@ body {
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
-  .badge-blue     { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: #93c5fd; }
-  .badge-green    { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7; }
-  .badge-amber    { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); color: #fcd34d; }
-  .badge-rose     { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.25);  color: #fca5a5; }
+  .badge-blue     { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: #1d4ed8; }
+  .badge-green    { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: #047857; }
+  .badge-amber    { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); color: #b45309; }
+  .badge-rose     { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.25);  color: #b91c1c; }
 
   /* ----- Status pill ----- */
-  .status-done    { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7; }
-  .status-active  { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: #93c5fd; }
-  .status-pending { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted); }
+  .status-done    { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: #047857; }
+  .status-active  { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: #1d4ed8; }
+  .status-pending { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(0,0,0,0.04); border: 1px solid var(--border); color: var(--muted); }
 
   /* ----- Divider ----- */
   .divider { height: 1px; background: var(--border); }

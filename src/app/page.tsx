@@ -61,11 +61,11 @@ export default function Home() {
 
           {/* Headline */}
           <motion.div variants={fade} className="space-y-4">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.08] tracking-tight">
               Get your Turkish business<br />
-              permit in <span className="text-blue-400">days, not months</span>.
+              permit in <span className="text-blue-600">days, not months</span>.
             </h1>
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
               PermitOps AI automates the entire permit journey — from document checklist
               to municipal approval — for restaurants, cafés, and retail businesses across Turkey.
             </p>
@@ -86,7 +86,7 @@ export default function Home() {
           </motion.div>
 
           {/* Trust signals */}
-          <motion.div variants={fade} className="flex flex-wrap justify-center items-center gap-x-8 gap-y-2 pt-2 text-sm text-slate-500">
+          <motion.div variants={fade} className="flex flex-wrap justify-center items-center gap-x-8 gap-y-2 pt-2 text-sm text-gray-500">
             {['No credit card required', 'No lawyer needed', 'Municipality-official process'].map(t => (
               <span key={t} className="flex items-center gap-1.5">
                 <CheckCircle size={13} className="text-emerald-500 shrink-0" /> {t}
@@ -97,12 +97,12 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ DISTRICT LOGOS ═══════════════ */}
-      <section className="py-10 border-y border-white/5">
+      <section className="py-10 border-y border-gray-100">
         <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-xs font-semibold text-slate-600 uppercase tracking-widest mb-6">Supported municipalities</p>
+          <p className="text-center text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">Supported municipalities</p>
           <div className="flex flex-wrap justify-center gap-x-12 gap-y-3">
             {logos.map(l => (
-              <span key={l} className="text-slate-500 font-semibold text-sm tracking-wide hover:text-slate-300 transition-colors cursor-default select-none">{l}</span>
+              <span key={l} className="text-gray-400 font-semibold text-sm tracking-wide hover:text-gray-600 transition-colors cursor-default select-none">{l}</span>
             ))}
           </div>
         </div>
@@ -113,8 +113,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto space-y-14">
           <div className="text-center space-y-3">
             <p className="section-label">The process</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">How it works</h2>
-            <p className="text-slate-400 max-w-xl mx-auto">Four steps from conversation to approved permit, guided by AI every step of the way.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">How it works</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">Four steps from conversation to approved permit, guided by AI every step of the way.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -128,13 +128,13 @@ export default function Home() {
                 className="card card-hover p-6 space-y-4"
               >
                 <div className="flex items-center justify-between">
-                  <div className="h-10 w-10 rounded-xl bg-blue-600/12 border border-blue-500/20 flex items-center justify-center text-blue-400" style={{ background: 'rgba(59,130,246,0.1)' }}>
+                  <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                     <s.icon size={20} />
                   </div>
-                  <span className="text-3xl font-black text-white/5 select-none">{s.num}</span>
+                  <span className="text-3xl font-black text-gray-100 select-none">{s.num}</span>
                 </div>
-                <h3 className="font-semibold text-white text-[15px] leading-snug">{s.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+                <h3 className="font-semibold text-gray-900 text-[15px] leading-snug">{s.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{s.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -142,12 +142,12 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ FEATURES ═══════════════ */}
-      <section className="py-24 px-6 border-t border-white/5">
+      <section className="py-24 px-6 border-t border-gray-100">
         <div className="max-w-6xl mx-auto space-y-14">
           <div className="text-center space-y-3">
             <p className="section-label">Technology</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Built for the Turkish market</h2>
-            <p className="text-slate-400 max-w-xl mx-auto">Enterprise-grade AI infrastructure trained on Turkish municipal law and permit regulations.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Built for the Turkish market</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">Enterprise-grade AI infrastructure trained on Turkish municipal law and permit regulations.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
@@ -161,14 +161,14 @@ export default function Home() {
                 className="card card-hover p-7 space-y-5 group"
               >
                 <div className="flex items-start justify-between">
-                  <div className="h-11 w-11 rounded-xl flex items-center justify-center text-blue-400 border border-blue-500/20 group-hover:bg-blue-600/15 transition-colors" style={{ background: 'rgba(59,130,246,0.08)' }}>
+                  <div className="h-11 w-11 rounded-xl flex items-center justify-center text-blue-600 border border-blue-100 group-hover:bg-blue-50 transition-colors bg-blue-50/50">
                     <f.icon size={22} />
                   </div>
                   <span className="badge badge-amber">{f.badge}</span>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-semibold text-white text-[16px]">{f.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+                  <h3 className="font-semibold text-gray-900 text-[16px]">{f.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -177,13 +177,13 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ STATS ═══════════════ */}
-      <section className="py-16 px-6 border-t border-white/5">
+      <section className="py-16 px-6 border-t border-gray-100">
         <div className="max-w-4xl mx-auto">
-          <div className="card grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-white/5">
+          <div className="card grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100">
             {stats.map((s, i) => (
               <div key={i} className="p-8 text-center space-y-1">
-                <p className="text-4xl font-black text-white">{s.value}</p>
-                <p className="text-sm text-slate-500">{s.label}</p>
+                <p className="text-4xl font-black text-gray-900">{s.value}</p>
+                <p className="text-sm text-gray-500">{s.label}</p>
               </div>
             ))}
           </div>
@@ -191,12 +191,12 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ CTA BANNER ═══════════════ */}
-      <section className="py-24 px-6 border-t border-white/5">
+      <section className="py-24 px-6 border-t border-gray-100">
         <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
             Ready to open your business in Turkey?
           </h2>
-          <p className="text-slate-400 text-lg">Start your application today. Our AI advisor will guide you through every step.</p>
+          <p className="text-gray-600 text-lg">Start your application today. Our AI advisor will guide you through every step.</p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
             <Link href="/chat">
               <button className="btn btn-blue text-base px-8 py-3.5">
@@ -213,18 +213,18 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ FOOTER ═══════════════ */}
-      <footer className="border-t border-white/5 py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
+      <footer className="border-t border-gray-100 py-10 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center">
               <ShieldCheck size={12} className="text-white" />
             </div>
-            <span className="font-semibold text-slate-400">PermitOps AI</span>
+            <span className="font-semibold text-gray-700">PermitOps AI</span>
           </div>
           <p>© 2024 PermitOps AI. All rights reserved.</p>
           <div className="flex gap-5">
             {['Privacy', 'Terms', 'Docs'].map(l => (
-              <a key={l} href="#" className="hover:text-slate-300 transition-colors">{l}</a>
+              <a key={l} href="#" className="hover:text-gray-800 transition-colors">{l}</a>
             ))}
           </div>
         </div>
