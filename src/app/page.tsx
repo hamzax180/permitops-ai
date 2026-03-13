@@ -35,6 +35,8 @@ const stats = [
   { value: '98%', label: 'Success rate' },
 ];
 
+const logos = ['Beşiktaş', 'Kadıköy', 'Şişli', 'Üsküdar', 'Ataşehir', 'Bakırköy'];
+
 const howItWorksSteps = (t: any) => [
   {
     title: t('process_step1_title'),
@@ -53,12 +55,9 @@ const howItWorksSteps = (t: any) => [
   }
 ];
 
-const logos = ['Beşiktaş', 'Kadıköy', 'Şişli', 'Üsküdar', 'Ataşehir', 'Bakırköy'];
-
 export default function Home() {
   const { t, isRTL } = useLanguage();
   const stepsData = howItWorksSteps(t);
-
   return (
     <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
 
@@ -75,12 +74,12 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3 mb-2">
             <div className="w-6 h-6 animate-pulse bg-gradient-to-tr from-[#4285f4] via-[#9b72cb] to-[#d96570] rounded-full blur-[2px] opacity-80" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-[#8ab4f8] dark:to-[#9b72cb] font-semibold text-lg">
-              Hi Hamza
+              {t('home_hero_greeting_user')}
             </span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[var(--text)] leading-tight">
-            {t('home_hero_greeting')}
+            {t('home_hero_title')}
           </h1>
 
           <motion.h2
@@ -89,7 +88,7 @@ export default function Home() {
             transition={{ delay: 0.4, duration: 1 }}
             className="text-3xl md:text-4xl text-[var(--muted)] font-light"
           >
-            {t('home_hero_subtitle_direct')}
+            {t('home_hero_subtitle')}
           </motion.h2>
 
           <motion.p
@@ -98,7 +97,7 @@ export default function Home() {
             transition={{ delay: 1.2, duration: 2 }}
             className="text-xl md:text-2xl text-[var(--muted)] font-light italic opacity-60"
           >
-            {t('home_hero_question')}
+            {t('home_hero_question') || 'Where should we start?'}
           </motion.p>
         </motion.div>
 
@@ -141,10 +140,10 @@ export default function Home() {
           className="flex flex-wrap items-center justify-center gap-3 pt-2 pb-2"
         >
           {[
-            { label: 'Upload documents', icon: FileText, color: 'text-blue-500' },
-            { label: 'Check status', icon: Clock, color: 'text-purple-500' },
-            { label: 'Beşiktaş protocols', icon: Building2, color: 'text-rose-500' },
-            { label: 'Fire safety guide', icon: ShieldCheck, color: 'text-emerald-500' },
+            { label: t('hero_cat_upload'), icon: FileText, color: 'text-blue-500' },
+            { label: t('hero_cat_status'), icon: Clock, color: 'text-purple-500' },
+            { label: t('hero_cat_protocols'), icon: Building2, color: 'text-rose-500' },
+            { label: t('hero_cat_safety'), icon: ShieldCheck, color: 'text-emerald-500' },
           ].map((item, i) => (
             <button
               key={i}
@@ -164,7 +163,9 @@ export default function Home() {
           className="pt-32 flex flex-col items-center gap-2 cursor-pointer group"
           onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
         >
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">{t('how_it_works_label') || 'How it works'}</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">
+            {t('how_it_works_label')}
+          </span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
@@ -198,8 +199,8 @@ export default function Home() {
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
-            <h3 className="text-lg font-black uppercase tracking-[0.6em] text-purple-500 drop-shadow-sm font-['Outfit']">{t('process_title')}</h3>
-            <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md">{t('process_subtitle')}</h2>
+            <h3 className="text-xl md:text-2xl font-bold text-purple-500 drop-shadow-sm font-['Outfit']">{t('process_title')}</h3>
+            <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md font-['Outfit']">{t('process_subtitle')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -215,9 +216,9 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-2xl bg-purple-600 dark:bg-purple-500 flex items-center justify-center text-white shadow-lg">
                   <step.icon size={24} />
                 </div>
-                <h4 className="text-2xl font-bold text-white drop-shadow-md">{stepsData[i].title}</h4>
+                <h4 className="text-2xl font-bold text-white drop-shadow-md">{step.title}</h4>
                 <p className="text-lg text-white/95 leading-relaxed font-bold drop-shadow-md">
-                  {stepsData[i].desc}
+                  {step.desc}
                 </p>
               </motion.div>
             ))}

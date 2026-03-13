@@ -10,31 +10,34 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
-  const pathname  = usePathname();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [open,     setOpen]     = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 16);
-    window.addEventListener('scroll', fn);
-    return () => window.removeEventListener('scroll', fn);
+    const handleScroll = () => setScrolled(window.scrollY > 16);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const links = [
-    { href: '/',          label: t('navbar_home') },
-    { href: '/chat',      label: t('navbar_chat') },
+    { href: '/', label: t('navbar_home') },
+    { href: '/chat', label: t('navbar_chat') },
     { href: '/dashboard', label: t('navbar_dashboard') },
   ];
 
+
+
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-white/5 shadow-2xl' : 'bg-transparent'
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-white/5 shadow-2xl' : 'bg-transparent'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
+
+        {/* Logo removed */}
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
@@ -44,9 +47,8 @@ export default function Navbar() {
               <Link
                 key={href}
                 href={href}
-                className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  active ? 'text-[var(--text)]' : 'text-[var(--muted)] hover:text-[var(--text)]'
-                }`}
+                className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors ${active ? 'text-[var(--text)]' : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
               >
                 {active && (
                   <motion.span
@@ -99,18 +101,15 @@ export default function Navbar() {
               key={href}
               href={href}
               onClick={() => setOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname === href ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
+              className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === href ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
             >
               {label}
             </Link>
           ))}
           <div className="pt-3 border-t border-white/5">
             <Link href="/chat" onClick={() => setOpen(false)}>
-              <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">
-                {t('navbar_get_started')}
-              </button>
+              <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">Get Started</button>
             </Link>
           </div>
         </motion.div>

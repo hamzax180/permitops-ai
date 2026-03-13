@@ -22,13 +22,13 @@ interface PermitStep {
 }
 
 function StepBadge({ status }: { status: Status }) {
-  if (status === 'completed')   return <span className="badge badge-green">Completed</span>;
+  if (status === 'completed') return <span className="badge badge-green">Completed</span>;
   if (status === 'in-progress') return <span className="badge badge-purple">In Progress</span>;
   return <span className="badge status-pending">Pending</span>;
 }
 
 function StepIcon({ status }: { status: Status }) {
-  if (status === 'completed')   return <CheckCircle2 size={18} className="text-emerald-500" />;
+  if (status === 'completed') return <CheckCircle2 size={18} className="text-emerald-500" />;
   if (status === 'in-progress') return <Clock size={18} className="text-purple-500" />;
   return <Circle size={18} className="text-[var(--muted)]" />;
 }
@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("Document uploaded successfully!");
   const [toastType, setToastType] = useState<"success" | "error">("success");
-  
+
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [tckn, setTckn] = useState('');
@@ -52,7 +52,7 @@ export default function Dashboard() {
     async function fetchState() {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:8003/workflow/latest'); 
+        const res = await fetch('http://localhost:8003/workflow/latest');
         if (res.ok) {
           const json = await res.json();
           if (json && Object.keys(json).length > 0) {
@@ -121,7 +121,7 @@ export default function Dashboard() {
       });
 
       const json = await res.json();
-      
+
       if (json.status === "success") {
         setToastType("success");
         setToastMessage(json.message || "Submitted successfully via e-Devlet bot.");
@@ -153,7 +153,26 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen pt-24 pb-20 px-6 relative">
+    <main className="min-h-screen relative overflow-hidden">
+      {/* Video Background */}
+      <div className="absolute inset-0 z-0 w-full h-full">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover scale-[1.05] origin-top-left"
+        >
+          <source src="/dashboard_bg.mp4" type="video/mp4" />
+        </video>
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/40 dark:bg-black/60 z-[5]" />
+        {/* Subtle gradient to blend with edges */}
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
+      </div>
+
+      <div className="relative z-20 pt-24 pb-20 px-6">
       {/* Toast Notification */}
       <AnimatePresence>
         {showToast && (
@@ -161,9 +180,8 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: -20, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: -20, x: '-50%' }}
-            className={`fixed top-24 left-1/2 z-50 rounded-lg shadow-xl border px-5 py-3 flex items-center gap-3 backdrop-blur-md ${
-              toastType === 'success' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500' : 'border-red-500/20 bg-red-500/10 text-red-500'
-            }`}
+            className={`fixed top-24 left-1/2 z-50 rounded-lg shadow-xl border px-5 py-3 flex items-center gap-3 backdrop-blur-md ${toastType === 'success' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500' : 'border-red-500/20 bg-red-500/10 text-red-500'
+              }`}
           >
             {toastType === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
             <span className="text-sm font-semibold">{toastMessage}</span>
@@ -191,7 +209,7 @@ export default function Dashboard() {
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
-                       <ShieldCheck size={20} className="text-red-500" />
+                      <ShieldCheck size={20} className="text-red-500" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-[var(--text)]">e-Devlet Integration</h3>
@@ -202,7 +220,7 @@ export default function Dashboard() {
                     <X size={20} />
                   </button>
                 </div>
-                
+
                 <p className="text-sm text-[var(--muted)] mb-6 leading-relaxed">
                   Our RPA bot requires your credentials to log into turkiye.gov.tr and automatically submit the verified documents to Beşiktaş Municipality on your behalf.
                 </p>
@@ -215,8 +233,8 @@ export default function Dashboard() {
                         <Fingerprint size={16} className="text-[var(--muted)]" />
                       </div>
                       <div className="w-full">
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           maxLength={11}
                           value={tckn}
                           onChange={(e) => setTckn(e.target.value)}
@@ -233,8 +251,8 @@ export default function Dashboard() {
                         <Lock size={16} className="text-[var(--muted)]" />
                       </div>
                       <div className="w-full">
-                        <input 
-                          type="password" 
+                        <input
+                          type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl text-sm text-[var(--text)] focus:ring-2 focus:ring-blue-500 transition-all outline-none"
@@ -246,7 +264,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="mt-8">
-                  <button 
+                  <button
                     onClick={submitEDevlet}
                     disabled={uploading || !tckn || !password}
                     className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
@@ -274,7 +292,7 @@ export default function Dashboard() {
           <div className="space-y-1.5">
             <span className="badge badge-purple">
               <Activity size={10} className="animate-pulse" />
-              Live Session · #IST-BŞK-4221
+              {t('dashboard_live_session')} · #IST-BŞK-4221
             </span>
             <h1 className="text-2xl md:text-4xl font-black text-[var(--text)] tracking-tight">{t('dashboard_title')}</h1>
             <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium">
@@ -308,17 +326,17 @@ export default function Dashboard() {
           className="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
           {[
-            { label: 'Compliance Score', value: `${progress > 0 ? progress : '0'}%`,    color: 'text-emerald-500', icon: ShieldCheck, bg: 'bg-emerald-500/10' },
-            { label: 'Steps Complete',   value: `${done}/${steps.length}`, color: 'text-purple-500',    icon: CheckCircle2, bg: 'bg-purple-500/10' },
-            { label: 'Est. Days Left',   value: `${Math.max(0, steps.length * 2 - done * 2)} days`,   color: 'text-amber-500',   icon: Clock, bg: 'bg-amber-500/10' },
-            { label: 'Active AI Agents', value: `${data?.execution_plan?.assigned_agents.length || 0} active`, color: 'text-fuchsia-500',  icon: Cpu, bg: 'bg-fuchsia-500/10' },
+            { label: t('dashboard_compliance_score'), value: `${progress > 0 ? progress : '0'}%`, color: 'text-emerald-500', icon: ShieldCheck, bg: 'bg-emerald-500/10' },
+            { label: t('dashboard_steps_complete'), value: `${done}/${steps.length}`, color: 'text-purple-500', icon: CheckCircle2, bg: 'bg-purple-500/10' },
+            { label: t('dashboard_est_days'), value: `${Math.max(0, steps.length * 2 - done * 2)} ${t('dashboard_days')}`, color: 'text-amber-500', icon: Clock, bg: 'bg-amber-500/10' },
+            { label: t('dashboard_active_agents'), value: `${data?.execution_plan?.assigned_agents.length || 0} ${t('dashboard_active')}`, color: 'text-fuchsia-500', icon: Cpu, bg: 'bg-fuchsia-500/10' },
           ].map((s, i) => (
-            <div key={i} className="card p-5 flex items-center gap-4 hover:border-[var(--border-2)] transition-colors shadow-sm">
-              <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} border border-transparent`}>
+            <div key={i} className="glass-card p-5 flex items-center gap-4 hover:border-white/20 transition-all shadow-xl group">
+              <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} border border-white/5`}>
                 <s.icon size={20} className={s.color} />
               </div>
               <div className="min-w-0">
-                <p className="text-[12px] text-[var(--muted)] font-bold uppercase tracking-wider truncate">{s.label}</p>
+                <p className="text-[12px] text-white/50 font-bold uppercase tracking-wider truncate">{s.label}</p>
                 <p className={`text-xl font-black leading-tight ${s.color}`}>{s.value}</p>
               </div>
             </div>
@@ -326,9 +344,9 @@ export default function Dashboard() {
         </motion.div>
 
         {/* ── Progress Bar ── */}
-        <div className="card p-5 flex items-center gap-6 shadow-sm">
-          <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-widest whitespace-nowrap shrink-0">Overall Progress</span>
-          <div className="flex-1 h-2 bg-[var(--surface-2)] rounded-full overflow-hidden border border-[var(--border)]">
+        <div className="glass-card p-5 flex items-center gap-6 shadow-xl">
+          <span className="text-sm font-bold text-white/60 uppercase tracking-widest whitespace-nowrap shrink-0">{t('dashboard_overall_progress')}</span>
+          <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
@@ -344,40 +362,38 @@ export default function Dashboard() {
 
           {/* Workflow Steps */}
           <div className="lg:col-span-8 space-y-2.5">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 px-0.5">Workflow Steps</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 px-0.5">{t('dashboard_workflow_steps')}</h2>
             {steps.map((s, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.06, ease: 'easeOut', duration: 0.4 }}
-                className={`card overflow-hidden cursor-pointer transition-colors hover:border-[var(--border-2)] ${
-                  s.status === 'in-progress' ? 'border-blue-500/30' : ''
-                }`}
+                className={`glass-card overflow-hidden cursor-pointer transition-all hover:bg-white/5 ${s.status === 'in-progress' ? 'border-purple-500/40 shadow-purple-500/10' : 'shadow-xl'
+                  }`}
                 onClick={() => setExpanded(expanded === i ? null : i)}
               >
                 <div className="p-4 flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    s.status === 'completed'  ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                    s.status === 'in-progress' ? 'bg-purple-500/10 border border-purple-500/20' :
-                    'bg-[var(--surface-2)] border border-[var(--border)]'
-                  }`}>
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${s.status === 'completed' ? 'bg-emerald-500/20 border border-emerald-500/30' :
+                      s.status === 'in-progress' ? 'bg-purple-500/20 border border-purple-500/30' :
+                        'bg-white/5 border border-white/10'
+                    }`}>
                     <StepIcon status={s.status} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="font-bold text-[var(--text)] text-[16px]">{s.title}</h3>
+                      <h3 className="font-bold text-white text-[16px]">{s.title}</h3>
                       <StepBadge status={s.status} />
                     </div>
-                    <p className="text-sm text-[var(--muted)] mt-1 font-medium truncate">{s.summary}</p>
+                    <p className="text-sm text-white/60 mt-1 font-medium truncate">{s.summary}</p>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs text-[var(--muted)] hidden sm:block font-bold uppercase tracking-wider">{s.date}</span>
+                    <span className="text-xs text-white/50 hidden sm:block font-bold uppercase tracking-wider">{s.date}</span>
                     <ChevronDown
                       size={16}
-                      className={`text-[var(--muted)] transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}
+                      className={`text-white/40 transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}
                     />
                   </div>
                 </div>
@@ -423,45 +439,46 @@ export default function Dashboard() {
           <div className="lg:col-span-4 space-y-4">
 
             {/* Action Required */}
-            <div className="card p-5 space-y-4 border-amber-500/30 bg-amber-500/5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+            <div className="glass-card p-5 space-y-4 border-amber-500/40 bg-amber-500/10 shadow-xl overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
                   <AlertCircle size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-black text-amber-500 uppercase tracking-widest">Action Required</p>
-                  <p className="text-[15px] font-bold text-[var(--text)] mt-1 leading-tight">{steps[1]?.title || 'Awaiting Information'}</p>
+                  <p className="text-xs font-black text-amber-500 uppercase tracking-widest">{t('dashboard_action_required')}</p>
+                  <p className="text-[15px] font-bold text-white mt-1 leading-tight">{steps[1]?.title || 'Awaiting Information'}</p>
                 </div>
               </div>
-              <p className="text-[13px] text-[var(--muted)] leading-relaxed font-medium">
-                Please provide details or documents for <strong className="text-[var(--text)]">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
+              <p className="text-[13px] text-white/70 leading-relaxed font-medium relative z-10">
+                Please provide details or documents for <strong className="text-white">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
               </p>
-              <button onClick={handleUploadClick} disabled={uploading || !data} className="btn btn-purple w-full !py-2.5 !text-sm justify-center shadow-lg transform transition-transform hover:scale-[1.02]">
+              <button onClick={handleUploadClick} disabled={uploading || !data} className="btn btn-purple w-full !py-2.5 !text-sm justify-center shadow-lg transform transition-transform hover:scale-[1.02] relative z-10">
                 <Upload size={14} /> {uploading ? 'Verifying AI...' : 'Upload information'}
               </button>
             </div>
 
             {/* AI Agents */}
-            <div className="card p-5 space-y-5 shadow-sm">
+            <div className="glass-card p-5 space-y-5 shadow-xl">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-black text-[var(--muted)] uppercase tracking-widest">AI Agents</p>
-                <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500">
+                <p className="text-xs font-black text-white/40 uppercase tracking-widest">{t('dashboard_active_agents')}</p>
+                <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
                   <span className="live-dot w-2 h-2 relative shrink-0" />
-                  {data?.execution_plan?.assigned_agents.length || 0} active
+                  {data?.execution_plan?.assigned_agents.length || 0} {t('dashboard_active')}
                 </span>
               </div>
               <div className="space-y-3">
                 {(data?.execution_plan?.assigned_agents || ['Planner', 'Classifier']).map((name: string, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-[var(--surface-2)] bg-[var(--surface-2)]/50 border border-[var(--border)]">
-                    <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-purple-500 bg-purple-500/10 border border-purple-500/20 shadow-sm">
+                  <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-white/10 bg-white/5 border border-white/10 shadow-lg">
+                    <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-purple-400 bg-purple-500/20 border border-purple-500/30 shadow-sm">
                       <Cpu size={14} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-bold text-[var(--text)]">{name}</p>
-                      <p className="text-[11px] text-[var(--muted)] font-medium truncate">Agent processing workflow</p>
+                      <p className="text-[14px] font-bold text-white">{name}</p>
+                      <p className="text-[11px] text-white/50 font-medium truncate">{t('dashboard_agent_status')}</p>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-500">
-                      Running
+                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">
+                      {t('dashboard_running')}
                     </span>
                   </div>
                 ))}
@@ -469,17 +486,18 @@ export default function Dashboard() {
             </div>
 
             {/* Next Step */}
-            <div className="card p-5 space-y-4 shadow-sm">
-              <p className="text-xs font-black text-[var(--muted)] uppercase tracking-widest">What&apos;s next</p>
-              <p className="text-[14px] text-[var(--text)] leading-relaxed font-medium">
-                After the fire certificate is submitted, your <span className="text-purple-500 font-bold">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
+            <div className="glass-card p-5 space-y-4 shadow-xl">
+              <p className="text-xs font-black text-white/40 uppercase tracking-widest">{t('dashboard_whats_next')}</p>
+              <p className="text-[14px] text-white/90 leading-relaxed font-medium">
+                {t('dashboard_next_step_desc')}
               </p>
-              <Link href="/chat" className="text-sm font-bold text-purple-500 hover:text-purple-400 flex items-center gap-2 transition-all hover:translate-x-1">
-                Ask AI about this step <ArrowRight size={14} />
+              <Link href="/chat" className="text-sm font-bold text-purple-400 hover:text-purple-300 flex items-center gap-2 transition-all hover:translate-x-1">
+                {t('dashboard_ask_ai_step')} <ArrowRight size={14} />
               </Link>
             </div>
 
           </div>
+        </div>
         </div>
       </div>
     </main>
