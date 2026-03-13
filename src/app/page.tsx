@@ -38,10 +38,10 @@ const logos = ['Beşiktaş', 'Kadıköy', 'Şişli', 'Üsküdar', 'Ataşehir', '
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center px-6 transition-colors duration-500 overflow-hidden">
+    <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
 
       {/* ═══════════════ GEMINI STYLE CONTENT ═══════════════ */}
-      <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 pt-24 pb-10 relative">
+      <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 pt-24 pb-10 px-6 relative">
 
         {/* Animated Header Group */}
         <motion.div
@@ -155,8 +155,8 @@ export default function Home() {
       </section>
 
       {/* ═══════════════ HOW IT WORKS SECTION ═══════════════ */}
-      <section id="how-it-works" className="w-full relative overflow-hidden py-40 px-6">
-        {/* Live Video Background - Brighter */}
+      <section id="how-it-works" className="w-full relative overflow-hidden py-40">
+        {/* Live Video Background - Brighter & Full Fit */}
         <div className="absolute inset-0 z-0 w-full h-full">
           <video
             autoPlay
@@ -167,14 +167,14 @@ export default function Home() {
           >
             <source src="/how_it_works.mp4" type="video/mp4" />
           </video>
-          {/* Subtle Gradient for blending */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg)] via-transparent to-[var(--bg)]" />
+          {/* Very Subtle Gradient for blending */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg)] via-transparent to-[var(--bg)] opacity-30" />
         </div>
 
-        <div className="max-w-6xl mx-auto relative z-10">
+        <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-blue-500">The Process</h3>
-            <h2 className="text-3xl md:text-5xl font-medium">Getting permits shouldn't be a mystery.</h2>
+            <h2 className="text-3xl md:text-5xl font-medium text-white">Getting permits shouldn't be a mystery.</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -201,13 +201,13 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }}
-                className="bg-black/10 backdrop-blur-md border border-white/5 rounded-3xl p-8 space-y-6 hover:bg-black/20 transition-all group/card shadow-2xl"
+                className="bg-black/5 backdrop-blur-[2px] border border-white/5 rounded-3xl p-8 space-y-6 hover:bg-black/10 transition-all group/card"
               >
                 <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
                   <step.icon size={24} />
                 </div>
                 <h4 className="text-xl font-semibold text-white">{step.title}</h4>
-                <p className="text-white/70 leading-relaxed">
+                <p className="text-white/80 leading-relaxed font-light">
                   {step.desc}
                 </p>
               </motion.div>
