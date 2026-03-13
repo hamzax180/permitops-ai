@@ -41,6 +41,16 @@ async def permit_node(state: GraphState):
     if not any("Capital" in s for s in all_steps):
         # Insert after MERSIS
         all_steps.insert(3, "Deposit Initial Capital (Blocked Bank Account)")
+        
+    # 5. Trade Registry (New)
+    if not any("Trade Registry" in s for s in all_steps):
+        # Insert after Capital
+        all_steps.insert(4, "Register with Trade Registry (Ticaret Sicil Müdürlüğü)")
+        
+    # 6. Post-Registration (New)
+    if not any("Post-Registration" in s for s in all_steps):
+        # Insert after Trade Registry
+        all_steps.insert(5, "Post-Registration (Corporate Bank, Tax Office, SGK, Accountant)")
     
     state['state'].execution_plan = ExecutionPlan(
         steps=all_steps,

@@ -20,12 +20,13 @@ Given a user query about opening a business in Turkey, output a complete, accura
 - Clear ordered steps:
     1. Get a Tax Number (Mandatory starting point)
     2. Choose Company Type in MERSİS (Path: Login -> Company Establishment -> New Company -> Select LTD/A.Ş.)
-    3. Deposit Initial Capital (Bank: Ziraat, İş, etc. Open 'Blocked Account' via MERSIS number. A.Ş. needs 25% upfront, LTD can pay in 24 months.)
-    4. Trade Registry Office (Submit Bank Bloque Mektubu & Notarized Documents)
+    3. Deposit Initial Capital (Bank: Ziraat, İş, etc. A.Ş. needs 25% upfront, LTD can pay in 24 months.)
+    4. Trade Registry Office (Ticaret Sicil Müdürlüğü. Submit Bank Letter & Notarized Docs for legal formation.)
+    5. Post-Registration (Corporate Bank Account, Tax Office Registration, SGK for staff, Mandatory Accountant)
 - A realistic timeline in days
 - A friendly one-paragraph plain-language summary
 
-IMPORTANT TIP for Foreigners: Most foreigners cannot complete MERSİS alone because it requires Turkish e-Devlet access. Advise they usually need a certified accountant (muhasebeci).
+IMPORTANT TIP for Foreigners: Most foreigners cannot complete MERSİS alone. Advise they usually need a certified accountant (muhasebeci).
 
 Focus on Beşiktaş district regulations where applicable. Be specific and practical.
 """,
