@@ -170,12 +170,14 @@ export default function Home() {
           {/* Sharp Gradual Transitions (The Split) */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
+          {/* Subtle Dark Overlay for Text Pop */}
+          <div className="absolute inset-0 bg-black/30 z-[5]" />
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-blue-600 dark:text-blue-500">The Process</h3>
-            <h2 className="text-3xl md:text-5xl font-medium text-[var(--text)]">Getting permits shouldn't be a mystery.</h2>
+            <h3 className="text-sm font-black uppercase tracking-[0.4em] text-blue-500">The Process</h3>
+            <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md">Getting permits shouldn't be a mystery.</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -207,8 +209,8 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-2xl bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white shadow-lg">
                   <step.icon size={24} />
                 </div>
-                <h4 className="text-2xl font-bold text-[var(--text)] drop-shadow-sm">{step.title}</h4>
-                <p className="text-lg text-[var(--text)] leading-relaxed font-semibold drop-shadow-sm">
+                <h4 className="text-2xl font-bold text-white drop-shadow-md">{step.title}</h4>
+                <p className="text-lg text-white/95 leading-relaxed font-bold drop-shadow-md">
                   {step.desc}
                 </p>
               </motion.div>
