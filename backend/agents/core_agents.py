@@ -1,35 +1,26 @@
 import os
 from dotenv import load_dotenv
-from pydantic_ai import Agent, RunContext
-from backend.models.schemas import ExecutionPlan, PermitPlan
+from pydantic_ai import Agent
+from backend.models.schemas import CombinedPermitResult
 
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
-# Planner Agent Definition
-planner_agent = Agent(
-    'openai:gpt-4o', # Using gpt-4o as a reliable default for complex planning
-    result_type=ExecutionPlan,
+# Single combined agent — replaces the old planner + classifier pair.
+# One API call → full permit plan + workflow steps + timeline + summary.
+permit_agent = Agent(
+    'google-gla:gemini-2.5-flash',
+    output_type=CombinedPermitResult,
     system_prompt="""
-You are the Lead Architect for PermitOps AI. 
-Your goal is to parse user requests for starting a business in Turkey and generate a multi-step execution plan.
-You assign tasks to specialized agents:
-- Permit Classifier: Identifies legal requirements.
-- Checklist Generator: Lists required documents.
-- Validator: Checks document consistency.
-- Status Agent: Updates the user on progression.
+You are PermitOps AI, a Turkish regulatory expert specializing in Istanbul business permits.
 
-Break down the user's request into logical, sequential steps.
-""",
-)
+Given a user query about opening a business in Turkey, output a complete, accurate permit plan including:
+- All required permits (e.g. Workplace License, Fire Safety Certificate)
+- The government agencies responsible for each permit
+- All documents the owner needs to prepare
+- Clear ordered steps the owner must take
+- A realistic timeline in days
+- A friendly one-paragraph plain-language summary
 
-# Permit Classification Agent
-classifier_agent = Agent(
-    'openai:gpt-4o',
-    result_type=PermitPlan,
-    system_prompt="""
-You are a Turkish Regulatory Expert. 
-Based on the business profile (type, size, location), determine the EXACT permits required.
-Focus on Beşiktaş district regulations if specified.
-Output must include permits (e.g., Workplace License, Fire Inspection), the relevant agencies, and necessary documents.
+Focus on Beşiktaş district regulations where applicable. Be specific and practical.
 """,
 )

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
-  CheckCircle2, Clock, Circle, AlertCircle, TrendingUp,
+  CheckCircle2, Clock, Circle, AlertCircle,
   ShieldCheck, ArrowRight, MapPin, Calendar, FileText,
   Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw
 } from 'lucide-react';
@@ -20,47 +20,6 @@ interface PermitStep {
   docs: string[];
 }
 
-const steps: PermitStep[] = [
-  {
-    title: 'Intake & Registration',
-    status: 'completed',
-    date: 'Mar 10, 2024',
-    summary: '12 documents verified. Business number assigned.',
-    detail: 'AI verified 12 corporate documents against Beşiktaş Municipality requirements. Business registration number BŞK-2024-4221 assigned. Tax registration confirmed with GİB.',
-    docs: ['business_registration.pdf', 'tax_certificate.pdf', 'identity_copy.pdf'],
-  },
-  {
-    title: 'Permit Classification',
-    status: 'completed',
-    date: 'Mar 11, 2024',
-    summary: '3 permit types identified. Classification confidence: 97%.',
-    detail: 'System identified 3 permits required: İşyeri Açma ve Çalışma Ruhsatı, Yangın Uygunluk Belgesi, and Gıda Satış Ruhsatı. Path approved by ComplianceAgent.',
-    docs: ['permit_classification_report.json'],
-  },
-  {
-    title: 'Fire Safety Inspection',
-    status: 'in-progress',
-    date: 'In Review',
-    summary: 'Physical inspection done. Certificate pending.',
-    detail: 'Site inspection completed Mar 13. Kitchen exhaust ventilation schematic is under review by İtfaiye. Upload the fire safety drawing to expedite approval.',
-    docs: ['fire_inspection_request.pdf'],
-  },
-  {
-    title: 'Workplace License Issuance',
-    status: 'pending',
-    date: 'Est. Mar 18',
-    summary: 'Awaiting fire certificate. Municipality processing in 2–3 days.',
-    detail: 'Municipality will issue İşyeri Açma ve Çalışma Ruhsatı once fire certificate arrives. Estimated 2–3 business days after submission.',
-    docs: [],
-  },
-];
-
-const agents = [
-  { name: 'PlannerAgent',   desc: 'Determines permit path',      active: false },
-  { name: 'ValidatorAgent', desc: 'Checks document compliance',  active: true },
-  { name: 'TrackerAgent',   desc: 'Monitors workflow state',     active: true },
-];
-
 function StepBadge({ status }: { status: Status }) {
   if (status === 'completed')   return <span className="status-done">Completed</span>;
   if (status === 'in-progress') return <span className="status-active">In Progress</span>;
@@ -74,12 +33,68 @@ function StepIcon({ status }: { status: Status }) {
 }
 
 export default function Dashboard() {
-  const [expanded, setExpanded] = useState<number | null>(2);
+  const [data, setData] = useState<any>(null);
+  const [expanded, setExpanded] = useState<number | null>(0);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  useEffect(() => {
+    async function fetchState() {
+      try {
+        setLoading(true);
+        const res = await fetch('http://localhost:8003/workflow/latest'); 
+        if (res.ok) {
+          const json = await res.json();
+          if (json && Object.keys(json).length > 0) {
+            setData(json);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch dashboard data", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchState();
+  }, []);
+
+  const refresh = async () => {
+    try {
+      const res = await fetch('http://localhost:8003/workflow/latest');
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Object.keys(json).length > 0) {
+          setData(json);
+        }
+      }
+    } catch (e) {
+      console.error("Manual refresh failed", e);
+    }
+  };
+
+  const steps: PermitStep[] = data ? [
+    ...(data.execution_plan?.steps.map((step: string, i: number) => ({
+      title: step,
+      status: i === 0 ? 'completed' : (i === 1 ? 'in-progress' : 'pending'),
+      date: data.last_updated ? new Date(data.last_updated).toLocaleDateString() : 'Recent',
+      summary: `Step ${i + 1} of the permit process.`,
+      detail: `Agent ${data.execution_plan.assigned_agents[i] || 'System'} is handling this step.`,
+      docs: i === 1 ? (data.permit_plan?.documents || []) : [],
+    })) || []),
+  ] : [
+    {
+      title: 'Initialize Workflow',
+      status: 'pending',
+      date: 'N/A',
+      summary: 'Start a chat to generate your permit plan.',
+      detail: 'Once you describe your business in the chat, the AI will generate a customized permit path for you here.',
+      docs: [],
+    }
+  ];
+
   const done = steps.filter(s => s.status === 'completed').length;
-  const progress = Math.round((done / steps.length) * 100);
+  const progress = steps.length > 0 ? Math.round((done / steps.length) * 100) : 0;
 
   const handleUpload = () => {
     setUploading(true);
@@ -89,6 +104,17 @@ export default function Dashboard() {
       setTimeout(() => setShowToast(false), 3000);
     }, 1500);
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center pt-24">
+        <div className="flex flex-col items-center gap-4 text-slate-400">
+          <Activity size={32} className="animate-pulse text-blue-500" />
+          <p className="text-sm font-medium">Synchronizing with Beşiktaş Municipality...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen pt-24 pb-20 px-6 relative">
@@ -123,16 +149,20 @@ export default function Dashboard() {
             </span>
             <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Permit Dashboard</h1>
             <p className="text-sm text-slate-500 flex items-center gap-3 flex-wrap">
-              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-blue-400" /> Beşiktaş Restaurant, Istanbul</span>
+              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-blue-400" /> {data?.business_profile?.raw_query || 'Beşiktaş Restaurant'}, Istanbul</span>
               <span className="h-3 w-px bg-slate-700" />
-              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-400" /> Started Mar 10, 2024</span>
+              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-400" /> {data?.last_updated ? `Updated ${new Date(data.last_updated).toLocaleDateString()}` : 'No active session'}</span>
             </p>
           </div>
 
           <div className="flex gap-2.5 shrink-0">
+            <button onClick={refresh} className="btn btn-outline !py-2 !px-3 !text-sm lg:flex hidden items-center gap-2">
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              Sync
+            </button>
             <Link href="/chat">
               <button className="btn btn-outline !py-2 !px-4 !text-sm">
-                <RefreshCw size={14} /> Ask AI
+                <ArrowRight size={14} /> Ask AI
               </button>
             </Link>
             <button onClick={handleUpload} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
@@ -149,10 +179,10 @@ export default function Dashboard() {
           className="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
           {[
-            { label: 'Compliance Score', value: '94.8%',    color: 'text-emerald-400', icon: ShieldCheck },
-            { label: 'Steps Complete',   value: `${done}/4`, color: 'text-blue-400',    icon: CheckCircle2 },
-            { label: 'Est. Days Left',   value: '8 days',   color: 'text-amber-400',   icon: Clock },
-            { label: 'Active AI Agents', value: '2 running',color: 'text-violet-400',  icon: Cpu },
+            { label: 'Compliance Score', value: `${progress > 0 ? progress : '0'}%`,    color: 'text-emerald-400', icon: ShieldCheck },
+            { label: 'Steps Complete',   value: `${done}/${steps.length}`, color: 'text-blue-400',    icon: CheckCircle2 },
+            { label: 'Est. Days Left',   value: `${Math.max(0, steps.length * 2 - done * 2)} days`,   color: 'text-amber-400',   icon: Clock },
+            { label: 'Active AI Agents', value: `${data?.execution_plan?.assigned_agents.length || 0} active`, color: 'text-violet-400',  icon: Cpu },
           ].map((s, i) => (
             <div key={i} className="card p-4 flex items-center gap-3">
               <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -271,14 +301,14 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Action Required</p>
-                  <p className="text-sm font-semibold text-white mt-0.5">Upload fire safety plan</p>
+                  <p className="text-sm font-semibold text-white mt-0.5">{steps[1]?.title || 'Awaiting Information'}</p>
                 </div>
               </div>
               <p className="text-[13px] text-slate-400 leading-relaxed">
-                Kitchen exhaust ventilation schematic must be submitted by <strong className="text-white">Mar 14, 18:00 IST</strong> to avoid permit delay.
+                Please provide details or documents for <strong className="text-white">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
               </p>
-              <button onClick={handleUpload} disabled={uploading} className="btn btn-blue w-full !py-2.5 !text-sm justify-center disabled:opacity-50">
-                <Upload size={13} /> {uploading ? 'Verifying AI...' : 'Upload drawing'}
+              <button onClick={handleUpload} disabled={uploading || !data} className="btn btn-blue w-full !py-2.5 !text-sm justify-center disabled:opacity-50">
+                <Upload size={13} /> {uploading ? 'Verifying AI...' : 'Upload information'}
               </button>
             </div>
 
@@ -288,22 +318,22 @@ export default function Dashboard() {
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">AI Agents</p>
                 <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
                   <span className="live-dot w-2 h-2 relative shrink-0" />
-                  2 active
+                  {data?.execution_plan?.assigned_agents.length || 0} active
                 </span>
               </div>
               <div className="space-y-2">
-                {agents.map((a, i) => (
+                {(data?.execution_plan?.assigned_agents || ['Planner', 'Classifier']).map((name: string, i: number) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-xl transition-colors" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${a.active ? 'text-blue-400' : 'text-slate-600'}`}
-                         style={{ background: a.active ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)', border: `1px solid ${a.active ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
+                    <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-blue-400"
+                         style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
                       <Cpu size={13} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white">{a.name}</p>
-                      <p className="text-[11px] text-slate-500 truncate">{a.desc}</p>
+                      <p className="text-[13px] font-semibold text-white">{name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">Agent processing workflow</p>
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${a.active ? 'text-blue-400' : 'text-slate-700'}`}>
-                      {a.active ? 'Running' : 'Idle'}
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">
+                      Running
                     </span>
                   </div>
                 ))}
@@ -312,7 +342,7 @@ export default function Dashboard() {
 
             {/* Next Step */}
             <div className="card p-5 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">What's next</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">What&apos;s next</p>
               <p className="text-sm text-slate-300 leading-relaxed">
                 After the fire certificate is submitted, your <span className="text-blue-400 font-medium">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
               </p>

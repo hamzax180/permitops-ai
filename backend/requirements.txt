@@ -8,3 +8,4 @@ pgvector
 boto3
 python-dotenv
 httpx
+google-generativeai
