@@ -158,13 +158,15 @@ async def get_latest():
         "business_profile": {"raw_query": latest_workflow.get("business", "")},
         "execution_plan": {
             "steps": [
-                "Register business with trade registry",
-                "Apply for workplace license (İşyeri Açma ve Çalışma Ruhsatı)",
-                "Pass fire safety inspection",
-                "Obtain health & sanitation approval",
-                "Final municipal inspection and permit issuance"
+                "Get a Tax Number (Individual Tax ID)",
+                "Choose Company Type (LTD/A.Ş.) & Prepare Documents",
+                "MERSİS Online Registration & Articles Generation",
+                "Deposit Initial Capital (Blocked Bank Account)",
+                "Register with Trade Registry (Ticaret Sicil Müdürlüğü)",
+                "Post-Registration (Corporate Bank, Tax Office, SGK)",
+                "Apply for Workplace License (İşyeri Açma ve Çalışma Ruhsatı)"
             ],
-            "assigned_agents": ["PermitOps AI"] * 5
+            "assigned_agents": ["PermitOps AI"] * 7
         },
         "permit_plan": {
             "permits": ["İşyeri Açma ve Çalışma Ruhsatı", "Fire Safety Certificate", "Health Safety Certificate"],

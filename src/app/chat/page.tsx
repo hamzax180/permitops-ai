@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useLanguage } from '../context/LanguageContext';
 
 type Role = 'assistant' | 'user';
 interface Msg { id: number; role: Role; content: string; }
@@ -19,6 +20,7 @@ const QUICK_Q = [
 let _id = 1;
 
 export default function ChatPage() {
+  const { t, isRTL } = useLanguage();
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput]   = useState('');
   const [busy,  setBusy]    = useState(false);
@@ -107,7 +109,7 @@ export default function ChatPage() {
             className="flex items-center gap-2 text-sm font-medium text-[var(--muted)] hover:text-[var(--text)] transition-colors bg-[var(--surface-2)] hover:bg-[var(--border-2)] px-4 py-2 rounded-full border border-[var(--border)]"
           >
             <Sparkles size={14} className="text-purple-500" />
-            New Chat
+            {t('chat_new')}
           </button>
           <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--muted)]">
             <User size={16} />
@@ -126,10 +128,10 @@ export default function ChatPage() {
               className="text-center space-y-4"
             >
               <h1 className="text-4xl md:text-5xl font-medium tracking-tight">
-                Hello there.
+                {t('chat_greeting') || 'Hello there.'}
               </h1>
               <h2 className="text-2xl md:text-3xl font-light text-[var(--muted)]">
-                How can I help with Istanbul permits today?
+                {t('chat_subtitle') || 'How can I help with Istanbul permits today?'}
               </h2>
             </motion.div>
             
@@ -241,7 +243,7 @@ export default function ChatPage() {
                   }
                 }}
                 disabled={busy}
-                placeholder="Ask PermitOps AI..."
+                placeholder={t('chat_placeholder')}
                 className="flex-1 max-h-[200px] min-h-[44px] py-3.5 bg-transparent text-[15px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none overflow-y-auto slim-scroll"
                 rows={1}
               />

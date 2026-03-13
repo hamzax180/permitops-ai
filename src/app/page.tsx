@@ -8,6 +8,7 @@ import {
   ChevronDown, Search, Sparkles
 } from 'lucide-react';
 import type { Variants } from 'framer-motion';
+import { useLanguage } from './context/LanguageContext';
 
 /* ── Animation Variants ── */
 const fade: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -34,9 +35,30 @@ const stats = [
   { value: '98%', label: 'Success rate' },
 ];
 
+const howItWorksSteps = (t: any) => [
+  {
+    title: t('process_step1_title'),
+    desc: t('process_step1_desc'),
+    icon: Search
+  },
+  {
+    title: t('process_step2_title'),
+    desc: t('process_step2_desc'),
+    icon: Sparkles
+  },
+  {
+    title: t('process_step3_title'),
+    desc: t('process_step3_desc'),
+    icon: Bot
+  }
+];
+
 const logos = ['Beşiktaş', 'Kadıköy', 'Şişli', 'Üsküdar', 'Ataşehir', 'Bakırköy'];
 
 export default function Home() {
+  const { t, isRTL } = useLanguage();
+  const stepsData = howItWorksSteps(t);
+
   return (
     <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
 
@@ -58,7 +80,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-[var(--text)] leading-tight">
-            Hello there.
+            {t('home_hero_greeting')}
           </h1>
 
           <motion.h2
@@ -67,7 +89,7 @@ export default function Home() {
             transition={{ delay: 0.4, duration: 1 }}
             className="text-3xl md:text-4xl text-[var(--muted)] font-light"
           >
-            How can I help with Istanbul permits today?
+            {t('home_hero_subtitle_direct')}
           </motion.h2>
 
           <motion.p
@@ -76,7 +98,7 @@ export default function Home() {
             transition={{ delay: 1.2, duration: 2 }}
             className="text-xl md:text-2xl text-[var(--muted)] font-light italic opacity-60"
           >
-            Where should we start?
+            {t('home_hero_question')}
           </motion.p>
         </motion.div>
 
@@ -91,7 +113,7 @@ export default function Home() {
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 flex flex-col gap-4 text-left shadow-xl dark:shadow-2xl">
             <input
               type="text"
-              placeholder="Ask PermitOps AI..."
+              placeholder={t('chat_placeholder')}
               className="bg-transparent border-none outline-none text-xl text-[var(--text)] placeholder-[var(--muted)] w-full"
             />
             <div className="flex items-center justify-between pt-2">
@@ -142,7 +164,7 @@ export default function Home() {
           className="pt-32 flex flex-col items-center gap-2 cursor-pointer group"
           onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
         >
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">How it works</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors">{t('how_it_works_label') || 'How it works'}</span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
@@ -176,42 +198,26 @@ export default function Home() {
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
-            <h3 className="text-lg font-black uppercase tracking-[0.6em] text-purple-500 drop-shadow-sm font-['Outfit']">The Process</h3>
-            <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md">Getting permits shouldn't be a mystery.</h2>
+            <h3 className="text-lg font-black uppercase tracking-[0.6em] text-purple-500 drop-shadow-sm font-['Outfit']">{t('process_title')}</h3>
+            <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md">{t('process_subtitle')}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {[
-              {
-                title: "1. Describe",
-                desc: "Enter your business type or permit requirement in plain Turkish or English. Our AI understands municipal nuance.",
-                icon: Search
-              },
-              {
-                title: "2. Analyze",
-                desc: "PermitOps AI cross-references 450+ municipal protocols to determine your exact path and required files.",
-                icon: Sparkles
-              },
-              {
-                title: "3. Automate",
-                desc: "Our RPA bot handles the heavy lifting on e-Devlet, filling forms and tracking status while you focus on business.",
-                icon: Bot
-              }
-            ].map((step, i) => (
+            {stepsData.map((step, i) => (
               <motion.div
                 key={i}
                 whileInView={{ opacity: 1, y: 0 }}
                 initial={{ opacity: 0, y: 20 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }}
-                className="flex flex-col space-y-6 group/card"
+                className={`flex flex-col space-y-6 group/card ${isRTL ? 'text-right items-end' : 'text-left items-start'}`}
               >
                 <div className="w-12 h-12 rounded-2xl bg-purple-600 dark:bg-purple-500 flex items-center justify-center text-white shadow-lg">
                   <step.icon size={24} />
                 </div>
-                <h4 className="text-2xl font-bold text-white drop-shadow-md">{step.title}</h4>
+                <h4 className="text-2xl font-bold text-white drop-shadow-md">{stepsData[i].title}</h4>
                 <p className="text-lg text-white/95 leading-relaxed font-bold drop-shadow-md">
-                  {step.desc}
+                  {stepsData[i].desc}
                 </p>
               </motion.div>
             ))}

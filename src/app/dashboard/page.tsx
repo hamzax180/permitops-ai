@@ -8,6 +8,7 @@ import {
   ShieldCheck, ArrowRight, MapPin, Calendar, FileText,
   Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 type Status = 'completed' | 'in-progress' | 'pending';
 
@@ -33,6 +34,7 @@ function StepIcon({ status }: { status: Status }) {
 }
 
 export default function Dashboard() {
+  const { t, isRTL } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
   const [loading, setLoading] = useState(true);
@@ -274,26 +276,26 @@ export default function Dashboard() {
               <Activity size={10} className="animate-pulse" />
               Live Session · #IST-BŞK-4221
             </span>
-            <h1 className="text-2xl md:text-4xl font-black text-[var(--text)] tracking-tight">Permit Dashboard</h1>
+            <h1 className="text-2xl md:text-4xl font-black text-[var(--text)] tracking-tight">{t('dashboard_title')}</h1>
             <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium">
-              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.business_profile?.raw_query || 'Beşiktaş Restaurant'}, Istanbul</span>
+              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.business_profile?.raw_query || (isRTL ? 'مطعم في بشكتاش' : 'Beşiktaş Restaurant')}, Istanbul</span>
               <span className="h-3 w-px bg-[var(--border)]" />
-              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `Updated ${new Date(data.last_updated).toLocaleDateString()}` : 'No active session'}</span>
+              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `${t('dashboard_updated')} ${new Date(data.last_updated).toLocaleDateString()}` : t('dashboard_no_session')}</span>
             </p>
           </div>
 
           <div className="flex gap-2.5 shrink-0">
             <button onClick={refresh} className="btn btn-outline !py-2 !px-3 !text-sm lg:flex hidden items-center gap-2">
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              Sync
+              {t('dashboard_sync')}
             </button>
             <Link href="/chat">
               <button className="btn btn-outline !py-2 !px-4 !text-sm">
-                <ArrowRight size={14} /> Ask AI
+                <ArrowRight size={14} /> {t('dashboard_ask_ai')}
               </button>
             </Link>
             <button onClick={handleUploadClick} disabled={uploading} className="btn btn-purple !py-2 !px-4 !text-sm disabled:opacity-50">
-              <Upload size={14} /> {uploading ? 'Processing...' : 'Upload Docs'}
+              <Upload size={14} /> {uploading ? t('dashboard_processing') : t('dashboard_upload')}
             </button>
           </div>
         </motion.div>

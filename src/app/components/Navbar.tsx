@@ -6,12 +6,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Menu, X, FileCheck, Sun, Moon } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
-
-const links = [
-  { href: '/',          label: 'Home' },
-  { href: '/chat',      label: 'AI Advisor' },
-  { href: '/dashboard', label: 'My Permits' },
-];
+import LanguageSwitcher from './LanguageSwitcher';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
   const pathname  = usePathname();
@@ -24,7 +20,13 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
+  const { t } = useLanguage();
 
+  const links = [
+    { href: '/',          label: t('navbar_home') },
+    { href: '/chat',      label: t('navbar_chat') },
+    { href: '/dashboard', label: t('navbar_dashboard') },
+  ];
 
   return (
     <header
@@ -33,8 +35,6 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
-
-        {/* Logo removed */}
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
@@ -63,15 +63,16 @@ export default function Navbar() {
 
         {/* Right CTA */}
         <div className="hidden md:flex items-center gap-3">
+          <LanguageSwitcher />
           <ThemeToggle />
           <Link href="/dashboard">
             <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
-              Dashboard
+              {t('navbar_dashboard')}
             </button>
           </Link>
           <Link href="/chat">
             <button className="bg-white text-black hover:bg-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-lg transition-all active:scale-95">
-              Get Started
+              {t('navbar_get_started')}
             </button>
           </Link>
         </div>
@@ -107,7 +108,9 @@ export default function Navbar() {
           ))}
           <div className="pt-3 border-t border-white/5">
             <Link href="/chat" onClick={() => setOpen(false)}>
-              <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">Get Started</button>
+              <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">
+                {t('navbar_get_started')}
+              </button>
             </Link>
           </div>
         </motion.div>
