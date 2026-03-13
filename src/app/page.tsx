@@ -167,8 +167,10 @@ export default function Home() {
           >
             <source src="/how_it_works.mp4" type="video/mp4" />
           </video>
-          {/* Very Subtle Gradient for blending */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg)] via-transparent to-[var(--bg)] opacity-30" />
+          {/* Deep Gradual Transitions */}
+          <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
+          <div className="absolute inset-0 bg-[var(--bg)]/10 z-10" />
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
