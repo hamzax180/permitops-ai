@@ -176,7 +176,7 @@ export default function Home() {
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-[0.5em] text-purple-500 drop-shadow-sm">The Process</h3>
+            <h3 className="text-lg font-black uppercase tracking-[0.6em] text-purple-500 drop-shadow-sm font-['Outfit']">The Process</h3>
             <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md">Getting permits shouldn't be a mystery.</h2>
           </div>
 
