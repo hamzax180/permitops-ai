@@ -45,7 +45,7 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  active ? 'text-white' : 'text-gray-400 hover:text-white'
+                  active ? 'text-[var(--text)]' : 'text-[var(--muted)] hover:text-[var(--text)]'
                 }`}
               >
                 {active && (

@@ -167,16 +167,15 @@ export default function Home() {
           >
             <source src="/how_it_works.mp4" type="video/mp4" />
           </video>
-          {/* Deep Gradual Transitions */}
-          <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
-          <div className="absolute inset-0 bg-[var(--bg)]/10 z-10" />
+          {/* Sharp Gradual Transitions (The Split) */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-blue-500">The Process</h3>
-            <h2 className="text-3xl md:text-5xl font-medium text-white">Getting permits shouldn't be a mystery.</h2>
+            <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-blue-600 dark:text-blue-500">The Process</h3>
+            <h2 className="text-3xl md:text-5xl font-medium text-[var(--text)]">Getting permits shouldn't be a mystery.</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -203,13 +202,13 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }}
-                className="bg-black/5 backdrop-blur-[2px] border border-white/5 rounded-3xl p-8 space-y-6 hover:bg-black/10 transition-all group/card"
+                className="flex flex-col space-y-6 group/card"
               >
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                <div className="w-12 h-12 rounded-2xl bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white shadow-lg">
                   <step.icon size={24} />
                 </div>
-                <h4 className="text-xl font-semibold text-white">{step.title}</h4>
-                <p className="text-white/80 leading-relaxed font-light">
+                <h4 className="text-2xl font-bold text-[var(--text)] drop-shadow-sm">{step.title}</h4>
+                <p className="text-lg text-[var(--text)] leading-relaxed font-semibold drop-shadow-sm">
                   {step.desc}
                 </p>
               </motion.div>
