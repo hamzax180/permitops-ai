@@ -21,7 +21,6 @@ const translations: Record<Language, Record<string, string>> = {
     home_hero_subtitle_direct: 'How can I help with Istanbul permits today?',
     home_hero_question: 'Where should we start?',
     how_it_works_label: 'How it works',
-    chat_placeholder: 'Ask PermitOps AI...',
     process_title: 'The Process',
     process_subtitle: "Getting permits shouldn't be a mystery.",
     process_step1_title: '1. Describe',
