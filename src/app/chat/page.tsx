@@ -93,7 +93,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <main className="h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] selection:bg-blue-500/30 font-sans overflow-hidden transition-colors duration-300">
+    <main className="h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] selection:bg-purple-500/30 font-sans overflow-hidden transition-colors duration-300">
       
       {/* ── Top Header Bar ── */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--nav-bg)] backdrop-blur-md z-10">
@@ -106,7 +106,7 @@ export default function ChatPage() {
             onClick={clearChat}
             className="flex items-center gap-2 text-sm font-medium text-[var(--muted)] hover:text-[var(--text)] transition-colors bg-[var(--surface-2)] hover:bg-[var(--border-2)] px-4 py-2 rounded-full border border-[var(--border)]"
           >
-            <Sparkles size={14} className="text-blue-500" />
+            <Sparkles size={14} className="text-purple-500" />
             New Chat
           </button>
           <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--muted)]">
@@ -160,7 +160,7 @@ export default function ChatPage() {
                   className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {m.role === 'assistant' && (
-                    <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-blue-500 shrink-0 mr-4 mt-1 shadow-sm">
+                    <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-purple-500 shrink-0 mr-4 mt-1 shadow-sm">
                       <Sparkles size={16} />
                     </div>
                   )}
@@ -176,9 +176,9 @@ export default function ChatPage() {
                           remarkPlugins={[remarkGfm]}
                           components={{
                             p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2 marker:text-blue-500" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-2 marker:text-blue-500" {...props} />,
-                            a: ({node, ...props}) => <a className="text-blue-600 dark:text-blue-400 hover:underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />,
+                            ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-2 marker:text-purple-500" {...props} />,
+                            ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-2 marker:text-purple-500" {...props} />,
+                            a: ({node, ...props}) => <a className="text-purple-600 dark:text-purple-400 hover:underline font-medium" target="_blank" rel="noopener noreferrer" {...props} />,
                             strong: ({node, ...props}) => <strong className="font-bold text-[var(--text)]" {...props} />,
                             code: ({node, className, children, ...props}) => {
                               const match = /language-(\w+)/.exec(className || '');
@@ -202,7 +202,7 @@ export default function ChatPage() {
 
             {busy && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-full justify-start">
-                <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-blue-400 shrink-0 mr-4">
+                <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-purple-400 shrink-0 mr-4">
                   <Sparkles size={16} className="animate-pulse" />
                 </div>
                 <div className="text-[var(--muted)] py-1 flex items-center space-x-1">
@@ -253,7 +253,7 @@ export default function ChatPage() {
                     if(inputRef.current) inputRef.current.style.height = 'auto';
                   }}
                   disabled={busy}
-                  className="shrink-0 mb-1 mr-1 h-10 w-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-500 transition-colors shadow-lg active:scale-95"
+                  className="shrink-0 mb-1 mr-1 h-10 w-10 flex items-center justify-center rounded-full bg-purple-600 text-white hover:bg-purple-500 transition-colors shadow-lg active:scale-95"
                 >
                   <Send size={18} className="ml-0.5" />
                 </button>

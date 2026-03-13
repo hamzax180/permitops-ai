@@ -176,7 +176,7 @@ export default function Home() {
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-16 space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-[0.4em] text-blue-500">The Process</h3>
+            <h3 className="text-sm font-black uppercase tracking-[0.5em] text-purple-500 drop-shadow-sm">The Process</h3>
             <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md">Getting permits shouldn't be a mystery.</h2>
           </div>
 
@@ -206,7 +206,7 @@ export default function Home() {
                 transition={{ delay: i * 0.2 }}
                 className="flex flex-col space-y-6 group/card"
               >
-                <div className="w-12 h-12 rounded-2xl bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600 dark:bg-purple-500 flex items-center justify-center text-white shadow-lg">
                   <step.icon size={24} />
                 </div>
                 <h4 className="text-2xl font-bold text-white drop-shadow-md">{step.title}</h4>

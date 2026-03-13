@@ -22,13 +22,13 @@ interface PermitStep {
 
 function StepBadge({ status }: { status: Status }) {
   if (status === 'completed')   return <span className="badge badge-green">Completed</span>;
-  if (status === 'in-progress') return <span className="badge badge-blue">In Progress</span>;
+  if (status === 'in-progress') return <span className="badge badge-purple">In Progress</span>;
   return <span className="badge status-pending">Pending</span>;
 }
 
 function StepIcon({ status }: { status: Status }) {
   if (status === 'completed')   return <CheckCircle2 size={18} className="text-emerald-500" />;
-  if (status === 'in-progress') return <Clock size={18} className="text-blue-500" />;
+  if (status === 'in-progress') return <Clock size={18} className="text-purple-500" />;
   return <Circle size={18} className="text-[var(--muted)]" />;
 }
 
@@ -143,7 +143,7 @@ export default function Dashboard() {
     return (
       <main className="min-h-screen flex items-center justify-center pt-24">
         <div className="flex flex-col items-center gap-4 text-gray-500">
-          <Activity size={32} className="animate-pulse text-blue-600" />
+          <Activity size={32} className="animate-pulse text-purple-500" />
           <p className="text-sm font-medium">Synchronizing with Beşiktaş Municipality...</p>
         </div>
       </main>
@@ -270,15 +270,15 @@ export default function Dashboard() {
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-5"
         >
           <div className="space-y-1.5">
-            <span className="badge badge-blue">
+            <span className="badge badge-purple">
               <Activity size={10} className="animate-pulse" />
               Live Session · #IST-BŞK-4221
             </span>
             <h1 className="text-2xl md:text-4xl font-black text-[var(--text)] tracking-tight">Permit Dashboard</h1>
             <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium">
-              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-blue-500" /> {data?.business_profile?.raw_query || 'Beşiktaş Restaurant'}, Istanbul</span>
+              <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.business_profile?.raw_query || 'Beşiktaş Restaurant'}, Istanbul</span>
               <span className="h-3 w-px bg-[var(--border)]" />
-              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-blue-500" /> {data?.last_updated ? `Updated ${new Date(data.last_updated).toLocaleDateString()}` : 'No active session'}</span>
+              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `Updated ${new Date(data.last_updated).toLocaleDateString()}` : 'No active session'}</span>
             </p>
           </div>
 
@@ -292,7 +292,7 @@ export default function Dashboard() {
                 <ArrowRight size={14} /> Ask AI
               </button>
             </Link>
-            <button onClick={handleUploadClick} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
+            <button onClick={handleUploadClick} disabled={uploading} className="btn btn-purple !py-2 !px-4 !text-sm disabled:opacity-50">
               <Upload size={14} /> {uploading ? 'Processing...' : 'Upload Docs'}
             </button>
           </div>
@@ -307,9 +307,9 @@ export default function Dashboard() {
         >
           {[
             { label: 'Compliance Score', value: `${progress > 0 ? progress : '0'}%`,    color: 'text-emerald-500', icon: ShieldCheck, bg: 'bg-emerald-500/10' },
-            { label: 'Steps Complete',   value: `${done}/${steps.length}`, color: 'text-blue-500',    icon: CheckCircle2, bg: 'bg-blue-500/10' },
+            { label: 'Steps Complete',   value: `${done}/${steps.length}`, color: 'text-purple-500',    icon: CheckCircle2, bg: 'bg-purple-500/10' },
             { label: 'Est. Days Left',   value: `${Math.max(0, steps.length * 2 - done * 2)} days`,   color: 'text-amber-500',   icon: Clock, bg: 'bg-amber-500/10' },
-            { label: 'Active AI Agents', value: `${data?.execution_plan?.assigned_agents.length || 0} active`, color: 'text-violet-500',  icon: Cpu, bg: 'bg-violet-500/10' },
+            { label: 'Active AI Agents', value: `${data?.execution_plan?.assigned_agents.length || 0} active`, color: 'text-fuchsia-500',  icon: Cpu, bg: 'bg-fuchsia-500/10' },
           ].map((s, i) => (
             <div key={i} className="card p-5 flex items-center gap-4 hover:border-[var(--border-2)] transition-colors shadow-sm">
               <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} border border-transparent`}>
@@ -331,7 +331,7 @@ export default function Dashboard() {
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
-              className="h-full rounded-full bg-blue-500"
+              className="h-full rounded-full bg-purple-500"
             />
           </div>
           <span className="text-sm font-black text-[var(--text)] shrink-0">{progress}%</span>
@@ -357,7 +357,7 @@ export default function Dashboard() {
                 <div className="p-4 flex items-center gap-4">
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
                     s.status === 'completed'  ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                    s.status === 'in-progress' ? 'bg-blue-500/10 border border-blue-500/20' :
+                    s.status === 'in-progress' ? 'bg-purple-500/10 border border-purple-500/20' :
                     'bg-[var(--surface-2)] border border-[var(--border)]'
                   }`}>
                     <StepIcon status={s.status} />
@@ -396,7 +396,7 @@ export default function Dashboard() {
                           <div className="flex flex-wrap gap-2">
                             {s.docs.map(doc => (
                               <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--muted)] hover:text-[var(--text)] transition-colors cursor-pointer bg-[var(--surface-2)] border border-[var(--border)]">
-                                <FileText size={12} className="text-blue-500 shrink-0" />
+                                <FileText size={12} className="text-purple-500 shrink-0" />
                                 {doc}
                                 <ExternalLink size={10} className="text-[var(--muted)]" />
                               </div>
@@ -405,7 +405,7 @@ export default function Dashboard() {
                         )}
 
                         {s.status === 'in-progress' && (
-                          <button onClick={handleUploadClick} disabled={uploading} className="btn btn-blue !py-2 !px-4 !text-sm disabled:opacity-50">
+                          <button onClick={handleUploadClick} disabled={uploading} className="btn btn-purple !py-2 !px-4 !text-sm disabled:opacity-50">
                             <Upload size={13} /> {uploading ? 'Checking...' : 'Upload Required Document'}
                           </button>
                         )}
@@ -434,7 +434,7 @@ export default function Dashboard() {
               <p className="text-[13px] text-[var(--muted)] leading-relaxed font-medium">
                 Please provide details or documents for <strong className="text-[var(--text)]">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
               </p>
-              <button onClick={handleUploadClick} disabled={uploading || !data} className="btn btn-blue w-full !py-2.5 !text-sm justify-center shadow-lg transform transition-transform hover:scale-[1.02]">
+              <button onClick={handleUploadClick} disabled={uploading || !data} className="btn btn-purple w-full !py-2.5 !text-sm justify-center shadow-lg transform transition-transform hover:scale-[1.02]">
                 <Upload size={14} /> {uploading ? 'Verifying AI...' : 'Upload information'}
               </button>
             </div>
@@ -451,14 +451,14 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {(data?.execution_plan?.assigned_agents || ['Planner', 'Classifier']).map((name: string, i: number) => (
                   <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-[var(--surface-2)] bg-[var(--surface-2)]/50 border border-[var(--border)]">
-                    <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-blue-500 bg-blue-500/10 border border-blue-500/20 shadow-sm">
+                    <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-purple-500 bg-purple-500/10 border border-purple-500/20 shadow-sm">
                       <Cpu size={14} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-bold text-[var(--text)]">{name}</p>
                       <p className="text-[11px] text-[var(--muted)] font-medium truncate">Agent processing workflow</p>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-500">
                       Running
                     </span>
                   </div>
@@ -470,9 +470,9 @@ export default function Dashboard() {
             <div className="card p-5 space-y-4 shadow-sm">
               <p className="text-xs font-black text-[var(--muted)] uppercase tracking-widest">What&apos;s next</p>
               <p className="text-[14px] text-[var(--text)] leading-relaxed font-medium">
-                After the fire certificate is submitted, your <span className="text-blue-500 font-bold">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
+                After the fire certificate is submitted, your <span className="text-purple-500 font-bold">İşyeri Açma ve Çalışma Ruhsatı</span> will be requested automatically.
               </p>
-              <Link href="/chat" className="text-sm font-bold text-blue-500 hover:text-blue-400 flex items-center gap-2 transition-all hover:translate-x-1">
+              <Link href="/chat" className="text-sm font-bold text-purple-500 hover:text-purple-400 flex items-center gap-2 transition-all hover:translate-x-1">
                 Ask AI about this step <ArrowRight size={14} />
               </Link>
             </div>
