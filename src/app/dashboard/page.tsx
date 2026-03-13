@@ -172,7 +172,13 @@ export default function Dashboard() {
       {/* e-Devlet Login Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <motion.div
+            key="edevlet-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -206,14 +212,16 @@ export default function Dashboard() {
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <Fingerprint size={16} className="text-gray-400" />
                       </div>
-                      <input 
-                        type="text" 
-                        maxLength={11}
-                        value={tckn}
-                        onChange={(e) => setTckn(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                        placeholder="11-digit ID number"
-                      />
+                      <div className="w-full">
+                        <input 
+                          type="text" 
+                          maxLength={11}
+                          value={tckn}
+                          onChange={(e) => setTckn(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          placeholder="11-digit ID number"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -222,13 +230,15 @@ export default function Dashboard() {
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                         <Lock size={16} className="text-gray-400" />
                       </div>
-                      <input 
-                        type="password" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                        placeholder="••••••••••••"
-                      />
+                      <div className="w-full">
+                        <input 
+                          type="password" 
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                          placeholder="••••••••••••"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -240,13 +250,13 @@ export default function Dashboard() {
                     className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     {uploading ? <Activity size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                    {uploading ? 'Bot Navigating Portal...' : 'Approve Bot Submission'}
+                    <span>{uploading ? 'Bot Navigating Portal...' : 'Approve Bot Submission'}</span>
                   </button>
                   <p className="text-[10px] text-center text-gray-400 mt-3 font-medium">Your credentials are used solely for this session and are NEVER logged into our database.</p>
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

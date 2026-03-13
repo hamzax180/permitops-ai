@@ -28,18 +28,18 @@ export default function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm shadow-black/5' : ''
+        scrolled ? 'bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-white/5 shadow-2xl' : 'bg-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/40">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <Shield size={16} className="text-white" />
           </div>
-          <span className="font-bold text-[15px] text-gray-900 tracking-tight">
-            Permit<span className="text-blue-600">Ops</span>
+          <span className="font-bold text-[15px] text-white tracking-tight">
+            Permit<span className="text-blue-400">Ops</span>
           </span>
           <span className="hidden sm:block text-[10px] font-semibold text-gray-500 tracking-widest uppercase mt-px">AI</span>
         </Link>
@@ -53,14 +53,13 @@ export default function Navbar() {
                 key={href}
                 href={href}
                 className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                  active ? 'text-white' : 'text-gray-400 hover:text-white'
                 }`}
               >
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute inset-0 rounded-lg bg-gray-100/50"
-                    style={{ backgroundColor: 'rgba(0,0,0,0.04)' }}
+                    className="absolute inset-0 rounded-lg bg-white/5"
                     transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
                   />
                 )}
@@ -73,21 +72,20 @@ export default function Navbar() {
         {/* Right CTA */}
         <div className="hidden md:flex items-center gap-3">
           <Link href="/dashboard">
-            <button className="btn btn-outline !py-2 !px-4 !text-sm">
+            <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
               Dashboard
             </button>
           </Link>
           <Link href="/chat">
-            <button className="btn btn-blue !py-2 !px-4 !text-sm">
-              <FileCheck size={14} />
-              Start for free
+            <button className="bg-white text-black hover:bg-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-lg transition-all active:scale-95">
+              Get Started
             </button>
           </Link>
         </div>
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2 text-gray-500 hover:text-gray-900 transition-colors"
+          className="md:hidden p-2 text-gray-400 hover:text-white transition-colors"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
@@ -100,7 +98,7 @@ export default function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:hidden bg-white/95 backdrop-blur-xl border-b border-gray-100 px-6 py-4 space-y-1"
+          className="md:hidden bg-[#0e0e0e]/95 backdrop-blur-xl border-b border-white/5 px-6 py-4 space-y-1"
         >
           {links.map(({ href, label }) => (
             <Link
@@ -108,15 +106,15 @@ export default function Navbar() {
               href={href}
               onClick={() => setOpen(false)}
               className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pathname === href ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                pathname === href ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {label}
             </Link>
           ))}
-          <div className="pt-3 border-t border-gray-100">
+          <div className="pt-3 border-t border-white/5">
             <Link href="/chat" onClick={() => setOpen(false)}>
-              <button className="btn btn-blue w-full mt-1">Start for free</button>
+              <button className="bg-white text-black w-full py-2.5 rounded-full font-bold text-sm">Get Started</button>
             </Link>
           </div>
         </motion.div>

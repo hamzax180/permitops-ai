@@ -2,18 +2,18 @@
 
 @import "tailwindcss";
 
-/* ─── Design Tokens ─── */
+/* ─── Gemini Design Tokens ─── */
 :root {
-  --bg:        #ffffff;
-  --surface:   #ffffff;
-  --surface-2: #f8fafc;
-  --border:    rgba(0,0,0,0.06);
-  --border-2:  rgba(0,0,0,0.12);
-  --blue:      #3b82f6;
-  --blue-dark: #2563eb;
-  --text:      #1f2937;
-  --muted:     #6b7280;
-  --radius:    12px;
+  --bg:          #0e0e0e;
+  --surface:     #1a1a1a;
+  --surface-2:   #2a2a2a;
+  --border:      rgba(255, 255, 255, 0.08);
+  --border-2:    rgba(255, 255, 255, 0.15);
+  --accent:      #8ab4f8;
+  --text:        #e3e3e3;
+  --muted:       #9aa0a6;
+  --radius:      16px;
+  --gemini-gradient: linear_gradient(74deg, #4285f4 0, #9b72cb 9%, #d96570 20%, #d96570 24%, #9b72cb 35%, #4285f4 44%, #9b72cb 50%, #d96570 56%, #d96570 61%, #9b72cb 71%, #4285f4 80%, #9b72cb 89%, #d96570 100%);
 }
 
 html { scroll-behavior: smooth; }
@@ -22,18 +22,18 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  min-height: 100vh;
 
-  /* Subtle page-level gradient */
-  background-image:
-    radial-gradient(ellipse 900px 600px at 50% -100px, rgba(59,130,246,0.08), transparent),
-    radial-gradient(ellipse 600px 400px at 100% 80%, rgba(99,102,241,0.04), transparent);
-  background-attachment: fixed;
+  /* Premium Gemini Gloom */
+  background-image: 
+    radial-gradient(circle at 50% 120%, rgba(66, 133, 244, 0.15), transparent 40%),
+    radial-gradient(circle at 10% 20%, rgba(155, 114, 203, 0.05), transparent 30%);
 }
 
 /* ─── Utility Components ─── */

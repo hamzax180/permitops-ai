@@ -37,198 +37,126 @@ const logos = ['Beşiktaş', 'Kadıköy', 'Şişli', 'Üsküdar', 'Ataşehir', '
 
 export default function Home() {
   return (
-    <main className="pt-16 overflow-x-hidden">
+    <main className="min-h-screen bg-[#0e0e0e] text-[#e3e3e3] flex flex-col items-center justify-center px-6 transition-colors duration-500">
+      
+      {/* ═══════════════ GEMINI STYLE CONTENT ═══════════════ */}
+      <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 py-20">
+        
+        {/* Animated Header Group */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center justify-center gap-3 mb-2">
+             <div className="w-6 h-6 animate-pulse bg-gradient-to-tr from-[#4285f4] via-[#9b72cb] to-[#d96570] rounded-full blur-[2px] opacity-80" />
+             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8ab4f8] to-[#9b72cb] font-semibold text-lg">
+               Hi Hamza
+             </span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-medium tracking-tight text-white leading-tight">
+            Hello there.
+          </h1>
+          
+          <motion.h2 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 1 }}
+            className="text-3xl md:text-4xl text-gray-400 font-light"
+          >
+            How can I help with Istanbul permits today?
+          </motion.h2>
 
-      {/* ═══════════════ HERO ═══════════════ */}
-      <section className="relative pt-24 pb-32 px-6">
-        {/* Background glow */}
-        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[900px] h-[500px] bg-[radial-gradient(ellipse,rgba(59,130,246,0.16),transparent_70%)]" />
-        </div>
-
-        <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-4xl mx-auto text-center space-y-8">
-
-          {/* Badge */}
-          <motion.div variants={fade} className="flex justify-center">
-            <span className="badge badge-blue">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                <span className="relative rounded-full h-1.5 w-1.5 bg-blue-500" />
-              </span>
-              Istanbul Live — v2.4 Protocol
-            </span>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.div variants={fade} className="space-y-4">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.08] tracking-tight">
-              Get your Turkish business<br />
-              permit in <span className="text-blue-600">days, not months</span>.
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              PermitOps AI automates the entire permit journey — from document checklist
-              to municipal approval — for restaurants, cafés, and retail businesses across Turkey.
-            </p>
-          </motion.div>
-
-          {/* CTAs */}
-          <motion.div variants={fade} className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link href="/chat">
-              <button className="btn btn-blue text-base px-7 py-3">
-                Start free application <ArrowRight size={16} />
-              </button>
-            </Link>
-            <Link href="/dashboard">
-              <button className="btn btn-outline text-base px-7 py-3">
-                See a live demo
-              </button>
-            </Link>
-          </motion.div>
-
-          {/* Trust signals */}
-          <motion.div variants={fade} className="flex flex-wrap justify-center items-center gap-x-8 gap-y-2 pt-2 text-sm text-gray-500">
-            {['No credit card required', 'No lawyer needed', 'Municipality-official process'].map(t => (
-              <span key={t} className="flex items-center gap-1.5">
-                <CheckCircle size={13} className="text-emerald-500 shrink-0" /> {t}
-              </span>
-            ))}
-          </motion.div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 2 }}
+            className="text-xl md:text-2xl text-gray-500 font-light italic"
+          >
+            Where should we start?
+          </motion.p>
         </motion.div>
-      </section>
 
-      {/* ═══════════════ DISTRICT LOGOS ═══════════════ */}
-      <section className="py-10 border-y border-gray-100">
-        <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">Supported municipalities</p>
-          <div className="flex flex-wrap justify-center gap-x-12 gap-y-3">
-            {logos.map(l => (
-              <span key={l} className="text-gray-400 font-semibold text-sm tracking-wide hover:text-gray-600 transition-colors cursor-default select-none">{l}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ HOW IT WORKS ═══════════════ */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto space-y-14">
-          <div className="text-center space-y-3">
-            <p className="section-label">The process</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">How it works</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Four steps from conversation to approved permit, guided by AI every step of the way.</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {howItWorks.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, ease: 'easeOut', duration: 0.5 }}
-                className="card card-hover p-6 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-                    <s.icon size={20} />
-                  </div>
-                  <span className="text-3xl font-black text-gray-100 select-none">{s.num}</span>
-                </div>
-                <h3 className="font-semibold text-gray-900 text-[15px] leading-snug">{s.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{s.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ FEATURES ═══════════════ */}
-      <section className="py-24 px-6 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto space-y-14">
-          <div className="text-center space-y-3">
-            <p className="section-label">Technology</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Built for the Turkish market</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Enterprise-grade AI infrastructure trained on Turkish municipal law and permit regulations.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, ease: 'easeOut', duration: 0.5 }}
-                className="card card-hover p-7 space-y-5 group"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="h-11 w-11 rounded-xl flex items-center justify-center text-blue-600 border border-blue-100 group-hover:bg-blue-50 transition-colors bg-blue-50/50">
-                    <f.icon size={22} />
-                  </div>
-                  <span className="badge badge-amber">{f.badge}</span>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-gray-900 text-[16px]">{f.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ STATS ═══════════════ */}
-      <section className="py-16 px-6 border-t border-gray-100">
-        <div className="max-w-4xl mx-auto">
-          <div className="card grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100">
-            {stats.map((s, i) => (
-              <div key={i} className="p-8 text-center space-y-1">
-                <p className="text-4xl font-black text-gray-900">{s.value}</p>
-                <p className="text-sm text-gray-500">{s.label}</p>
+        {/* Minimalist Input Bar */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.8, duration: 0.5 }}
+          className="w-full max-w-2xl relative group"
+        >
+          <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl group-hover:bg-white/10 transition-all duration-300 -z-10" />
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 flex flex-col gap-4 text-left shadow-2xl">
+            <input 
+              type="text" 
+              placeholder="Ask PermitOps AI..." 
+              className="bg-transparent border-none outline-none text-xl text-white placeholder-gray-600 w-full"
+            />
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-4 text-gray-500">
+                <FileText size={20} className="hover:text-white cursor-pointer transition-colors" />
+                <Bot size={20} className="hover:text-white cursor-pointer transition-colors" />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ CTA BANNER ═══════════════ */}
-      <section className="py-24 px-6 border-t border-gray-100">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
-            Ready to open your business in Turkey?
-          </h2>
-          <p className="text-gray-600 text-lg">Start your application today. Our AI advisor will guide you through every step.</p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
-            <Link href="/chat">
-              <button className="btn btn-blue text-base px-8 py-3.5">
-                Talk to AI Advisor <ArrowRight size={16} />
-              </button>
-            </Link>
-            <Link href="/dashboard">
-              <button className="btn btn-outline text-base px-8 py-3.5">
-                View demo <Clock size={15} />
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ FOOTER ═══════════════ */}
-      <footer className="border-t border-gray-100 py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center">
-              <ShieldCheck size={12} className="text-white" />
+              <div className="flex items-center gap-3">
+                 <span className="text-xs text-gray-600 font-medium">Fast v2.4</span>
+                 <Link href="/chat">
+                    <button className="bg-white/5 hover:bg-white/10 p-2 rounded-full transition-colors">
+                      <ArrowRight size={18} className="text-blue-400" />
+                    </button>
+                 </Link>
+              </div>
             </div>
-            <span className="font-semibold text-gray-700">PermitOps AI</span>
           </div>
-          <p>© 2024 PermitOps AI. All rights reserved.</p>
-          <div className="flex gap-5">
-            {['Privacy', 'Terms', 'Docs'].map(l => (
-              <a key={l} href="#" className="hover:text-gray-800 transition-colors">{l}</a>
-            ))}
+        </motion.div>
+
+        {/* Category Pills */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.2, duration: 1 }}
+          className="flex flex-wrap items-center justify-center gap-3 pt-4"
+        >
+          {[
+            { label: 'Upload documents', icon: FileText, color: 'text-blue-400' },
+            { label: 'Check status', icon: Clock, color: 'text-purple-400' },
+            { label: 'Beşiktaş protocols', icon: Building2, color: 'text-rose-400' },
+            { label: 'Fire safety guide', icon: ShieldCheck, color: 'text-emerald-400' },
+          ].map((item, i) => (
+            <button 
+              key={i}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1a1a1a] border border-white/5 hover:border-white/20 hover:bg-[#252525] transition-all text-sm font-medium text-gray-300"
+            >
+              <item.icon size={14} className={item.color} />
+              {item.label}
+            </button>
+          ))}
+        </motion.div>
+
+      </section>
+
+      {/* ═══════════════ PROMO SLIDE ═══════════════ */}
+      <motion.div 
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 3, duration: 0.8 }}
+        className="fixed bottom-10 w-full max-w-lg px-6"
+      >
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4 flex items-center justify-between shadow-2xl">
+          <div className="flex items-center gap-3">
+             <div className="bg-red-500/10 text-red-500 p-2 rounded-lg">
+                <FileText size={16} />
+             </div>
+             <div>
+                <p className="text-xs font-semibold text-white">Sharper insights, better permits.</p>
+                <p className="text-[10px] text-gray-500">Meet Nano Banana 2.4 Edition.</p>
+             </div>
           </div>
+          <button className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold px-4 py-1.5 rounded-lg transition-colors">
+            Try it
+          </button>
         </div>
-      </footer>
+      </motion.div>
 
     </main>
   );

@@ -39,8 +39,8 @@ app.add_middleware(
 # --- Try to load the agent pipeline (optional, runs in thread to avoid deadlock) ---
 _agents_available = False
 try:
-    from backend.workflow.orchestrator import orchestrator
-    from backend.models.schemas import PermitState
+    from workflow.orchestrator import orchestrator
+    from models.schemas import PermitState
     _agents_available = True
     print("[Startup] ✅ Agent pipeline loaded successfully")
 except Exception as e:
@@ -148,7 +148,7 @@ async def get_latest():
     if state:
         # Return real agent pipeline data for the dashboard
         try:
-            from backend.models.schemas import PermitState
+            from models.schemas import PermitState
             if isinstance(state, PermitState):
                 return state.model_dump()
         except Exception:
@@ -183,7 +183,7 @@ async def business_intake(query: UserQuery):
 @app.post("/api/submit-edevlet")
 async def submit_edevlet(creds: UserCredentials):
     try:
-        from backend.bot import run_edevlet_bot
+        from bot import run_edevlet_bot
         # Simulate passing the required documents to the bot based on latest workflow
         docs_to_upload = ["lease_agreement.pdf", "tax_certificate.pdf"]
         
