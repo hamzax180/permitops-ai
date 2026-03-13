@@ -34,16 +34,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <Shield size={16} className="text-white" />
-          </div>
-          <span className="font-bold text-[15px] text-white tracking-tight">
-            Permit<span className="text-blue-400">Ops</span>
-          </span>
-          <span className="hidden sm:block text-[10px] font-semibold text-gray-500 tracking-widest uppercase mt-px">AI</span>
-        </Link>
+        {/* Logo removed */}
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
