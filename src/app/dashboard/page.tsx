@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [tckn, setTckn] = useState('');
   const [password, setPassword] = useState('');
+  const [videoEnded, setVideoEnded] = useState(false);
 
   useEffect(() => {
     async function fetchState() {
@@ -153,18 +154,30 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
+    <main className="min-h-screen relative overflow-hidden bg-[var(--bg)]" 
+      style={{
+        backgroundImage: 'radial-gradient(circle at 50% 120%, rgba(66, 133, 244, 0.1), transparent 40%), radial-gradient(circle at 10% 20%, rgba(155, 114, 203, 0.03), transparent 30%)'
+      }}>
       {/* Video Background */}
       <div className="absolute inset-0 z-0 w-full h-full">
-        <video
+        <motion.video
+          initial={{ opacity: 0 }}
+          animate={{ opacity: videoEnded ? 0 : 1 }}
+          transition={{ duration: 1.5 }}
           autoPlay
-          loop
           muted
           playsInline
-          className="w-full h-full object-cover scale-[1.05] origin-top-left"
+          onEnded={() => setVideoEnded(true)}
+          className="w-full h-full object-cover"
         >
           <source src="/dashboard_bg.mp4" type="video/mp4" />
-        </video>
+        </motion.video>
+        
+        {/* Watermark Patch - Hides the "Ve" corner without scaling */}
+        {!videoEnded && (
+          <div className="absolute bottom-4 right-4 w-24 h-12 bg-black/20 blur-xl z-20 pointer-events-none" />
+        )}
+
         {/* Subtle gradient to blend with edges */}
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
