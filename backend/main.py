@@ -26,11 +26,12 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
 gemini_model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
-    system_instruction="""You are PermitOps AI. Provide concise, high-density Turkish permit advice.
-Always include:
+    system_instruction="""You are PermitOps AI, a Turkish business permit expert.
+If the user's request is vague or missing critical details (like Business Type or Location/District), you MUST first ask clarifying questions: "Where is your business located?" and "What type of business are you opening?".
+Once you have the details, provide concise permit advice:
 📋 Permits (Agency)
 📄 Required Documents
-✅ Action Steps (Provide exactly 14 sequential legal steps as defined in the protocol)
+✅ Action Steps (Exactly 14 steps)
 💬 Summary (Ends with: "Go to the Dashboard to start working with the Permit AI Agent.")
 Keep it short and professional."""
 )
@@ -94,7 +95,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     access_token = create_access_token(data={"sub": new_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "email": new_user.email}
+    return {"access_token": access_token, "token_type": "bearer", "email": new_user.email, "full_name": new_user.full_name}
 
 @app.post("/auth/login", response_model=Token)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
@@ -103,7 +104,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     
     access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email}
+    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email, "full_name": db_user.full_name}
 
 import uuid
 
@@ -123,23 +124,27 @@ async def create_chat_session(token: str, db: Session = Depends(get_db)):
     return {"id": session_id, "title": "New Chat"}
 
 
-async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en") -> str:
-    """Run the full pydantic-ai + langgraph pipeline."""
-    initial_state = PermitState(business_profile={"raw_query": query})
-    
-    processed_query = query
-    if language == "ar":
-        processed_query = f"Answer in Arabic: {query}"
-    elif language == "tr":
-        processed_query = f"Answer in Turkish: {query}"
+async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Session = None, language: str = "en", session_id: str = "default-session") -> str:
+    """Run the multi-agent langgraph workflow."""
+    if not _agents_available:
+        return await _run_direct_gemini(query, user, db, language, session_id)
+        
+    initial_state = {
+        "state": PermitState(business_profile={"raw_query": query, "language": language, "session_id": session_id}),
+        "user_request": query,
+        "language": language
+    }
 
     try:
-        print(f"[_run_with_agents] Invoking orchestrator for query: {query[:50]}...")
-        result = await orchestrator.ainvoke({
-            "state": initial_state,
-            "user_request": processed_query,
-            "language": language
-        })
+        # Enforce language in the query for the agent if not English
+        if language == "ar":
+            initial_state["user_request"] = f"(Answer strictly in Arabic / بالعربية) {query}"
+        elif language == "tr":
+            initial_state["user_request"] = f"(Lütfen Türkçe cevap veriniz) {query}"
+            
+        print(f"[_run_with_agents] Invoking orchestrator for session {session_id}")
+        config = {"configurable": {"thread_id": session_id}}
+        result = await orchestrator.ainvoke(initial_state, config=config)
         state = result["state"]
         print("[_run_with_agents] Orchestrator completed successfully")
     except Exception as e:
@@ -153,14 +158,12 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Option
             
     if user and db:
         try:
-            session_id = state.business_profile.get("session_id", "default")
             db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
             if db_session:
                 print(f"[_run_with_agents] Saving for session {session_id}")
                 db_session.dashboard_state = json.dumps(dashboard_data)
                 db.commit()
             else:
-                # Fallback to user-global if session not found (legacy)
                 user.latest_dashboard_state = json.dumps(dashboard_data)
                 db.commit()
         except Exception as e:
@@ -168,9 +171,11 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Option
     else:
         # Save to guest states
         global guest_dashboard_states
-        session_id = state.business_profile.get("session_id", "default")
         print(f"[_run_with_agents] Updating guest_dashboard_states for {session_id}")
         guest_dashboard_states[session_id] = json.dumps(dashboard_data)
+
+    if state.clarifying_question:
+        return state.clarifying_question
 
     combined = state.combined_result
     if combined:
@@ -187,7 +192,7 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Option
     raise ValueError("Empty agent result")
 
 
-async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en") -> str:
+async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session") -> str:
     """Direct Gemini call — fast and reliable fallback."""
     localized_query = query
     if language == "ar":
@@ -206,7 +211,7 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
         ]
         
         mock_state = {
-            "business_profile": {"raw_query": query},
+            "business_profile": {"raw_query": query, "session_id": session_id},
             "execution_plan": {
                 "steps": mock_steps,
                 "assigned_agents": ["Planner", "Classifier"]
@@ -220,7 +225,6 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
             "direct_answer": response.text
         }
         if user and db:
-            session_id = query.get("session_id", "default") if isinstance(query, dict) else "default"
             db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
             if db_session:
                 print(f"[_run_direct_gemini] Saving for session {session_id}")
@@ -231,7 +235,6 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
                 db.commit()
         else:
             global guest_dashboard_states
-            session_id = query.get("session_id", "default") if isinstance(query, dict) else "default"
             print(f"[_run_direct_gemini] Saving to guest_dashboard_states for {session_id}")
             guest_dashboard_states[session_id] = json.dumps(mock_state)
         
@@ -249,7 +252,7 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
 
     try:
         # Get or create session
-        session_id = query.context.get("session_id") if query.context else "default"
+        session_id = query.context.get("session_id") if query.context else "default-session"
         if user:
             db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
             if not db_session:
@@ -267,13 +270,13 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
 
         if _agents_available:
             try:
-                answer = await _run_with_agents(query.query, user, db, query.language)
+                answer = await _run_with_agents(query.query, user, db, query.language, session_id)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
                 # Use current gemini_model for fallback
-                answer = await _run_direct_gemini(query.query, user, db, query.language)
+                answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
         else:
-            answer = await _run_direct_gemini(query.query, user, db, query.language)
+            answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
         
         if user:
             # Save assistant message
@@ -340,45 +343,76 @@ async def get_latest(token: Optional[str] = None, session_id: Optional[str] = No
     return {}
 
 
-@app.post("/workflow/step/complete/{step_id}")
-async def complete_step(step_id: int, token: str, session_id: Optional[str] = None, db: Session = Depends(get_db)):
-    try:
-        user = await get_current_user(token, db)
-        
-        state_dict = None
-        db_session = None
-        
-        if session_id:
-            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
-            if db_session and db_session.dashboard_state:
-                state_dict = json.loads(db_session.dashboard_state)
-                
-        if not state_dict and user.latest_dashboard_state:
-            state_dict = json.loads(user.latest_dashboard_state)
+async def _get_and_update_state(step_id: int, token: Optional[str], session_id: Optional[str], db: Session, new_status: str):
+    user = None
+    if token:
+        try:
+            user = await get_current_user(token, db)
+        except:
+            pass
+
+    state_dict = None
+    db_session = None
+    
+    if user and session_id:
+        db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+        if db_session and db_session.dashboard_state:
+            state_dict = json.loads(db_session.dashboard_state)
             
-        if not state_dict:
-            raise HTTPException(status_code=404, detail="No active workflow found")
+    if not state_dict and user and user.latest_dashboard_state:
+        state_dict = json.loads(user.latest_dashboard_state)
         
-        steps = state_dict.get("execution_plan", {}).get("steps", [])
-        updated = False
-        for step in steps:
-            if step.get("id") == step_id:
-                step["status"] = "completed"
-                updated = True
-                break
-                
-        if not updated:
-            raise HTTPException(status_code=404, detail="Step not found")
+    if not state_dict and session_id in guest_dashboard_states:
+        state_dict = json.loads(guest_dashboard_states[session_id])
+        
+    if not state_dict:
+        raise HTTPException(status_code=404, detail="No active workflow found")
+    
+    steps = state_dict.get("execution_plan", {}).get("steps", [])
+    updated = False
+    for step in steps:
+        if step.get("id") == step_id:
+            step["status"] = new_status
+            updated = True
+            break
             
-        # Save back to correct location
-        serialized = json.dumps(state_dict)
-        if db_session:
-            db_session.dashboard_state = serialized
-        else:
-            user.latest_dashboard_state = serialized
-            
+    if not updated:
+        raise HTTPException(status_code=404, detail="Step not found")
+        
+    serialized = json.dumps(state_dict)
+    if db_session:
+        db_session.dashboard_state = serialized
         db.commit()
+    elif user:
+        user.latest_dashboard_state = serialized
+        db.commit()
+    elif session_id:
+        guest_dashboard_states[session_id] = serialized
+        
+    return state_dict
+
+@app.post("/workflow/step/complete/{step_id}")
+async def complete_step(step_id: int, token: Optional[str] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
+    try:
+        await _get_and_update_state(step_id, token, session_id, db, "completed")
         return {"status": "success", "message": f"Step {step_id} marked as completed"}
+    except Exception as e:
+        if isinstance(e, HTTPException): raise e
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/workflow/step/automate/{step_id}")
+async def automate_step(step_id: int, token: Optional[str] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
+    try:
+        # Simulate bot starting
+        await _get_and_update_state(step_id, token, session_id, db, "in-progress")
+        
+        # Simulate work
+        await asyncio.sleep(3)
+        
+        # Complete
+        await _get_and_update_state(step_id, token, session_id, db, "completed")
+        
+        return {"status": "success", "message": f"Step {step_id} automated successfully"}
     except Exception as e:
         if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))

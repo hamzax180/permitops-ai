@@ -71,7 +71,7 @@ export default function Navbar() {
           <ThemeToggle />
           {isAuthenticated ? (
             <>
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{user?.email}</span>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{user?.fullName || user?.email}</span>
               <button 
                 onClick={logout}
                 className="px-4 py-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"

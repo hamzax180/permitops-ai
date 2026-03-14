@@ -21,6 +21,13 @@ async def permit_node(state: GraphState):
         print("[Orchestrator] result has no .data, trying to use result directly or .output")
         combined = getattr(result, 'output', result)
         
+    from models.schemas import QuestionResponse
+    
+    if isinstance(combined, QuestionResponse):
+        print(f"[Orchestrator] Agent returned a question: {combined.question}")
+        state['state'].clarifying_question = combined.question
+        return state
+
     if not isinstance(combined, CombinedPermitResult):
         print(f"[Orchestrator] Result is not CombinedPermitResult, it is {type(combined)}")
         # Fallback for string or invalid output

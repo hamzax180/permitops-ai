@@ -53,7 +53,7 @@ export default function Sidebar({
     <motion.aside
       initial={false}
       animate={{ width: isExpanded ? 280 : 68 }}
-      className="h-full bg-[#1e1f20] flex flex-col shrink-0 transition-all duration-300 ease-in-out relative z-50 shadow-2xl"
+      className="h-full bg-[#131314] flex flex-col shrink-0 transition-all duration-300 ease-in-out relative z-50 shadow-2xl border-r border-white/5"
     >
       {/* Top Menu Button */}
       <div className="p-4 mb-2">
@@ -70,7 +70,7 @@ export default function Sidebar({
       <div className="px-3 mb-4">
         <button
           onClick={onNewChat}
-          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[#1a1a1a] hover:bg-[#2a2b2d] border border-white/5 shadow-md overflow-hidden ${
+          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[#000000] hover:bg-[#1a1a1a] border border-white/5 shadow-md overflow-hidden ${
             isExpanded ? 'w-36 px-4' : 'w-10 px-2.5 ml-1'
           }`}
         >

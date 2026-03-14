@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   CheckCircle2, Clock, Circle, AlertCircle,
   ShieldCheck, ArrowRight, MapPin, Calendar, FileText,
-  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock
+  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -46,14 +46,15 @@ export default function Dashboard() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
-  const [tckn, setTckn] = useState('');
-  const [password, setPassword] = useState('');
+  const [tckn, setTckn] = useState('99945855004');
+  const [password, setPassword] = useState('••••••••••••');
+  const [automatedStepId, setAutomatedStepId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchState() {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('permitops_token');
         const sid = localStorage.getItem('permitops_active_session_id');
         let url = `http://localhost:8003/workflow/latest`;
         const params = new URLSearchParams();
@@ -64,9 +65,7 @@ export default function Dashboard() {
         const res = await fetch(url);
         if (res.ok) {
           const json = await res.json();
-          if (json && Object.keys(json).length > 0) {
-            setData(json);
-          }
+          setData(json); // Call even if empty to clear previous session state
         }
       } catch (e) {
         console.error("Failed to fetch dashboard data", e);
@@ -83,7 +82,7 @@ export default function Dashboard() {
 
   const refresh = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('permitops_token');
       const sid = localStorage.getItem('permitops_active_session_id');
       let url = `http://localhost:8003/workflow/latest`;
       const params = new URLSearchParams();
@@ -94,18 +93,46 @@ export default function Dashboard() {
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
-        if (json && Object.keys(json).length > 0) {
-          setData(json);
-        }
+        setData(json);
       }
     } catch (e) {
       console.error("Manual refresh failed", e);
     }
   };
 
+  const automateStep = async (id: number) => {
+    const step = steps.find(s => s.id === id);
+    if (step) {
+      setAutomatedStepId(id);
+      setShowModal(true);
+    }
+  };
+
+  const triggerAutomation = async (id: number) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('permitops_token');
+      const sid = localStorage.getItem('permitops_active_session_id');
+      let url = `http://localhost:8003/workflow/step/automate/${id}`;
+      const params = new URLSearchParams();
+      if (token) params.append('token', token);
+      if (sid) params.append('session_id', sid);
+      url += `?${params.toString()}`;
+
+      const res = await fetch(url, { method: 'POST' });
+      if (res.ok) {
+        refresh();
+      }
+    } catch (e) {
+      console.error("Failed to automate step", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const markComplete = async (id: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('permitops_token');
       const sid = localStorage.getItem('permitops_active_session_id');
       let url = `http://localhost:8003/workflow/step/complete/${id}`;
       const params = new URLSearchParams();
@@ -124,8 +151,11 @@ export default function Dashboard() {
     }
   };
 
-  const steps: any[] = data ? [
-    ...(data.execution_plan?.steps?.map((s: any, i: number) => ({
+  const stepsData = data?.execution_plan?.steps;
+  const hasSteps = stepsData && Array.isArray(stepsData) && stepsData.length > 0;
+
+  const steps: any[] = hasSteps ? [
+    ...(stepsData.map((s: any, i: number) => ({
       id: s.id,
       title: s.title,
       responsible: s.responsible,
@@ -134,7 +164,7 @@ export default function Dashboard() {
       summary: s.notes || `Step ${i + 1} of the permit process.`,
       detail: `${s.responsible} is handling this step.`,
       docs: i === 1 ? (data.permit_plan?.documents || []) : [],
-    })) || []),
+    })))
   ] : [
     {
       id: 0,
@@ -151,12 +181,24 @@ export default function Dashboard() {
   const done = steps.filter(s => s.status === 'completed').length;
   const progress = steps.length > 0 ? Math.round((done / steps.length) * 100) : 0;
 
+  const currentAutomatedStep = automatedStepId ? steps.find(s => s.id === automatedStepId) : null;
+  const isMersis = currentAutomatedStep && (
+    (currentAutomatedStep.title || "") + 
+    (currentAutomatedStep.detail || "") + 
+    (currentAutomatedStep.summary || "")
+  ).toLowerCase().includes("mersis");
+  const portalName = isMersis ? "MERSİS" : "e-Devlet";
+  const portalUrl = isMersis ? "mersis.gtb.gov.tr" : "turkiye.gov.tr";
+
   const handleUploadClick = () => {
     setShowModal(true);
   };
 
   const submitEDevlet = async () => {
     setUploading(true);
+    // Open window immediately to avoid popup blocker
+    const portalWin = window.open('about:blank', '_blank');
+    
     try {
       const res = await fetch('http://localhost:8003/api/submit-edevlet', {
         method: 'POST',
@@ -170,20 +212,41 @@ export default function Dashboard() {
 
       if (json.status === "success") {
         setToastType("success");
-        setToastMessage(json.message || "Submitted successfully via e-Devlet bot.");
+        setToastMessage(json.message || "Submitted successfully via bot.");
         setShowModal(false);
-        refresh(); // refetch state
+        
+        // Use the pre-opened window
+        if (portalWin && automatedStepId) {
+          const step = steps.find(s => s.id === automatedStepId);
+          const isMersis = step && (
+            (step.title || "") + 
+            (step.detail || "") + 
+            (step.summary || "")
+          ).toLowerCase().includes("mersis");
+          
+          let targetUrl = "https://www.turkiye.gov.tr";
+          if (isMersis) targetUrl = "https://mersis.gtb.gov.tr";
+          
+          portalWin.location.href = targetUrl;
+          setAutomatedStepId(null);
+        } else if (portalWin) {
+          portalWin.close();
+        }
+
+        refresh();
       } else {
+        if (portalWin) portalWin.close();
         setToastType("error");
         setToastMessage(json.message || "Failed to submit.");
       }
     } catch (e) {
+      if (portalWin) portalWin.close();
       setToastType("error");
       setToastMessage("Network error communicating with backend.");
     } finally {
       setUploading(false);
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
+      setTimeout(() => setShowToast(false), 5000);
     }
   };
 
@@ -230,7 +293,20 @@ export default function Dashboard() {
                 }`}
             >
               {toastType === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-              <span className="text-sm font-semibold">{toastMessage}</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">{toastMessage}</span>
+                {toastType === 'success' && (
+                  <button 
+                    onClick={() => {
+                      const url = toastMessage.toLowerCase().includes('mersis') ? 'https://mersis.gtb.gov.tr' : 'https://www.turkiye.gov.tr';
+                      window.open(url, '_blank');
+                    }}
+                    className="text-[11px] font-bold underline mt-0.5 hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    Go to Portal <ExternalLink size={10} />
+                  </button>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -258,7 +334,7 @@ export default function Dashboard() {
                         <ShieldCheck size={20} className="text-red-500" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-[var(--text)]">e-Devlet Integration</h3>
+                        <h3 className="text-lg font-bold text-[var(--text)]">{portalName} Integration</h3>
                         <p className="text-xs text-[var(--muted)]">Secure AI Automation Bot</p>
                       </div>
                     </div>
@@ -268,7 +344,7 @@ export default function Dashboard() {
                   </div>
 
                   <p className="text-sm text-[var(--muted)] mb-6 leading-relaxed">
-                    Our RPA bot requires your credentials to log into turkiye.gov.tr and automatically submit the verified documents to Beşiktaş Municipality on your behalf.
+                    Our RPA bot requires your credentials to log into {portalUrl} and automatically submit the verified documents to Beşiktaş Municipality on your behalf.
                   </p>
 
                   <div className="space-y-4">
@@ -291,7 +367,9 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-1.5 ml-0.5">e-Devlet Password</label>
+                      <label className="block text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-1.5 ml-0.5">
+                        {portalName} Password
+                      </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                           <Lock size={16} className="text-[var(--muted)]" />
@@ -316,7 +394,7 @@ export default function Dashboard() {
                       className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                     >
                       {uploading ? <Activity size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                      <span>{uploading ? 'Bot Navigating Portal...' : 'Approve Bot Submission'}</span>
+                      <span>{uploading ? t('dashboard_processing') : 'Approve Bot Submission'}</span>
                     </button>
                     <p className="text-[10px] text-center text-gray-400 mt-3 font-medium">Your credentials are used solely for this session and are NEVER logged into our database.</p>
                   </div>
@@ -468,16 +546,32 @@ export default function Dashboard() {
                             </div>
                           )}
 
-                          {s.responsible !== 'Agent' && s.status !== 'completed' && (
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                markComplete(s.id);
-                              }} 
-                              className="btn btn-emerald !py-2 !px-4 !text-sm flex items-center gap-2"
-                            >
-                              <CheckCircle2 size={13} /> {t('dashboard_mark_complete')}
-                            </button>
+                          {s.status !== 'completed' && (
+                            <div className="flex gap-3">
+                              {(s.responsible.includes('Agent') || s.responsible.includes('Ajan') || s.responsible.includes('وكيل')) ? (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    automateStep(s.id);
+                                  }} 
+                                  disabled={loading}
+                                  className="btn btn-purple !py-2 !px-4 !text-sm flex items-center gap-2"
+                                >
+                                  <Sparkles size={13} className={s.status === 'in-progress' ? 'animate-pulse' : ''} />
+                                  {s.status === 'in-progress' ? t('dashboard_processing') : t('dashboard_auto_execute')}
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markComplete(s.id);
+                                  }} 
+                                  className="btn btn-emerald !py-2 !px-4 !text-sm flex items-center gap-2"
+                                >
+                                  <CheckCircle2 size={13} /> {t('dashboard_mark_complete')}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </motion.div>

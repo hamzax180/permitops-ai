@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { Variants } from 'framer-motion';
 import { useLanguage } from './context/LanguageContext';
+import { useAuth } from './context/AuthContext';
 
 /* ── Animation Variants ── */
 const fade: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -41,22 +42,20 @@ const howItWorksSteps = (t: any) => [
   {
     title: t('process_step1_title'),
     desc: t('process_step1_desc'),
-    icon: Search
   },
   {
     title: t('process_step2_title'),
     desc: t('process_step2_desc'),
-    icon: Sparkles
   },
   {
     title: t('process_step3_title'),
     desc: t('process_step3_desc'),
-    icon: Bot
   }
 ];
 
 export default function Home() {
   const { t, isRTL } = useLanguage();
+  const { user } = useAuth();
   const stepsData = howItWorksSteps(t);
   return (
     <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
@@ -74,7 +73,7 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3 mb-2">
             <div className="w-6 h-6 animate-pulse bg-gradient-to-tr from-[#4285f4] via-[#9b72cb] to-[#d96570] rounded-full blur-[2px] opacity-80" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-[#8ab4f8] dark:to-[#9b72cb] font-semibold text-lg">
-              {t('home_hero_greeting_user')}
+              {t('home_hero_greeting_user').replace('Hamza', user?.fullName || 'Guest')}
             </span>
           </div>
 
@@ -198,12 +197,14 @@ export default function Home() {
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
-          <div className="text-center mb-16 space-y-4">
-            <h3 className="text-xl md:text-2xl font-bold text-purple-500 drop-shadow-sm font-['Outfit']">{t('process_title')}</h3>
-            <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-md font-['Outfit']">{t('process_subtitle')}</h2>
+          <div className="text-center mb-24 space-y-6">
+            <div className="flex items-center justify-center mb-2">
+              <h3 className="text-xl md:text-3xl font-black uppercase tracking-[0.4em] text-purple-400 drop-shadow-sm">{t('process_title')}</h3>
+            </div>
+            <h2 className="text-5xl md:text-7xl font-medium text-white drop-shadow-md tracking-tight leading-tight max-w-4xl mx-auto">{t('process_subtitle')}</h2>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+ 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
             {stepsData.map((step, i) => (
               <motion.div
                 key={i}
@@ -213,11 +214,8 @@ export default function Home() {
                 transition={{ delay: i * 0.2 }}
                 className={`flex flex-col space-y-6 group/card ${isRTL ? 'text-right items-end' : 'text-left items-start'}`}
               >
-                <div className="w-12 h-12 rounded-2xl bg-purple-600 dark:bg-purple-500 flex items-center justify-center text-white shadow-lg">
-                  <step.icon size={24} />
-                </div>
-                <h4 className="text-2xl font-bold text-white drop-shadow-md">{step.title}</h4>
-                <p className="text-lg text-white/95 leading-relaxed font-bold drop-shadow-md">
+                <h4 className="text-6xl font-medium text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-tight">{step.title}</h4>
+                <p className="text-[22px] text-white/80 leading-relaxed font-normal drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
                   {step.desc}
                 </p>
               </motion.div>

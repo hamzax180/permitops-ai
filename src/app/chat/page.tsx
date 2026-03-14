@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic, Plus, ChevronDown } from 'lucide-react';
+import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic, Plus, ChevronDown, Building2, FileText, Search, Clock, HelpCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,7 +15,7 @@ interface Msg { id: number; role: Role; content: string; }
 
 export default function ChatPage() {
   const { t, isRTL, language } = useLanguage();
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   
   const QUICK_Q = [
@@ -183,7 +183,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <div className="flex h-screen bg-[#131314] text-white overflow-hidden selection:bg-[#8ab4f8]/30">
+    <div className="flex h-screen bg-[#000000] text-white overflow-hidden selection:bg-[#8ab4f8]/30">
       <Sidebar 
         currentSessionId={sessionId}
         onSessionSelect={(id) => setSessionId(id)}
@@ -194,16 +194,13 @@ export default function ChatPage() {
       
       <main className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative">
         {/* Header Bar */}
-        <header className="flex items-center justify-between px-6 py-4 shrink-0 bg-[#131314]/80 backdrop-blur-md z-10 transition-all">
+        <header className="flex items-center justify-between px-6 py-4 shrink-0 bg-[#000000]/80 backdrop-blur-md z-10 transition-all">
           <div className="flex items-center gap-3">
-              <span className="text-lg font-medium tracking-tight bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
-                PermitOps
-              </span>
           </div>
-
+ 
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4285f4] to-[#9b72cb] p-[1.5px] cursor-pointer hover:shadow-lg transition-shadow">
-              <div className="w-full h-full rounded-full bg-[#131314] flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-[#000000] flex items-center justify-center">
                 <User size={16} className="text-white/80" />
               </div>
             </div>
@@ -215,13 +212,35 @@ export default function ChatPage() {
 
           {isEmpty ? (
             <div className="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-6 gap-2 pb-32">
+              {/* Suggestion Chips */}
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex flex-wrap justify-center gap-2.5 max-w-4xl mb-8"
+              >
+                {[
+                  { icon: Building2, label: t('chat_suggestion_business'), color: 'text-blue-400' },
+                  { icon: FileText, label: t('chat_suggestion_permit'), color: 'text-purple-400' },
+                  { icon: Search, label: t('chat_suggestion_location'), color: 'text-green-400' },
+                  { icon: Clock, label: t('chat_suggestion_duration'), color: 'text-orange-400' },
+                  { icon: Sparkles, label: t('chat_suggestion_cost'), color: 'text-yellow-400' },
+                  { icon: HelpCircle, label: t('chat_suggestion_help'), color: 'text-indigo-400' }
+                ].map((chip, i) => (
+                  <div
+                    key={i}
+                    className="bg-[#1e1f20] border border-white/5 text-white/90 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none"
+                  >
+                    {chip.icon && <chip.icon size={14} className={chip.color} />}
+                    {chip.label}
+                  </div>
+                ))}
+              </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                 className="w-full mb-8"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl md:text-2xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
-                    ✦ {t('chat_welcome').replace('{name}', 'hatose')}
+                     {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
                   </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
@@ -269,25 +288,21 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* Suggestion Chips */}
+              {/* Interactive Suggestions */}
               <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl"
               >
                 {[
-                  { icon: ImageIcon, label: t('chat_suggestion_create_image'), color: 'text-orange-400' },
-                  { icon: Mic, label: t('chat_suggestion_create_music'), color: 'text-pink-400' },
-                  { label: t('chat_suggestion_energy') },
-                  { label: t('chat_suggestion_write') },
-                  { label: t('chat_suggestion_learn') },
-                  { label: t('chat_suggestion_video') }
+                  { label: t('chat_suggestion_obtain') },
+                  { label: t('chat_suggestion_steps') },
+                  { label: t('chat_suggestion_docs') }
                 ].map((chip, i) => (
                   <button
                     key={i}
                     onClick={() => send(chip.label)}
-                    className="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-white/5 text-white/90 text-sm py-2.5 px-5 rounded-full transition-all hover:border-white/10 flex items-center gap-2 font-medium"
+                    className="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-white/5 text-white/90 text-[15px] py-2.5 px-6 rounded-full transition-all hover:border-white/10 font-medium active:scale-95 touch-manipulation"
                   >
-                    {chip.icon && <chip.icon size={14} className={chip.color} />}
                     {chip.label}
                   </button>
                 ))}

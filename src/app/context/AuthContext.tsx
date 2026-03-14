@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface AuthContextType {
-    user: any;
+    user: { email: string; fullName?: string } | null;
     token: string | null;
-    login: (token: string, email: string) => void;
+    login: (token: string, email: string, fullName: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -13,23 +13,30 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<{ email: string; fullName?: string } | null>(null);
     const [token, setToken] = useState<string | null>(null);
+
+    const getFallbackName = (email: string) => {
+        return email.split('@')[0].split(/[._-]/).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    };
 
     useEffect(() => {
         const savedToken = localStorage.getItem('permitops_token');
         const savedUser = localStorage.getItem('permitops_user');
+        const savedName = localStorage.getItem('permitops_name');
         if (savedToken && savedUser) {
             setToken(savedToken);
-            setUser({ email: savedUser });
+            setUser({ email: savedUser, fullName: savedName || getFallbackName(savedUser) });
         }
     }, []);
 
-    const login = (token: string, email: string) => {
+    const login = (token: string, email: string, fullName?: string) => {
+        const name = fullName || getFallbackName(email);
         setToken(token);
-        setUser({ email });
+        setUser({ email, fullName: name });
         localStorage.setItem('permitops_token', token);
         localStorage.setItem('permitops_user', email);
+        localStorage.setItem('permitops_name', name);
     };
 
     const logout = () => {
@@ -37,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         localStorage.removeItem('permitops_token');
         localStorage.removeItem('permitops_user');
+        localStorage.removeItem('permitops_name');
     };
 
     return (

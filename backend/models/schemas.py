@@ -36,11 +36,16 @@ class WorkflowStatus(BaseModel):
     completion_percentage: float
     next_action_required: Optional[str]
 
+class QuestionResponse(BaseModel):
+    question: str
+    missing_fields: List[str]
+
 class PermitState(BaseModel):
     business_profile: Optional[Dict] = None
     execution_plan: Optional[ExecutionPlan] = None
     permit_plan: Optional[PermitPlan] = None
     combined_result: Optional[CombinedPermitResult] = None
+    clarifying_question: Optional[str] = None
     checklist: Optional[DocumentChecklist] = None
     uploaded_documents: List[str] = []
     validation_results: List[Dict] = []
@@ -65,3 +70,4 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     email: str
+    full_name: Optional[str] = None
