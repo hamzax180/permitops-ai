@@ -22,9 +22,10 @@ interface PermitStep {
 }
 
 function StepBadge({ status }: { status: Status }) {
-  if (status === 'completed') return <span className="badge badge-green">Completed</span>;
-  if (status === 'in-progress') return <span className="badge badge-purple">In Progress</span>;
-  return <span className="badge status-pending">Pending</span>;
+  const { t } = useLanguage();
+  if (status === 'completed') return <span className="badge badge-green">{t('status_completed')}</span>;
+  if (status === 'in-progress') return <span className="badge badge-purple">{t('status_in_progress')}</span>;
+  return <span className="badge status-pending">{t('status_pending')}</span>;
 }
 
 function StepIcon({ status }: { status: Status }) {
@@ -34,13 +35,13 @@ function StepIcon({ status }: { status: Status }) {
 }
 
 export default function Dashboard() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("Document uploaded successfully!");
+  const [toastMessage, setToastMessage] = useState(t('dashboard_toast_success') || "Document uploaded successfully!");
   const [toastType, setToastType] = useState<"success" | "error">("success");
 
   // Modal State
@@ -52,7 +53,9 @@ export default function Dashboard() {
     async function fetchState() {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:8003/workflow/latest');
+        const token = localStorage.getItem('token');
+        const url = token ? `http://localhost:8003/workflow/latest?token=${token}` : 'http://localhost:8003/workflow/latest';
+        const res = await fetch(url);
         if (res.ok) {
           const json = await res.json();
           if (json && Object.keys(json).length > 0) {
@@ -66,11 +69,13 @@ export default function Dashboard() {
       }
     }
     fetchState();
-  }, []);
+  }, [language]);
 
   const refresh = async () => {
     try {
-      const res = await fetch('http://localhost:8003/workflow/latest');
+      const token = localStorage.getItem('token');
+      const url = token ? `http://localhost:8003/workflow/latest?token=${token}` : 'http://localhost:8003/workflow/latest';
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         if (json && Object.keys(json).length > 0) {
@@ -82,22 +87,41 @@ export default function Dashboard() {
     }
   };
 
-  const steps: PermitStep[] = data ? [
-    ...(data.execution_plan?.steps.map((step: string, i: number) => ({
-      title: step,
-      status: i === 0 ? 'completed' : (i === 1 ? 'in-progress' : 'pending'),
+  const markComplete = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`http://localhost:8003/workflow/step/complete/${id}?token=${token}`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        refresh();
+      }
+    } catch (e) {
+      console.error("Failed to mark step complete", e);
+    }
+  };
+
+  const steps: any[] = data ? [
+    ...(data.execution_plan?.steps?.map((s: any, i: number) => ({
+      id: s.id,
+      title: s.title,
+      responsible: s.responsible,
+      status: s.status as Status,
       date: data.last_updated ? new Date(data.last_updated).toLocaleDateString() : 'Recent',
-      summary: `Step ${i + 1} of the permit process.`,
-      detail: `Agent ${data.execution_plan.assigned_agents[i] || 'System'} is handling this step.`,
+      summary: s.notes || `Step ${i + 1} of the permit process.`,
+      detail: `${s.responsible} is handling this step.`,
       docs: i === 1 ? (data.permit_plan?.documents || []) : [],
     })) || []),
   ] : [
     {
-      title: 'Initialize Workflow',
-      status: 'pending',
+      id: 0,
+      title: t('dashboard_init_title'),
+      responsible: 'Agent',
+      status: 'pending' as Status,
       date: 'N/A',
-      summary: 'Start a chat to generate your permit plan.',
-      detail: 'Once you describe your business in the chat, the AI will generate a customized permit path for you here.',
+      summary: t('dashboard_init_summary'),
+      detail: t('dashboard_init_detail'),
       docs: [],
     }
   ];
@@ -146,7 +170,7 @@ export default function Dashboard() {
       <main className="min-h-screen flex items-center justify-center pt-24">
         <div className="flex flex-col items-center gap-4 text-gray-500">
           <Activity size={32} className="animate-pulse text-purple-500" />
-          <p className="text-sm font-medium">Synchronizing with Beşiktaş Municipality...</p>
+          <p className="text-sm font-medium">{t('dashboard_syncing')}</p>
         </div>
       </main>
     );
@@ -298,7 +322,7 @@ export default function Dashboard() {
               <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium">
                 <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.business_profile?.raw_query || (isRTL ? 'مطعم في بشكتاش' : 'Beşiktaş Restaurant')}, Istanbul</span>
                 <span className="h-3 w-px bg-[var(--border)]" />
-                <span className="flex items-center gap-1.5"><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `${t('dashboard_updated')} ${new Date(data.last_updated).toLocaleDateString()}` : t('dashboard_no_session')}</span>
+                <span className="flex items-center gap-1.5" suppressHydrationWarning><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `${t('dashboard_updated')} ${new Date(data.last_updated).toLocaleDateString()}` : t('dashboard_no_session')}</span>
               </p>
             </div>
 
@@ -329,7 +353,7 @@ export default function Dashboard() {
               { label: t('dashboard_compliance_score'), value: `${progress > 0 ? progress : '0'}%`, color: 'text-emerald-500', icon: ShieldCheck, bg: 'bg-emerald-500/10' },
               { label: t('dashboard_steps_complete'), value: `${done}/${steps.length}`, color: 'text-purple-500', icon: CheckCircle2, bg: 'bg-purple-500/10' },
               { label: t('dashboard_est_days'), value: `${Math.max(0, steps.length * 2 - done * 2)} ${t('dashboard_days')}`, color: 'text-amber-500', icon: Clock, bg: 'bg-amber-500/10' },
-              { label: t('dashboard_active_agents'), value: `${data?.execution_plan?.assigned_agents.length || 0} ${t('dashboard_active')}`, color: 'text-fuchsia-500', icon: Cpu, bg: 'bg-fuchsia-500/10' },
+              { label: t('dashboard_active_agents'), value: `${data?.execution_plan?.assigned_agents?.length || 0} ${t('dashboard_active')}`, color: 'text-fuchsia-500', icon: Cpu, bg: 'bg-fuchsia-500/10' },
             ].map((s, i) => (
               <div key={i} className="glass-card p-5 flex items-center gap-4 hover:border-white/20 transition-all shadow-xl group">
                 <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} border border-white/5`}>
@@ -390,7 +414,7 @@ export default function Dashboard() {
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-white/50 hidden sm:block font-bold uppercase tracking-wider">{s.date}</span>
+                      <span className="text-xs text-white/50 hidden sm:block font-bold uppercase tracking-wider" suppressHydrationWarning>{s.date}</span>
                       <ChevronDown
                         size={16}
                         className={`text-white/40 transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}
@@ -412,7 +436,7 @@ export default function Dashboard() {
 
                           {s.docs.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                              {s.docs.map(doc => (
+                              {s.docs.map((doc: string) => (
                                 <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--muted)] hover:text-[var(--text)] transition-colors cursor-pointer bg-[var(--surface-2)] border border-[var(--border)]">
                                   <FileText size={12} className="text-purple-500 shrink-0" />
                                   {doc}
@@ -422,9 +446,15 @@ export default function Dashboard() {
                             </div>
                           )}
 
-                          {s.status === 'in-progress' && (
-                            <button onClick={handleUploadClick} disabled={uploading} className="btn btn-purple !py-2 !px-4 !text-sm disabled:opacity-50">
-                              <Upload size={13} /> {uploading ? 'Checking...' : 'Upload Required Document'}
+                          {s.responsible !== 'Agent' && s.status !== 'completed' && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markComplete(s.id);
+                              }} 
+                              className="btn btn-emerald !py-2 !px-4 !text-sm flex items-center gap-2"
+                            >
+                              <CheckCircle2 size={13} /> {t('dashboard_mark_complete')}
                             </button>
                           )}
                         </div>
@@ -447,15 +477,24 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-xs font-black text-amber-500 uppercase tracking-widest">{t('dashboard_action_required')}</p>
-                    <p className="text-[15px] font-bold text-white mt-1 leading-tight">{steps[1]?.title || 'Awaiting Information'}</p>
+                    <p className="text-[15px] font-bold text-white mt-1 leading-tight">
+                      {steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent')?.title || t('dashboard_all_clear')}
+                    </p>
                   </div>
                 </div>
                 <p className="text-[13px] text-white/70 leading-relaxed font-medium relative z-10">
-                  Please provide details or documents for <strong className="text-white">{steps[1]?.title || 'next steps'}</strong> to avoid permit delay.
+                  {steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent') 
+                    ? t('dashboard_action_required_desc').replace('{step}', steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent')?.title || '')
+                    : t('dashboard_bot_processing')}
                 </p>
-                <button onClick={handleUploadClick} disabled={uploading || !data} className="btn btn-purple w-full !py-2.5 !text-sm justify-center shadow-lg transform transition-transform hover:scale-[1.02] relative z-10">
-                  <Upload size={14} /> {uploading ? 'Verifying AI...' : 'Upload information'}
-                </button>
+                {steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent') && (
+                  <button 
+                    onClick={() => markComplete(steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent')?.id)} 
+                    className="btn btn-purple w-full !py-2.5 !text-sm justify-center shadow-lg transform transition-transform hover:scale-[1.02] relative z-10"
+                  >
+                    <CheckCircle2 size={14} /> {t('dashboard_mark_done')}
+                  </button>
+                )}
               </div>
 
               {/* AI Agents */}
@@ -464,7 +503,7 @@ export default function Dashboard() {
                   <p className="text-xs font-black text-white/40 uppercase tracking-widest">{t('dashboard_active_agents')}</p>
                   <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
                     <span className="live-dot w-2 h-2 relative shrink-0" />
-                    {data?.execution_plan?.assigned_agents.length || 0} {t('dashboard_active')}
+                    {data?.execution_plan?.assigned_agents?.length || 0} {t('dashboard_active')}
                   </span>
                 </div>
                 <div className="space-y-3">

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic, Plus } from 'lucide-react';
+import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic, Plus, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,7 +14,7 @@ type Role = 'assistant' | 'user';
 interface Msg { id: number; role: Role; content: string; }
 
 export default function ChatPage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const { token, isAuthenticated } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   
@@ -148,7 +148,7 @@ export default function ChatPage() {
       const res = await fetch(`http://localhost:8003/agent/query${token ? `?token=${token}` : ''}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, context: { session_id: sessionId } }),
+        body: JSON.stringify({ query: q, language, context: { session_id: sessionId } }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -194,7 +194,6 @@ export default function ChatPage() {
               <span className="text-lg font-medium tracking-tight bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
                 PermitOps
               </span>
-              <span className="text-white/40 text-sm hidden sm:block">AI Advisor</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -210,30 +209,81 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col min-h-0 relative">
 
           {isEmpty ? (
-            <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto w-full px-6 gap-8 pb-32">
+            <div className="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-6 gap-2 pb-32">
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-                className="text-center space-y-4"
+                className="w-full mb-8"
               >
-                <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-white/90">
-                  {t('chat_greeting')}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl md:text-2xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
+                    ✦ Merhaba hatose
+                  </span>
+                </div>
+                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
+                  Where do we begin?
                 </h1>
-                <h2 className="text-2xl md:text-3xl font-light text-white/40">
-                  {t('chat_subtitle')}
-                </h2>
               </motion.div>
 
+              {/* Chat Input Pill (for empty state it's centered) */}
+              <div className="w-full max-w-3xl mb-12">
+                <div className="bg-[#1e1f20] rounded-[32px] p-2 pr-3 min-h-[140px] flex flex-col border border-transparent hover:bg-[#212224] transition-all group">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
+                    }}
+                    placeholder="Gemini 3'e sorun"
+                    className="flex-1 bg-transparent text-[18px] p-4 text-white placeholder:text-white/30 focus:outline-none resize-none"
+                  />
+                  <div className="flex items-center justify-between px-2 pb-1">
+                    <div className="flex items-center gap-1">
+                      <button className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition-all">
+                        <Plus size={20} />
+                      </button>
+                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="text-[#8ab4f8]">
+                           ⚙
+                        </motion.div>
+                        Vehicles
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <span className="text-xs font-medium text-white/40 flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
+                         Fast <ChevronDown size={14} />
+                       </span>
+                       <button className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition-all">
+                        <Mic size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Suggestion Chips */}
               <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mt-4 w-full"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex flex-wrap justify-center gap-2.5 max-w-4xl"
               >
-                {QUICK_Q.map((q, i) => (
+                {[
+                  { icon: ImageIcon, label: 'Create Image', color: 'text-orange-400' },
+                  { icon: Mic, label: 'Create music', color: 'text-pink-400' },
+                  { label: 'Add energy to my day!' },
+                  { label: 'Write whatever you want.' },
+                  { label: 'Help me learn' },
+                  { label: 'Create a video' }
+                ].map((chip, i) => (
                   <button
                     key={i}
-                    onClick={() => send(q)}
-                    className="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-white/5 text-white/80 text-sm py-4 px-6 rounded-2xl transition-all hover:border-white/10 text-left shadow-sm group"
+                    onClick={() => send(chip.label)}
+                    className="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-white/5 text-white/90 text-sm py-2.5 px-5 rounded-full transition-all hover:border-white/10 flex items-center gap-2 font-medium"
                   >
-                    <span className="line-clamp-2">{q}</span>
+                    {chip.icon && <chip.icon size={14} className={chip.color} />}
+                    {chip.label}
                   </button>
                 ))}
               </motion.div>
@@ -304,60 +354,66 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* Sticky Input Bar (Pill Capsule) */}
-          <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#131314] via-[#131314] to-transparent pt-12 pb-10 px-4 flex justify-center">
-            <div className="w-full max-w-3xl relative px-2">
-              <div className={`relative flex items-end gap-3 bg-[#1e1f20] rounded-[32px] p-2 pr-3 min-h-[56px] border border-transparent transition-all duration-300 group ${busy ? 'opacity-70' : 'hover:bg-[#2a2b2d] focus-within:bg-[#2a2b2d] focus-within:ring-1 focus-within:ring-white/10'}`}>
-
-                <button className="shrink-0 p-3 text-white/60 hover:text-white transition-colors">
-                  <Plus size={22} />
-                </button>
-
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={e => {
-                    setInput(e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      send();
-                      if (inputRef.current) inputRef.current.style.height = 'auto';
-                    }
-                  }}
-                  disabled={busy}
-                  placeholder={t('chat_placeholder')}
-                  className="flex-1 max-h-[200px] min-h-[24px] py-3.5 bg-transparent text-[16px] text-white placeholder:text-white/30 focus:outline-none resize-none overflow-y-auto slim-scroll"
-                  rows={1}
-                />
-
-                <div className="flex items-center gap-1 mb-1 shadow-sm">
-                  {input.trim() ? (
-                    <button
-                      onClick={() => {
+          {/* Sticky Input Bar (Only visible when NOT empty) */}
+          {!isEmpty && (
+            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e] to-transparent pt-12 pb-10 px-4 flex justify-center">
+              <div className="w-full max-w-3xl relative px-2">
+                <div className={`relative flex flex-col bg-[#1e1f20] rounded-[32px] p-2 pr-3 min-h-[56px] border border-transparent transition-all duration-300 group ${busy ? 'opacity-70' : 'hover:bg-[#212224] focus-within:bg-[#212224] focus-within:ring-1 focus-within:ring-white/10'}`}>
+                  
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={e => {
+                      setInput(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
                         send();
                         if (inputRef.current) inputRef.current.style.height = 'auto';
-                      }}
-                      disabled={busy}
-                      className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[#8ab4f8] hover:bg-white/5 transition-colors"
-                    >
-                      <Send size={20} />
-                    </button>
-                  ) : (
-                    <button className="p-3 text-white/60 hover:text-white transition-colors px-2">
-                      <Mic size={22} />
-                    </button>
-                  )}
+                      }
+                    }}
+                    disabled={busy}
+                    placeholder={t('chat_placeholder')}
+                    className="flex-1 max-h-[200px] min-h-[48px] px-4 py-3 bg-transparent text-[16px] text-white placeholder:text-white/30 focus:outline-none resize-none overflow-y-auto slim-scroll"
+                    rows={1}
+                  />
+
+                  <div className="flex items-center justify-between px-2 pb-1">
+                    <div className="flex items-center gap-1">
+                      <button className="p-2.5 text-white/60 hover:text-white transition-colors">
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {input.trim() ? (
+                        <button
+                          onClick={() => {
+                            send();
+                            if (inputRef.current) inputRef.current.style.height = 'auto';
+                          }}
+                          disabled={busy}
+                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[#8ab4f8] hover:bg-white/5 transition-colors"
+                        >
+                          <Send size={20} />
+                        </button>
+                      ) : (
+                        <button className="p-3 text-white/60 hover:text-white transition-colors px-2">
+                          <Mic size={20} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                <p className="text-center text-[11px] text-white/30 mt-4 font-normal tracking-wide">
+                  PermitOps AI Advisor • Municipal Protocol Engine • v2.4
+                </p>
               </div>
-              <p className="text-center text-[11px] text-white/30 mt-4 font-normal tracking-wide">
-                PermitOps AI Advisor • Municipal Protocol Engine • v2.4
-              </p>
             </div>
-          </div>
+          )}
 
         </div>
 

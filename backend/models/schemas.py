@@ -7,9 +7,16 @@ class PermitPlan(BaseModel):
     agencies: List[str] = Field(..., description="Authorities involved")
     documents: List[str] = Field(..., description="Total documents needed across all permits")
 
+class StepDetail(BaseModel):
+    id: int
+    title: str
+    responsible: str = "Agent"  # "Human", "Agent", "Human/Agent"
+    status: str = "pending"    # "pending", "completed"
+    notes: Optional[str] = None
+
 class ExecutionPlan(BaseModel):
-    steps: List[str] = Field(..., description="Logical steps for the agent workflow")
-    assigned_agents: List[str] = Field(..., description="Agents delegated for each step")
+    steps: List[StepDetail] = Field(..., description="Ordered detailed steps for the workflow")
+    assigned_agents: List[str] = Field(default=["Planner", "Classifier"])
 
 # Combined schema — lets us answer fully in ONE Gemini API call
 class CombinedPermitResult(BaseModel):
@@ -42,6 +49,7 @@ class PermitState(BaseModel):
 
 class UserQuery(BaseModel):
     query: str
+    language: str = "en"
     context: Optional[Dict] = None
 
 class UserCreate(BaseModel):

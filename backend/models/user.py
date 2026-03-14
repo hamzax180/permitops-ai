@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, Text
 from database import Base
 
 class User(Base):
@@ -9,3 +9,4 @@ class User(Base):
     hashed_password = Column(String)
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    latest_dashboard_state = Column(Text, nullable=True) # Serialized JSON

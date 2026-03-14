@@ -1,5 +1,6 @@
 import os
 import asyncio
+import datetime
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -7,12 +8,14 @@ from pydantic import BaseModel
 from typing import Optional, List
 import google.generativeai as genai
 from dotenv import load_dotenv
+import json
 
 from database import engine, Base, get_db
 from models.user import User as DBUser
 from models.chat import ChatSession, ChatMessage
 from models.schemas import UserCreate, UserLogin, Token, UserQuery
 from utils.auth import get_password_hash, verify_password, create_access_token, decode_access_token
+from utils.protocol import get_localized_steps
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -27,7 +30,7 @@ gemini_model = genai.GenerativeModel(
 Always include:
 📋 Permits (Agency)
 📄 Required Documents
-✅ Action Steps
+✅ Action Steps (Provide exactly 14 sequential legal steps as defined in the protocol)
 💬 Summary (Ends with: "Go to the Dashboard to start working with the Permit AI Agent.")
 Keep it short and professional."""
 )
@@ -54,16 +57,11 @@ try:
     from workflow.orchestrator import orchestrator
     from models.schemas import PermitState
     _agents_available = True
-    print("[Startup] ✅ Agent pipeline loaded successfully")
+    print("[Startup] Agent pipeline loaded successfully")
 except Exception as e:
-    print(f"[Startup] ⚠️ Agent pipeline unavailable: {e}. Using direct Gemini fallback.")
-
-# In-memory workflow store for dashboard
-latest_workflow: dict = {}
-
-class UserQuery(BaseModel):
-    query: str
-    context: Optional[dict] = None
+    print(f"[Startup] Agent pipeline unavailable: {e}. Using direct Gemini fallback.")
+# Global state for guests (non-persistent across restarts)
+guest_dashboard_state = None
 
 class UserCredentials(BaseModel):
     tckn: str
@@ -125,53 +123,103 @@ async def create_chat_session(token: str, db: Session = Depends(get_db)):
     return {"id": session_id, "title": "New Chat"}
 
 
-async def _run_with_agents(query: str) -> str:
-    """Run the full pydantic-ai + langgraph pipeline in a thread to avoid deadlock."""
+async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en") -> str:
+    """Run the full pydantic-ai + langgraph pipeline."""
     initial_state = PermitState(business_profile={"raw_query": query})
+    
+    processed_query = query
+    if language == "ar":
+        processed_query = f"Answer in Arabic: {query}"
+    elif language == "tr":
+        processed_query = f"Answer in Turkish: {query}"
 
-    def _sync_invoke():
-        import asyncio as _asyncio
-        loop = _asyncio.new_event_loop()
-        _asyncio.set_event_loop(loop)
+    try:
+        print(f"[_run_with_agents] Invoking orchestrator for query: {query[:50]}...")
+        result = await orchestrator.ainvoke({
+            "state": initial_state,
+            "user_request": processed_query,
+            "language": language
+        })
+        state = result["state"]
+        print("[_run_with_agents] Orchestrator completed successfully")
+    except Exception as e:
+        print(f"[_run_with_agents ERROR] Orchestrator failed: {e}")
+        raise
+
+    dashboard_data = state.model_dump()
+    if "last_updated" in dashboard_data and dashboard_data["last_updated"]:
+        if hasattr(dashboard_data["last_updated"], "isoformat"):
+            dashboard_data["last_updated"] = dashboard_data["last_updated"].isoformat()
+            
+    if user and db:
         try:
-            return loop.run_until_complete(orchestrator.ainvoke({
-                "state": initial_state,
-                "user_request": query
-            }))
-        finally:
-            loop.close()
-
-    result = await asyncio.to_thread(_sync_invoke)
-    state = result["state"]
-
-    # Update dashboard data
-    latest_workflow["state"] = state
-    latest_workflow["business"] = query
+            print(f"[_run_with_agents] Saving for user {user.email}")
+            user.latest_dashboard_state = json.dumps(dashboard_data)
+            db.commit()
+        except Exception as e:
+            print(f"[Dashboard Update Error] {e}")
+    else:
+        # Save to guest state
+        global guest_dashboard_state
+        print("[_run_with_agents] Updating guest_dashboard_state")
+        guest_dashboard_state = json.dumps(dashboard_data)
 
     combined = state.combined_result
     if combined:
+        # Override combined.steps with localized enforced steps from execution_plan
+        steps_list = [s.title for s in state.execution_plan.steps]
+        
         return (
             f"💬 {combined.summary}\n\n"
             f"📋 **Permits (Agencies):** {', '.join(combined.permits)}\n"
             f"📄 **Required Docs:** {', '.join(combined.documents[:6])}...\n"
-            f"✅ **Action Steps:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(combined.steps)) +
+            f"✅ **Action Steps:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps_list)) +
             f"\n\n⏱️ **Timeline:** {combined.timeline_days} days"
-        )
-    elif state.permit_plan:
-        p = state.permit_plan
-        return (
-            f"📋 **Permits Required:** {', '.join(p.permits)}\n\n"
-            f"🏛️ **Relevant Agencies:** {', '.join(p.agencies)}\n\n"
-            f"📄 **Documents to Prepare:**\n- " + "\n- ".join(p.documents)
         )
     raise ValueError("Empty agent result")
 
 
-async def _run_direct_gemini(query: str) -> str:
+async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en") -> str:
     """Direct Gemini call — fast and reliable fallback."""
-    response = await asyncio.to_thread(gemini_model.generate_content, query)
-    latest_workflow["business"] = query
-    latest_workflow["direct_answer"] = response.text
+    localized_query = query
+    if language == "ar":
+        localized_query = f"Answer in Arabic: {query}"
+    elif language == "tr":
+        localized_query = f"Answer in Turkish: {query}"
+        
+    response = await asyncio.to_thread(gemini_model.generate_content, localized_query)
+    
+    if True: # Always update state (either user or guest)
+        # Mock a workflow state for direct calls so the dashboard isn't empty
+        localized_specs = get_localized_steps(language)
+        mock_steps = [
+            {"id": s[0], "title": s[1], "responsible": s[2], "status": "pending", "notes": s[3]}
+            for s in localized_specs
+        ]
+        
+        mock_state = {
+            "business_profile": {"raw_query": query},
+            "execution_plan": {
+                "steps": mock_steps,
+                "assigned_agents": ["Planner", "Classifier"]
+            },
+            "permit_plan": {
+                "permits": ["İşyeri Açma ve Çalışma Ruhsatı"],
+                "agencies": ["Municipality"],
+                "documents": ["Tax registration", "Lease agreement", "ID copy"]
+            },
+            "last_updated": datetime.datetime.now().isoformat(),
+            "direct_answer": response.text
+        }
+        if user and db:
+            print(f"[_run_direct_gemini] Saving for user {user.email}")
+            user.latest_dashboard_state = json.dumps(mock_state)
+            db.commit()
+        else:
+            global guest_dashboard_state
+            print("[_run_direct_gemini] Saving to guest_dashboard_state")
+            guest_dashboard_state = json.dumps(mock_state)
+        
     return response.text
 
 
@@ -204,14 +252,13 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
 
         if _agents_available:
             try:
-                answer = await _run_with_agents(query.query)
+                answer = await _run_with_agents(query.query, user, db, query.language)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
-                fallback_model = genai.GenerativeModel("gemini-2.5-flash")
-                fallback_response = await asyncio.to_thread(fallback_model.generate_content, query.query)
-                answer = fallback_response.text
+                # Use current gemini_model for fallback
+                answer = await _run_direct_gemini(query.query, user, db, query.language)
         else:
-            answer = await _run_direct_gemini(query.query)
+            answer = await _run_direct_gemini(query.query, user, db, query.language)
         
         if user:
             # Save assistant message
@@ -219,6 +266,7 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
             db.add(assistant_msg)
             db.commit()
 
+        print(f"[agent_query] Success. Content length: {len(answer)}")
         return {"role": "assistant", "content": answer}
 
     except Exception as e:
@@ -251,40 +299,57 @@ async def clear_chat_history(session_id: str, token: str, db: Session = Depends(
 
 
 @app.get("/workflow/latest")
-async def get_latest():
-    if not latest_workflow:
-        return {}
-    state = latest_workflow.get("state")
-    if state:
-        # Return real agent pipeline data for the dashboard
+async def get_latest(token: Optional[str] = None, db: Session = Depends(get_db)):
+    user = None
+    if token:
         try:
-            from models.schemas import PermitState
-            if isinstance(state, PermitState):
-                return state.model_dump()
-        except Exception:
+            user = await get_current_user(token, db)
+        except:
             pass
-    # Fallback to basic structure
-    return {
-        "business_profile": {"raw_query": latest_workflow.get("business", "")},
-        "execution_plan": {
-            "steps": [
-                "Get a Tax Number (Individual Tax ID)",
-                "Choose Company Type (LTD/A.Ş.) & Prepare Documents",
-                "MERSİS Online Registration & Articles Generation",
-                "Deposit Initial Capital (Blocked Bank Account)",
-                "Register with Trade Registry (Ticaret Sicil Müdürlüğü)",
-                "Post-Registration (Corporate Bank, Tax Office, SGK)",
-                "Apply for Workplace License (İşyeri Açma ve Çalışma Ruhsatı)"
-            ],
-            "assigned_agents": ["PermitOps AI"] * 7
-        },
-        "permit_plan": {
-            "permits": ["İşyeri Açma ve Çalışma Ruhsatı", "Fire Safety Certificate", "Health Safety Certificate"],
-            "agencies": ["Beşiktaş Municipality", "Istanbul Fire Department", "Ministry of Health"],
-            "documents": ["Tax registration certificate", "Lease agreement", "Floor plan", "ID/Passport copy", "Application form"]
-        },
-        "last_updated": "2026-03-13T05:00:00"
-    }
+
+    if user and user.latest_dashboard_state:
+        try:
+            return json.loads(user.latest_dashboard_state)
+        except:
+            pass
+    
+    # Fallback to guest state if no user or no user state
+    if guest_dashboard_state:
+        try:
+            print("[get_latest] Returning guest_dashboard_state")
+            return json.loads(guest_dashboard_state)
+        except:
+            pass
+            
+    print("[get_latest] Returning empty state")
+    return {}
+
+
+@app.post("/workflow/step/complete/{step_id}")
+async def complete_step(step_id: int, token: str, db: Session = Depends(get_db)):
+    user = await get_current_user(token, db)
+    if not user.latest_dashboard_state:
+        raise HTTPException(status_code=404, detail="No active workflow")
+    
+    try:
+        state_dict = json.loads(user.latest_dashboard_state)
+        steps = state_dict.get("execution_plan", {}).get("steps", [])
+        
+        updated = False
+        for step in steps:
+            if step.get("id") == step_id:
+                step["status"] = "completed"
+                updated = True
+                break
+                
+        if not updated:
+            raise HTTPException(status_code=404, detail="Step not found")
+            
+        user.latest_dashboard_state = json.dumps(state_dict)
+        db.commit()
+        return {"status": "success", "message": f"Step {step_id} marked as completed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/business/intake")

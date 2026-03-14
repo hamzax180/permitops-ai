@@ -1,60 +1,67 @@
 from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
-from models.schemas import PermitState, CombinedPermitResult
+from models.schemas import PermitState, CombinedPermitResult, ExecutionPlan
 from agents.core_agents import permit_agent
 from utils.rate_limiter import throttled_run
 
 class GraphState(TypedDict):
     state: PermitState
     user_request: str
+    language: str
 
 async def permit_node(state: GraphState):
     """Single node: runs one combined API call to get the full permit plan."""
-    result = await throttled_run(permit_agent.run, state['user_request'])
-    combined: CombinedPermitResult = result.data
+    result = await throttled_run(permit_agent, state['user_request'])
+    print(f"[Orchestrator] Agent result type: {type(result)}")
+    
+    # Handle different result types from pydantic-ai
+    if hasattr(result, 'data'):
+        combined = result.data
+    else:
+        print("[Orchestrator] result has no .data, trying to use result directly or .output")
+        combined = getattr(result, 'output', result)
+        
+    if not isinstance(combined, CombinedPermitResult):
+        print(f"[Orchestrator] Result is not CombinedPermitResult, it is {type(combined)}")
+        # Fallback for string or invalid output
+        combined = CombinedPermitResult(
+            summary=str(combined),
+            permits=["İşyeri Açma ve Çalışma Ruhsatı"],
+            agencies=["Municipality", "Tax Office"],
+            documents=["ID", "Lease", "Tax ID"],
+            steps=["1. Tax ID", "2. Registration", "3. Permit"],
+            timeline_days=30
+        )
+    
     state['state'].combined_result = combined
     # Also populate legacy fields so the dashboard still works
-    from models.schemas import PermitPlan, ExecutionPlan
+    from models.schemas import PermitPlan
     state['state'].permit_plan = PermitPlan(
         permits=combined.permits,
         agencies=combined.agencies,
         documents=combined.documents,
     )
-    # Ensure standard registration steps are present and ordered correctly
-    all_steps = combined.steps
+    # Define the required 14 steps with their responsibility
+    from models.schemas import StepDetail
+    from utils.protocol import get_localized_steps
     
-    # 1. Tax Number
-    if not any("Tax Number" in s for s in all_steps):
-        all_steps = ["Get a Tax Number (Individual Tax ID)"] + all_steps
-        
-    # 2. Company Type & Documents
-    if not any("Company Type" in s for s in all_steps):
-        # Insert after Tax Number
-        all_steps.insert(1, "Choose Company Type (LTD: 50k / A.Ş.: 250k TRY) & Prepare Documents")
-        
-    # 3. MERSIS Application
-    if not any("MERSIS" in s for s in all_steps):
-        # Insert after Type/Documents
-        all_steps.insert(2, "MERSİS Online Registration & Articles Generation")
-        
-    # 4. Deposit Capital
-    if not any("Capital" in s for s in all_steps):
-        # Insert after MERSIS
-        all_steps.insert(3, "Deposit Initial Capital (Blocked Bank Account)")
-        
-    # 5. Trade Registry (New)
-    if not any("Trade Registry" in s for s in all_steps):
-        # Insert after Capital
-        all_steps.insert(4, "Register with Trade Registry (Ticaret Sicil Müdürlüğü)")
-        
-    # 6. Post-Registration (New)
-    if not any("Post-Registration" in s for s in all_steps):
-        # Insert after Trade Registry
-        all_steps.insert(5, "Post-Registration (Corporate Bank, Tax Office, SGK, Accountant)")
+    lang = state.get('language', 'en')
+    step_specs = get_localized_steps(lang)
     
+    details = []
+    for id_val, title, resp, note in step_specs:
+        details.append(StepDetail(
+            id=id_val,
+            title=title,
+            responsible=resp,
+            status="pending",
+            notes=note
+        ))
+    
+    # Use the structured steps as the final execution plan
     state['state'].execution_plan = ExecutionPlan(
-        steps=all_steps,
-        assigned_agents=["PermitOps AI"] * len(all_steps),
+        steps=details,
+        assigned_agents=["Planner", "Classifier"]
     )
     return state
 
