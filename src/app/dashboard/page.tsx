@@ -54,7 +54,13 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        const url = token ? `http://localhost:8003/workflow/latest?token=${token}` : 'http://localhost:8003/workflow/latest';
+        const sid = localStorage.getItem('permitops_active_session_id');
+        let url = `http://localhost:8003/workflow/latest`;
+        const params = new URLSearchParams();
+        if (token) params.append('token', token);
+        if (sid) params.append('session_id', sid);
+        if (params.toString()) url += `?${params.toString()}`;
+
         const res = await fetch(url);
         if (res.ok) {
           const json = await res.json();
@@ -69,12 +75,22 @@ export default function Dashboard() {
       }
     }
     fetchState();
+
+    const handleStorage = () => fetchState();
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, [language]);
 
   const refresh = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = token ? `http://localhost:8003/workflow/latest?token=${token}` : 'http://localhost:8003/workflow/latest';
+      const sid = localStorage.getItem('permitops_active_session_id');
+      let url = `http://localhost:8003/workflow/latest`;
+      const params = new URLSearchParams();
+      if (token) params.append('token', token);
+      if (sid) params.append('session_id', sid);
+      if (params.toString()) url += `?${params.toString()}`;
+      
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
@@ -90,8 +106,14 @@ export default function Dashboard() {
   const markComplete = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
-      const res = await fetch(`http://localhost:8003/workflow/step/complete/${id}?token=${token}`, {
+      const sid = localStorage.getItem('permitops_active_session_id');
+      let url = `http://localhost:8003/workflow/step/complete/${id}`;
+      const params = new URLSearchParams();
+      if (token) params.append('token', token);
+      if (sid) params.append('session_id', sid);
+      url += `?${params.toString()}`;
+
+      const res = await fetch(url, {
         method: 'POST'
       });
       if (res.ok) {

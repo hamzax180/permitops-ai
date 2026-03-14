@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, MessageSquare, Trash2, Menu, Settings, HelpCircle, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ChatSession {
   id: string;
@@ -23,6 +24,7 @@ export default function Sidebar({
   onDeleteSession,
   token
 }: SidebarProps) {
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export default function Sidebar({
                 exit={{ opacity: 0, x: -10 }}
                 className="text-sm font-medium text-white/90 whitespace-nowrap"
               >
-                New Chat
+                 {t('sidebar_new_chat')}
               </motion.span>
             )}
           </AnimatePresence>
@@ -98,7 +100,7 @@ export default function Sidebar({
               exit={{ opacity: 0 }}
               className="text-[11px] font-bold text-white/40 uppercase tracking-widest px-3 mb-3 mt-4"
             >
-              Recent
+               {t('sidebar_recent')}
             </motion.h3>
           )}
         </AnimatePresence>
@@ -144,9 +146,9 @@ export default function Sidebar({
       {/* Bottom Actions */}
       <div className="p-3 space-y-1 mt-auto border-t border-white/5">
         {[
-          { icon: HelpCircle, label: 'Help', color: 'text-white/60' },
-          { icon: History, label: 'Activity', color: 'text-white/60' },
-          { icon: Settings, label: 'Settings', color: 'text-white/60' },
+          { icon: HelpCircle, label: t('sidebar_help'), color: 'text-white/60' },
+          { icon: History, label: t('sidebar_activity'), color: 'text-white/60' },
+          { icon: Settings, label: t('sidebar_settings'), color: 'text-white/60' },
         ].map((item, idx) => (
           <div
             key={idx}

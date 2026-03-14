@@ -99,6 +99,11 @@ export default function ChatPage() {
     if (isLoaded && !isAuthenticated && sessionId === "default-session") {
       localStorage.setItem('permitops_chat_history', JSON.stringify(msgs));
     }
+    if (sessionId) {
+      localStorage.setItem('permitops_active_session_id', sessionId);
+      // Dispatch storage event manually for same-tab updates
+      window.dispatchEvent(new Event('storage'));
+    }
   }, [msgs, isLoaded, isAuthenticated, sessionId]);
 
   useEffect(() => {
@@ -216,11 +221,11 @@ export default function ChatPage() {
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl md:text-2xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
-                    ✦ Merhaba hatose
+                    ✦ {t('chat_welcome').replace('{name}', 'hatose')}
                   </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
-                  Where do we begin?
+                  {t('chat_begin')}
                 </h1>
               </motion.div>
 
@@ -237,7 +242,7 @@ export default function ChatPage() {
                         send();
                       }
                     }}
-                    placeholder="Gemini 3'e sorun"
+                    placeholder={t('chat_placeholder_alt')}
                     className="flex-1 bg-transparent text-[18px] p-4 text-white placeholder:text-white/30 focus:outline-none resize-none"
                   />
                   <div className="flex items-center justify-between px-2 pb-1">
@@ -270,12 +275,12 @@ export default function ChatPage() {
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl"
               >
                 {[
-                  { icon: ImageIcon, label: 'Create Image', color: 'text-orange-400' },
-                  { icon: Mic, label: 'Create music', color: 'text-pink-400' },
-                  { label: 'Add energy to my day!' },
-                  { label: 'Write whatever you want.' },
-                  { label: 'Help me learn' },
-                  { label: 'Create a video' }
+                  { icon: ImageIcon, label: t('chat_suggestion_create_image'), color: 'text-orange-400' },
+                  { icon: Mic, label: t('chat_suggestion_create_music'), color: 'text-pink-400' },
+                  { label: t('chat_suggestion_energy') },
+                  { label: t('chat_suggestion_write') },
+                  { label: t('chat_suggestion_learn') },
+                  { label: t('chat_suggestion_video') }
                 ].map((chip, i) => (
                   <button
                     key={i}

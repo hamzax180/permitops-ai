@@ -60,8 +60,8 @@ try:
     print("[Startup] Agent pipeline loaded successfully")
 except Exception as e:
     print(f"[Startup] Agent pipeline unavailable: {e}. Using direct Gemini fallback.")
-# Global state for guests (non-persistent across restarts)
-guest_dashboard_state = None
+# Global states for guests (non-persistent across restarts, keyed by session_id)
+guest_dashboard_states = {}
 
 class UserCredentials(BaseModel):
     tckn: str
@@ -153,16 +153,24 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Option
             
     if user and db:
         try:
-            print(f"[_run_with_agents] Saving for user {user.email}")
-            user.latest_dashboard_state = json.dumps(dashboard_data)
-            db.commit()
+            session_id = state.business_profile.get("session_id", "default")
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if db_session:
+                print(f"[_run_with_agents] Saving for session {session_id}")
+                db_session.dashboard_state = json.dumps(dashboard_data)
+                db.commit()
+            else:
+                # Fallback to user-global if session not found (legacy)
+                user.latest_dashboard_state = json.dumps(dashboard_data)
+                db.commit()
         except Exception as e:
             print(f"[Dashboard Update Error] {e}")
     else:
-        # Save to guest state
-        global guest_dashboard_state
-        print("[_run_with_agents] Updating guest_dashboard_state")
-        guest_dashboard_state = json.dumps(dashboard_data)
+        # Save to guest states
+        global guest_dashboard_states
+        session_id = state.business_profile.get("session_id", "default")
+        print(f"[_run_with_agents] Updating guest_dashboard_states for {session_id}")
+        guest_dashboard_states[session_id] = json.dumps(dashboard_data)
 
     combined = state.combined_result
     if combined:
@@ -212,13 +220,20 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
             "direct_answer": response.text
         }
         if user and db:
-            print(f"[_run_direct_gemini] Saving for user {user.email}")
-            user.latest_dashboard_state = json.dumps(mock_state)
-            db.commit()
+            session_id = query.get("session_id", "default") if isinstance(query, dict) else "default"
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if db_session:
+                print(f"[_run_direct_gemini] Saving for session {session_id}")
+                db_session.dashboard_state = json.dumps(mock_state)
+                db.commit()
+            else:
+                user.latest_dashboard_state = json.dumps(mock_state)
+                db.commit()
         else:
-            global guest_dashboard_state
-            print("[_run_direct_gemini] Saving to guest_dashboard_state")
-            guest_dashboard_state = json.dumps(mock_state)
+            global guest_dashboard_states
+            session_id = query.get("session_id", "default") if isinstance(query, dict) else "default"
+            print(f"[_run_direct_gemini] Saving to guest_dashboard_states for {session_id}")
+            guest_dashboard_states[session_id] = json.dumps(mock_state)
         
     return response.text
 
@@ -299,7 +314,7 @@ async def clear_chat_history(session_id: str, token: str, db: Session = Depends(
 
 
 @app.get("/workflow/latest")
-async def get_latest(token: Optional[str] = None, db: Session = Depends(get_db)):
+async def get_latest(token: Optional[str] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
     user = None
     if token:
         try:
@@ -307,34 +322,44 @@ async def get_latest(token: Optional[str] = None, db: Session = Depends(get_db))
         except:
             pass
 
-    if user and user.latest_dashboard_state:
-        try:
+    if user:
+        if session_id:
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if db_session and db_session.dashboard_state:
+                return json.loads(db_session.dashboard_state)
+        
+        # Fallback to user latest if no session state
+        if user.latest_dashboard_state:
             return json.loads(user.latest_dashboard_state)
-        except:
-            pass
     
-    # Fallback to guest state if no user or no user state
-    if guest_dashboard_state:
-        try:
-            print("[get_latest] Returning guest_dashboard_state")
-            return json.loads(guest_dashboard_state)
-        except:
-            pass
+    # Fallback to guest states
+    if session_id and session_id in guest_dashboard_states:
+        return json.loads(guest_dashboard_states[session_id])
             
-    print("[get_latest] Returning empty state")
+    print(f"[get_latest] Returning empty state for session {session_id}")
     return {}
 
 
 @app.post("/workflow/step/complete/{step_id}")
-async def complete_step(step_id: int, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
-    if not user.latest_dashboard_state:
-        raise HTTPException(status_code=404, detail="No active workflow")
-    
+async def complete_step(step_id: int, token: str, session_id: Optional[str] = None, db: Session = Depends(get_db)):
     try:
-        state_dict = json.loads(user.latest_dashboard_state)
-        steps = state_dict.get("execution_plan", {}).get("steps", [])
+        user = await get_current_user(token, db)
         
+        state_dict = None
+        db_session = None
+        
+        if session_id:
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if db_session and db_session.dashboard_state:
+                state_dict = json.loads(db_session.dashboard_state)
+                
+        if not state_dict and user.latest_dashboard_state:
+            state_dict = json.loads(user.latest_dashboard_state)
+            
+        if not state_dict:
+            raise HTTPException(status_code=404, detail="No active workflow found")
+        
+        steps = state_dict.get("execution_plan", {}).get("steps", [])
         updated = False
         for step in steps:
             if step.get("id") == step_id:
@@ -345,10 +370,17 @@ async def complete_step(step_id: int, token: str, db: Session = Depends(get_db))
         if not updated:
             raise HTTPException(status_code=404, detail="Step not found")
             
-        user.latest_dashboard_state = json.dumps(state_dict)
+        # Save back to correct location
+        serialized = json.dumps(state_dict)
+        if db_session:
+            db_session.dashboard_state = serialized
+        else:
+            user.latest_dashboard_state = serialized
+            
         db.commit()
         return {"status": "success", "message": f"Step {step_id} marked as completed"}
     except Exception as e:
+        if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
 
 
