@@ -188,7 +188,7 @@ export default function Dashboard() {
     (currentAutomatedStep.summary || "")
   ).toLowerCase().includes("mersis");
   const portalName = isMersis ? "MERSİS" : "e-Devlet";
-  const portalUrl = isMersis ? "mersis.gtb.gov.tr" : "turkiye.gov.tr";
+  const portalUrl = isMersis ? "https://mersis.ticaret.gov.tr/Portal/KullaniciIslemleri/GirisIslemleri" : "turkiye.gov.tr";
 
   const handleUploadClick = () => {
     setShowModal(true);
@@ -205,7 +205,7 @@ export default function Dashboard() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ tckn, password })
+        body: JSON.stringify({ tckn, password, portal_url: portalUrl })
       });
 
       const json = await res.json();

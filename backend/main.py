@@ -67,6 +67,7 @@ guest_dashboard_states = {}
 class UserCredentials(BaseModel):
     tckn: str
     password: str
+    portal_url: Optional[str] = None
 
 # --- Auth Dependency ---
 async def get_current_user(token: str, db: Session = Depends(get_db)):
@@ -426,15 +427,23 @@ async def business_intake(query: UserQuery):
 @app.post("/api/submit-edevlet")
 async def submit_edevlet(creds: UserCredentials):
     try:
-        from bot import run_edevlet_bot
+        from bot import run_edevlet_bot, run_mersis_bot
         # Simulate passing the required documents to the bot based on latest workflow
         docs_to_upload = ["lease_agreement.pdf", "tax_certificate.pdf"]
         
-        # Run playwright bot in a background thread to prevent blocking FastAPI
-        result = await asyncio.to_thread(
-            asyncio.run,
-            run_edevlet_bot(creds.tckn, creds.password, docs_to_upload)
-        )
+        # Decide which bot function to run
+        use_mersis = creds.portal_url and "mersis" in creds.portal_url.lower()
+        
+        if use_mersis:
+            result = await asyncio.to_thread(
+                asyncio.run,
+                run_mersis_bot(creds.tckn, creds.password, creds.portal_url)
+            )
+        else:
+            result = await asyncio.to_thread(
+                asyncio.run,
+                run_edevlet_bot(creds.tckn, creds.password, docs_to_upload)
+            )
         
         if result["status"] == "success":
             # Update the mock workflow state to show progression
