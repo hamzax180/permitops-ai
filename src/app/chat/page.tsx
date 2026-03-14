@@ -183,7 +183,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <div className="flex h-screen bg-[#000000] text-white overflow-hidden selection:bg-[#8ab4f8]/30">
+    <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden selection:bg-[var(--accent)]/30">
       <Sidebar 
         currentSessionId={sessionId}
         onSessionSelect={(id) => setSessionId(id)}
@@ -194,14 +194,14 @@ export default function ChatPage() {
       
       <main className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative">
         {/* Header Bar */}
-        <header className="flex items-center justify-between px-6 py-4 shrink-0 bg-[#000000]/80 backdrop-blur-md z-10 transition-all">
+        <header className="flex items-center justify-between px-6 py-4 shrink-0 bg-[var(--bg)]/80 backdrop-blur-md z-10 transition-all">
           <div className="flex items-center gap-3">
           </div>
  
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4285f4] to-[#9b72cb] p-[1.5px] cursor-pointer hover:shadow-lg transition-shadow">
-              <div className="w-full h-full rounded-full bg-[#000000] flex items-center justify-center">
-                <User size={16} className="text-white/80" />
+              <div className="w-full h-full rounded-full bg-[var(--bg)] flex items-center justify-center">
+                <User size={16} className="text-[var(--text)] opacity-80" />
               </div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function ChatPage() {
                 ].map((chip, i) => (
                   <div
                     key={i}
-                    className="bg-[#1e1f20] border border-white/5 text-white/90 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none"
+                    className="bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none shadow-sm"
                   >
                     {chip.icon && <chip.icon size={14} className={chip.color} />}
                     {chip.label}
@@ -243,14 +243,14 @@ export default function ChatPage() {
                      {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
+                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-[var(--text)]">
                   {t('chat_begin')}
                 </h1>
               </motion.div>
 
               {/* Chat Input Pill (for empty state it's centered) */}
               <div className="w-full max-w-3xl mb-12">
-                <div className="bg-[#1e1f20] rounded-[32px] p-2 pr-3 min-h-[140px] flex flex-col border border-transparent hover:bg-[#212224] transition-all group">
+                <div className="bg-[var(--surface)] rounded-[32px] p-2 pr-3 min-h-[140px] flex flex-col border border-[var(--border)] hover:border-[var(--border-2)] transition-all group shadow-xl">
                   <textarea
                     ref={inputRef}
                     value={input}
@@ -262,25 +262,25 @@ export default function ChatPage() {
                       }
                     }}
                     placeholder={t('chat_placeholder_alt')}
-                    className="flex-1 bg-transparent text-[18px] p-4 text-white placeholder:text-white/30 focus:outline-none resize-none"
+                    className="flex-1 bg-transparent text-[18px] p-4 text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none"
                   />
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
-                      <button className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition-all">
+                      <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all">
                         <Plus size={20} />
                       </button>
-                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-all text-sm font-medium">
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="text-[#8ab4f8]">
+                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-all text-sm font-medium">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="text-[var(--accent)]">
                            ⚙
                         </motion.div>
                         Vehicles
                       </button>
                     </div>
                     <div className="flex items-center gap-3">
-                       <span className="text-xs font-medium text-white/40 flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
+                       <span className="text-xs font-medium text-[var(--muted)] flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors">
                          Fast <ChevronDown size={14} />
                        </span>
-                       <button className="p-2.5 text-white/60 hover:text-white hover:bg-white/5 rounded-full transition-all">
+                       <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all">
                         <Mic size={20} />
                       </button>
                     </div>
@@ -301,7 +301,7 @@ export default function ChatPage() {
                   <button
                     key={i}
                     onClick={() => send(chip.label)}
-                    className="bg-[#1e1f20] hover:bg-[#2a2b2d] border border-white/5 text-white/90 text-[15px] py-2.5 px-6 rounded-full transition-all hover:border-white/10 font-medium active:scale-95 touch-manipulation"
+                    className="bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)] text-[15px] py-2.5 px-6 rounded-full transition-all hover:border-[var(--border-2)] font-medium active:scale-95 touch-manipulation shadow-sm"
                   >
                     {chip.label}
                   </button>
@@ -326,8 +326,8 @@ export default function ChatPage() {
 
                     <div className={`flex flex-col max-w-[85%] md:max-w-[80%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                       <div className={`text-[16px] leading-[1.6] whitespace-pre-wrap ${m.role === 'user'
-                          ? 'bg-[#1e1f20] text-white px-6 py-4 rounded-[28px] border border-white/5 shadow-md'
-                          : 'text-[#e3e3e3] py-2 w-full font-normal'
+                          ? 'bg-[var(--surface)] text-[var(--text)] px-6 py-4 rounded-[28px] border border-[var(--border)] shadow-md'
+                          : 'text-[var(--text)] py-2 w-full font-normal'
                         }`}>
                         {m.role === 'assistant' ? (
                           <ReactMarkdown
@@ -336,13 +336,13 @@ export default function ChatPage() {
                               p: ({ node, ...props }) => <p className="mb-6 last:mb-0" {...props} />,
                               ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-6 space-y-3 marker:text-[#8ab4f8]" {...props} />,
                               ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-6 space-y-3 marker:text-[#8ab4f8]" {...props} />,
-                              strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
-                              a: ({ node, ...props }) => <a className="text-[#8ab4f8] hover:underline transition-colors" {...props} />,
+                              strong: ({ node, ...props }) => <strong className="font-bold text-[var(--text)]" {...props} />,
+                              a: ({ node, ...props }) => <a className="text-[var(--accent)] hover:underline transition-colors" {...props} />,
                               code: ({ node, className, children, ...props }) => {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const isInline = !match && !className?.includes('language-');
                                 return isInline
-                                  ? <code className="bg-[#2a2b2d] text-[#f28b82] px-1.5 py-0.5 rounded text-[14px] font-mono" {...props}>{children}</code>
+                                  ? <code className="bg-[var(--surface-2)] text-[#f28b82] px-1.5 py-0.5 rounded text-[14px] font-mono" {...props}>{children}</code>
                                   : <div className="bg-[#0e0e0e] rounded-xl border border-white/5 overflow-hidden my-6"><div className="px-4 py-2 bg-white/5 text-[11px] text-white/40 font-mono uppercase tracking-widest border-b border-white/5">{match?.[1] || 'code'}</div><pre className="p-4 overflow-x-auto text-[14px] text-gray-300 font-mono leading-relaxed"><code {...props}>{children}</code></pre></div>
                               }
                             }}
@@ -360,13 +360,13 @@ export default function ChatPage() {
 
               {busy && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-full justify-start">
-                  <div className="h-8 w-8 rounded-full bg-[#1e1f20] flex items-center justify-center text-[#8ab4f8] shrink-0 mr-4">
+                  <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--accent)] shrink-0 mr-4">
                     <Sparkles size={16} className="animate-pulse" />
                   </div>
-                  <div className="text-white/40 py-2 flex items-center space-x-1.5">
-                    <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                    <span className="w-1.5 h-1.5 bg-white/10 rounded-full animate-bounce"></span>
+                  <div className="text-[var(--muted)] py-2 flex items-center space-x-1.5">
+                    <span className="w-1.5 h-1.5 bg-[var(--muted)] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--muted)]/60 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--muted)]/30 rounded-full animate-bounce"></span>
                   </div>
                 </motion.div>
               )}
@@ -376,9 +376,9 @@ export default function ChatPage() {
 
           {/* Sticky Input Bar (Only visible when NOT empty) */}
           {!isEmpty && (
-            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#0e0e0e] via-[#0e0e0e] to-transparent pt-12 pb-10 px-4 flex justify-center">
+            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[var(--bg)] via-[var(--bg)] to-transparent pt-12 pb-10 px-4 flex justify-center">
               <div className="w-full max-w-3xl relative px-2">
-                <div className={`relative flex flex-col bg-[#1e1f20] rounded-[32px] p-2 pr-3 min-h-[56px] border border-transparent transition-all duration-300 group ${busy ? 'opacity-70' : 'hover:bg-[#212224] focus-within:bg-[#212224] focus-within:ring-1 focus-within:ring-white/10'}`}>
+                <div className={`relative flex flex-col bg-[var(--surface)] rounded-[32px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 group ${busy ? 'opacity-70' : 'hover:bg-[var(--surface-2)] focus-within:bg-[var(--surface-2)] focus-within:ring-1 focus-within:ring-[var(--border-2)]'}`}>
                   
                   <textarea
                     ref={inputRef}
@@ -397,13 +397,13 @@ export default function ChatPage() {
                     }}
                     disabled={busy}
                     placeholder={t('chat_placeholder')}
-                    className="flex-1 max-h-[200px] min-h-[48px] px-4 py-3 bg-transparent text-[16px] text-white placeholder:text-white/30 focus:outline-none resize-none overflow-y-auto slim-scroll"
+                    className="flex-1 max-h-[200px] min-h-[48px] px-4 py-3 bg-transparent text-[16px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none overflow-y-auto slim-scroll"
                     rows={1}
                   />
 
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
-                      <button className="p-2.5 text-white/60 hover:text-white transition-colors">
+                      <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] transition-colors">
                         <Plus size={20} />
                       </button>
                     </div>
@@ -416,19 +416,19 @@ export default function ChatPage() {
                             if (inputRef.current) inputRef.current.style.height = 'auto';
                           }}
                           disabled={busy}
-                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[#8ab4f8] hover:bg-white/5 transition-colors"
+                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--surface-2)] transition-colors"
                         >
                           <Send size={20} />
                         </button>
                       ) : (
-                        <button className="p-3 text-white/60 hover:text-white transition-colors px-2">
+                        <button className="p-3 text-[var(--muted)] hover:text-[var(--text)] transition-colors px-2">
                           <Mic size={20} />
                         </button>
                       )}
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[11px] text-white/30 mt-4 font-normal tracking-wide">
+                <p className="text-center text-[11px] text-[var(--muted)] mt-4 font-normal tracking-wide">
                   PermitOps AI Advisor • Municipal Protocol Engine • v2.4
                 </p>
               </div>
@@ -441,8 +441,8 @@ export default function ChatPage() {
           __html: `
           .slim-scroll::-webkit-scrollbar { width: 6px; }
           .slim-scroll::-webkit-scrollbar-track { background: transparent; }
-          .slim-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
-          .slim-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+          .slim-scroll::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
+          .slim-scroll::-webkit-scrollbar-thumb:hover { background: var(--border); }
         `}} />
       </main>
     </div>

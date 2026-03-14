@@ -53,13 +53,13 @@ export default function Sidebar({
     <motion.aside
       initial={false}
       animate={{ width: isExpanded ? 280 : 68 }}
-      className="h-full bg-[#131314] flex flex-col shrink-0 transition-all duration-300 ease-in-out relative z-50 shadow-2xl border-r border-white/5"
+      className="h-full bg-[var(--surface)] flex flex-col shrink-0 transition-all duration-300 ease-in-out relative z-50 shadow-2xl border-r border-[var(--border)]"
     >
       {/* Top Menu Button */}
       <div className="p-4 mb-2">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2.5 rounded-full hover:bg-white/10 text-white transition-colors"
+          className="p-2.5 rounded-full hover:bg-[var(--surface-2)] text-[var(--text)] transition-colors"
           title="Collapse menu"
         >
           <Menu size={20} />
@@ -70,7 +70,7 @@ export default function Sidebar({
       <div className="px-3 mb-4">
         <button
           onClick={onNewChat}
-          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[#000000] hover:bg-[#1a1a1a] border border-white/5 shadow-md overflow-hidden ${
+          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[var(--bg)] hover:bg-[var(--surface-2)] border border-[var(--border)] shadow-md overflow-hidden ${
             isExpanded ? 'w-36 px-4' : 'w-10 px-2.5 ml-1'
           }`}
         >
@@ -81,7 +81,7 @@ export default function Sidebar({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="text-sm font-medium text-white/90 whitespace-nowrap"
+                className="text-sm font-medium text-[var(--text)] opacity-90 whitespace-nowrap"
               >
                  {t('sidebar_new_chat')}
               </motion.span>
@@ -98,7 +98,7 @@ export default function Sidebar({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-[11px] font-bold text-white/40 uppercase tracking-widest px-3 mb-3 mt-4"
+              className="text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest px-3 mb-3 mt-4"
             >
                {t('sidebar_recent')}
             </motion.h3>
@@ -108,7 +108,7 @@ export default function Sidebar({
         {loading && sessions.length === 0 ? (
           <div className="space-y-4 px-3 py-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-2 bg-white/5 animate-pulse rounded-full w-full" />
+              <div key={i} className="h-2 bg-[var(--border)] animate-pulse rounded-full w-full" />
             ))}
           </div>
         ) : (
@@ -117,15 +117,15 @@ export default function Sidebar({
               key={s.id}
               className={`group relative flex items-center gap-3 p-3 rounded-full transition-all cursor-pointer ${
                 currentSessionId === s.id
-                  ? 'bg-[#2a2b2d] text-white shadow-sm'
-                  : 'hover:bg-white/5 text-white/70 hover:text-white'
+                  ? 'bg-[var(--surface-2)] text-[var(--accent)] shadow-sm'
+                  : 'hover:bg-[var(--surface-2)] text-[var(--text)] opacity-70 hover:opacity-100'
               }`}
               onClick={() => onSessionSelect(s.id)}
               title={s.title}
             >
-              <MessageSquare size={18} className={currentSessionId === s.id ? 'text-[#8ab4f8]' : 'text-white/40'} />
+              <MessageSquare size={18} className={currentSessionId === s.id ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />
               {isExpanded && (
-                <span className="text-sm font-medium truncate flex-1 pr-6">{s.title}</span>
+                <span className="text-sm font-medium truncate flex-1 pr-6 text-[var(--text)]">{s.title}</span>
               )}
               {isExpanded && (
                 <button
@@ -146,18 +146,18 @@ export default function Sidebar({
       {/* Bottom Actions */}
       <div className="p-3 space-y-1 mt-auto border-t border-white/5">
         {[
-          { icon: HelpCircle, label: t('sidebar_help'), color: 'text-white/60' },
-          { icon: History, label: t('sidebar_activity'), color: 'text-white/60' },
-          { icon: Settings, label: t('sidebar_settings'), color: 'text-white/60' },
+          { icon: HelpCircle, label: t('sidebar_help'), color: 'text-[var(--muted)]' },
+          { icon: History, label: t('sidebar_activity'), color: 'text-[var(--muted)]' },
+          { icon: Settings, label: t('sidebar_settings'), color: 'text-[var(--muted)]' },
         ].map((item, idx) => (
           <div
             key={idx}
-            className="group flex items-center gap-3 p-3 rounded-full hover:bg-white/5 cursor-pointer transition-all"
+            className="group flex items-center gap-3 p-3 rounded-full hover:bg-[var(--surface-2)] cursor-pointer transition-all"
             title={item.label}
           >
-            <item.icon size={18} className={`${item.color} group-hover:text-white transition-colors`} />
+            <item.icon size={18} className={`${item.color} group-hover:text-[var(--text)] transition-colors`} />
             {isExpanded && (
-              <span className="text-sm font-medium text-white/70 group-hover:text-white">{item.label}</span>
+              <span className="text-sm font-medium text-[var(--text)] opacity-70 group-hover:opacity-100">{item.label}</span>
             )}
           </div>
         ))}
