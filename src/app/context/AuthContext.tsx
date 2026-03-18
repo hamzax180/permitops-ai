@@ -21,13 +21,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        const savedToken = localStorage.getItem('permitops_token');
-        const savedUser = localStorage.getItem('permitops_user');
-        const savedName = localStorage.getItem('permitops_name');
-        if (savedToken && savedUser) {
-            setToken(savedToken);
-            setUser({ email: savedUser, fullName: savedName || getFallbackName(savedUser) });
-        }
+        const load = () => {
+            const savedToken = localStorage.getItem('permitops_token');
+            const savedUser = localStorage.getItem('permitops_user');
+            const savedName = localStorage.getItem('permitops_name');
+            if (savedToken && savedUser) {
+                setToken(savedToken);
+                setUser({ email: savedUser, fullName: savedName || getFallbackName(savedUser) });
+            } else {
+                setToken(null);
+                setUser(null);
+            }
+        };
+        
+        load();
+
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === 'permitops_token') {
+                load();
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
     const login = (token: string, email: string, fullName?: string) => {
