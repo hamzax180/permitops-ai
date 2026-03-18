@@ -7,7 +7,7 @@ class ChatSession(Base):
     __tablename__ = "chat_sessions"
 
     id = Column(String, primary_key=True, index=True) # Unique session ID
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     title = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

@@ -25,7 +25,7 @@ const howItWorks = [
 
 const features = [
   { icon: Bot, title: 'Multi-Agent AI', desc: 'LangGraph orchestrated agents run planning, classification, document validation, and compliance checking in parallel.', badge: 'PydanticAI' },
-  { icon: Globe, title: 'All 39 Districts', desc: 'Full Istanbul coverage — Beşiktaş, Kadıköy, Şişli, Ataşehir, and 35 more municipalities, each with distinct protocols.', badge: 'Istanbul' },
+  { icon: Globe, title: 'All 39 Districts', desc: 'Full Istanbul coverage — supporting all 39 municipalities, each with distinct local protocols and requirements.', badge: 'Istanbul' },
   { icon: Database, title: 'Real-Time Tracking', desc: 'Every step of your permit application is tracked in a persistent state machine. Nothing falls through the cracks.', badge: 'LangGraph' },
 ];
 
@@ -191,17 +191,14 @@ export default function Home() {
           </video>
           {/* Sharp Gradual Transitions (The Split) */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
-          {/* Subtle Dark Overlay for Text Pop */}
-          <div className="absolute inset-0 bg-black/30 z-[5]" />
+
+
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10 px-6">
           <div className="text-center mb-24 space-y-6">
-            <div className="flex items-center justify-center mb-2">
-              <h3 className="text-xl md:text-3xl font-black uppercase tracking-[0.4em] text-purple-400 drop-shadow-sm">{t('process_title')}</h3>
-            </div>
-            <h2 className="text-5xl md:text-7xl font-medium text-white drop-shadow-md tracking-tight leading-tight max-w-4xl mx-auto">{t('process_subtitle')}</h2>
+
+            <h2 className="text-5xl md:text-7xl font-medium text-white drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)] tracking-tight leading-tight max-w-4xl mx-auto">{t('process_subtitle')}</h2>
           </div>
  
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
@@ -214,8 +211,8 @@ export default function Home() {
                 transition={{ delay: i * 0.2 }}
                 className={`flex flex-col space-y-6 group/card ${isRTL ? 'text-right items-end' : 'text-left items-start'}`}
               >
-                <h4 className="text-6xl font-medium text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] tracking-tight">{step.title}</h4>
-                <p className="text-[22px] text-white/80 leading-relaxed font-normal drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
+                <h4 className="text-6xl font-medium text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] tracking-tight">{step.title}</h4>
+                <p className="text-[22px] text-white/90 leading-relaxed font-normal drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)]">
                   {step.desc}
                 </p>
               </motion.div>

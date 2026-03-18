@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, MessageSquare, Trash2, Menu, Settings, HelpCircle, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
+import { apiFetch } from '../utils/api';
 
 interface ChatSession {
   id: string;
@@ -11,7 +12,7 @@ interface ChatSession {
 
 interface SidebarProps {
   currentSessionId: string | null;
-  onSessionSelect: (id: string) => void;
+  onSessionSelect: (id: string, title: string) => void;
   onNewChat: () => void;
   onDeleteSession: (id: string) => void;
   token: string | null;
@@ -33,8 +34,8 @@ export default function Sidebar({
     if (!token) return;
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:8003/chat/sessions?token=${token}`);
-      if (res.ok) {
+      const res = await apiFetch(`/chat/sessions?token=${token}`);
+      if (res?.ok) {
         const data = await res.json();
         setSessions(data);
       }
@@ -120,7 +121,7 @@ export default function Sidebar({
                   ? 'bg-[var(--surface-2)] text-[var(--accent)] shadow-sm'
                   : 'hover:bg-[var(--surface-2)] text-[var(--text)] opacity-70 hover:opacity-100'
               }`}
-              onClick={() => onSessionSelect(s.id)}
+              onClick={() => onSessionSelect(s.id, s.title)}
               title={s.title}
             >
               <MessageSquare size={18} className={currentSessionId === s.id ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />

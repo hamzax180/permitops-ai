@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })();
         `}} />
       </head>
-      <body className="antialiased font-sans">
+      <body className="antialiased font-gemini">
         <LanguageProvider>
           <AuthProvider>
             <Navbar />

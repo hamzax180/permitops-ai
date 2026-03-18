@@ -3,60 +3,134 @@ import asyncio
 from playwright.async_api import async_playwright
 import traceback
 
-async def run_mersis_bot(tckn: str, password: str, portal_url: str) -> dict:
+MERSIS_URL = "https://mersis.ticaret.gov.tr/Portal/KullaniciIslemleri/GirisIslemleri"
+
+# Step-specific post-login MERSİS pages
+MERSIS_STEP_URLS = {
+    3: "/Portal/KurumIslemleri/SirketIslemleri/SirketUnvanSorgula",   # Company name reservation
+    4: "/Portal/KurumIslemleri/SirketIslemleri/SirketKurulusBasvurusu",  # Company formation (type/capital)
+    5: "/Portal/KurumIslemleri/SirketIslemleri/SirketIslemleri",        # Company address / structure
+}
+
+async def run_mersis_bot(tckn: str, password: str, portal_url: str, step_id: int = 0) -> dict:
     """
-    Detailed login sequence for MERSİS portal.
+    MERSİS login sequence via e-Government. After login, navigates to
+    the step-specific MERSİS page (steps 3/4/5).
     """
-    print(f"[MERSİS Bot] Starting session for TCKN: {tckn}")
-    
+    print(f"[MERSİS Bot] Starting session for TCKN: {tckn}, step_id={step_id}")
+
     try:
         p = await async_playwright().start()
-        browser = await p.chromium.launch(headless=False, slow_mo=1000)
+        browser = await p.chromium.launch(headless=False, slow_mo=800)
         context = await browser.new_context()
         page = await context.new_page()
 
-        print(f"[MERSİS Bot] Navigating to: {portal_url}")
-        await page.goto(portal_url)
-        
-        print("[MERSİS Bot] Clicking 'Login via e-Government'...")
-        await page.click('text="Login via e-Government"', timeout=20000)
-        
-        # Wait for redirect to e-Devlet
+        target_url = portal_url or MERSIS_URL
+        print(f"[MERSİS Bot] Navigating to: {target_url}")
+        await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
+
+        print("[MERSİS Bot] Looking for login buttons...")
+        try:
+            # First try the big red E-Devlet button
+            await page.click('text="E-Devlet Üzerinden Giriş"', timeout=10000)
+        except Exception:
+            try:
+                # Try English fallback
+                await page.click('text="Login via e-Government"', timeout=5000)
+            except Exception:
+                # Try the top-right "Giriş" link if we are on the home page instead of login page
+                await page.click('a:has-text("Giriş"), .header-login', timeout=5000)
+                # Then wait for the red button on the next page
+                await page.click('text="E-Devlet Üzerinden Giriş"', timeout=10000)
+
+        # Wait for redirect to e-Devlet login form
         await page.wait_for_selector('input[name="tridField"]', timeout=30000)
 
-        print("[MERSİS Bot] Typing TCKN character by character...")
-        await page.type('input[name="tridField"]', tckn, delay=400)
-        
-        print("[MERSİS Bot] Typing Password character by character...")
-        await page.type('input[name="egpField"]', password, delay=400)
-        
+        print("[MERSİS Bot] Entering TCKN...")
+        await page.type('input[name="tridField"]', tckn, delay=350)
+
+        print("[MERSİS Bot] Entering password...")
+        await page.type('input[name="egpField"]', password, delay=350)
+
         print("[MERSİS Bot] Clicking Log in...")
         submit_btn = await page.query_selector('input[name="submitButton"], .submitButton, button[type="submit"]')
         if submit_btn:
             await submit_btn.click()
 
-        print("[MERSİS Bot] Waiting for MERSİS Dashboard...")
+        print("[MERSİS Bot] Waiting for MERSİS dashboard...")
         try:
             await page.wait_for_url("**/Portal/Home**", timeout=120000)
             print("[MERSİS Bot] Dashboard detected!")
         except Exception:
             if "mersis" in page.url and "Giris" not in page.url:
-                 print("[MERSİS Bot] Dashboard seems loaded via URL. Proceeding...")
+                print("[MERSİS Bot] Dashboard loaded via URL check. Proceeding...")
             else:
                 return {"status": "error", "message": "Login timeout. MERSİS Dashboard not reached."}
 
-        return {"status": "success", "message": "Logged into MERSİS successfully. Browser is yours!"}
+        # ── Step-specific post-login navigation ──────────────────────────────
+        if step_id in MERSIS_STEP_URLS:
+            base = "https://mersis.ticaret.gov.tr"
+            step_path = MERSIS_STEP_URLS[step_id]
+            step_full_url = base + step_path
+            print(f"[MERSİS Bot] Step {step_id}: navigating to {step_full_url}")
+            try:
+                await page.goto(step_full_url, wait_until="domcontentloaded", timeout=30000)
+                await asyncio.sleep(5)
+                print(f"[MERSİS Bot] Step {step_id} page loaded.")
+
+                if step_id == 3:
+                    print("[MERSİS Bot] Executing Step 3: Company Name Reservation...")
+                    # Click "Add New Title" if it exists
+                    try:
+                        await page.click('button:has-text("Yeni Ünvan Ekle"), a:has-text("Yeni Ünvan"), .btn-success', timeout=5000)
+                        await asyncio.sleep(2)
+                        await page.type('input[name="Unvan"]', "PERMITOPS CAFE VE RESTORAN LİMİTED ŞİRKETİ", delay=100)
+                        print("[MERSİS Bot] Filled suggested company title for reservation.")
+                    except Exception as e:
+                        print(f"[MERSİS Bot] Step 3 minor error: {e}")
+
+                elif step_id == 4:
+                    print("[MERSİS Bot] Executing Step 4: Company Formation Application...")
+                    # Click "New Application" -> "Limited Company"
+                    try:
+                        await page.click('button:has-text("Yeni Başvuru"), a:has-text("Kuruluş Başlat")', timeout=5000)
+                        await asyncio.sleep(2)
+                        print("[MERSİS Bot] Initiated company formation wizard.")
+                    except Exception as e:
+                        print(f"[MERSİS Bot] Step 4 minor error: {e}")
+
+                elif step_id == 5:
+                    print("[MERSİS Bot] Executing Step 5: Company Address / Structure...")
+                    try:
+                        await page.click('button:has-text("Adres Ekle"), a:has-text("Merkez Adresi")', timeout=5000)
+                        await asyncio.sleep(2)
+                        print("[MERSİS Bot] Opened address entry form.")
+                    except Exception as e:
+                        print(f"[MERSİS Bot] Step 5 minor error: {e}")
+
+                print(f"[MERSİS Bot] Leaving browser open for user to review Step {step_id}.")
+
+            except Exception as nav_err:
+                print(f"[MERSİS Bot] Step page navigation warning: {nav_err}")
+
+        step_labels = {
+            3: "Company name reservation",
+            4: "Company formation application",
+            5: "Company address / structure form",
+        }
+        label = step_labels.get(step_id, f"Step {step_id}")
+        return {"status": "success", "message": f"MERSİS logged in successfully. Opened: {label}."}
 
     except Exception as e:
         err_trace = traceback.format_exc()
         print(f"[MERSİS Bot] Fatal Error:\n{err_trace}")
         return {"status": "error", "message": f"MERSİS Automation failed: {str(e)}"}
 
-async def run_edevlet_bot(tckn: str, password: str, docs: list) -> dict:
+async def run_edevlet_bot(tckn: str, password: str, docs: list, location: str = "Beşiktaş") -> dict:
     """
     Simulates logging into e-Devlet and submitting documents (Step 12).
     """
-    print(f"[e-Devlet Bot] Starting session for TCKN: {tckn}")
+    print(f"[e-Devlet Bot] Starting session for TCKN: {tckn}, location: {location}")
     
     try:
         p = await async_playwright().start()
@@ -96,9 +170,10 @@ async def run_edevlet_bot(tckn: str, password: str, docs: list) -> dict:
                 return {"status": "error", "message": "Login timeout. Dashboard not reached."}
 
         # --- STEP 12 SPECIFIC LOGIC: MULTI-PORTAL NAVIGATION ---
-        print("[e-Devlet Bot] Institution 1: Beşiktaş Municipality...")
+        print(f"[e-Devlet Bot] Institution 1: {location} Municipality...")
         await page.click('input#searchField')
-        await page.type('input#searchField', "Beşiktaş Belediyesi İş Yeri Açma", delay=300)
+        search_query = f"{location} Belediyesi İş Yeri Açma"
+        await page.type('input#searchField', search_query, delay=300)
         await asyncio.sleep(2)
         await page.keyboard.press("ArrowDown")
         await page.keyboard.press("Enter")

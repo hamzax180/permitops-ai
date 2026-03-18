@@ -34,14 +34,14 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-white/5 shadow-2xl' : 'bg-transparent'
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[var(--surface)]/80 backdrop-blur-xl border-b border-[var(--border)] shadow-sm' : 'bg-[var(--surface)]/50 backdrop-blur-sm'
         }`}
     >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
+      <div className="w-full pl-20 pr-6 md:pr-12 h-16 flex items-center justify-between">
 
         {/* Logo removed */}
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav - Left Aligned */}
         <nav className="hidden md:flex items-center gap-1">
           {links.map(({ href, label }) => {
             const active = pathname === href;
@@ -55,7 +55,7 @@ export default function Navbar() {
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute inset-0 rounded-lg bg-white/5"
+                    className="absolute inset-0 rounded-lg bg-[var(--surface-2)]"
                     transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
                   />
                 )}

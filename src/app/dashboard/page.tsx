@@ -339,7 +339,7 @@ export default function Dashboard() {
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-[var(--text)]">{portalName} Integration</h3>
-                        <p className="text-xs text-[var(--muted)]">Secure AI Automation Bot</p>
+                        <p className="text-white/60 text-sm italic">Simulating Local Municipality API...</p>
                       </div>
                     </div>
                     <button onClick={() => setShowModal(false)} className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
@@ -420,11 +420,11 @@ export default function Dashboard() {
             <div className="space-y-1.5">
               <span className="badge badge-purple">
                 <Activity size={10} className="animate-pulse" />
-                {t('dashboard_live_session')} · #IST-BŞK-4221
+                {t('dashboard_live_session')} · #{data?.combined_result?.location ? `IST-${data.combined_result.location.substring(0,3).toUpperCase().replace(/İ/g, 'I')}-4221` : 'IST-TR-4221'}
               </span>
               <h1 className="text-3xl md:text-5xl font-bold text-[var(--text)] tracking-tight drop-shadow-sm dark:drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">{t('dashboard_title')}</h1>
               <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-                <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.business_profile?.raw_query || (isRTL ? 'مطعم في بشكتاش' : 'Beşiktaş Restaurant')}, Istanbul</span>
+                <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.combined_result?.location ? `${data.combined_result.location} ${data.combined_result.business_type || ''}` : (isRTL ? 'مشروع في إسطنبول' : 'Istanbul Business')}, Istanbul</span>
                 <span className="h-3 w-px bg-[var(--border)]" />
                 <span className="flex items-center gap-1.5" suppressHydrationWarning><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `${t('dashboard_updated')} ${new Date(data.last_updated).toLocaleDateString()}` : t('dashboard_no_session')}</span>
               </p>

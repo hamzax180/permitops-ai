@@ -59,7 +59,7 @@ export default function SignupPage() {
             >
                 <div className="glass-card p-10 space-y-8 shadow-2xl">
                     <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-white">Create your account</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">Create your account</h1>
                         <p className="text-[var(--muted)] text-sm">Join PermitOps AI for faster business permits</p>
                     </div>
 
@@ -78,7 +78,7 @@ export default function SignupPage() {
                                     type="text"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl py-3.5 pl-12 pr-4 text-[var(--text)] focus:outline-none focus:border-purple-500 transition-colors"
                                     placeholder="Enter your name"
                                     required
                                 />
@@ -93,7 +93,7 @@ export default function SignupPage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl py-3.5 pl-12 pr-4 text-[var(--text)] focus:outline-none focus:border-purple-500 transition-colors"
                                     placeholder="name@company.com"
                                     required
                                 />
@@ -108,7 +108,7 @@ export default function SignupPage() {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                                    className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl py-3.5 pl-12 pr-4 text-[var(--text)] focus:outline-none focus:border-purple-500 transition-colors"
                                     placeholder="••••••••"
                                     required
                                 />

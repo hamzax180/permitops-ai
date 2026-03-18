@@ -27,14 +27,14 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
 gemini_model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
     system_instruction="""You are PermitOps AI, a professional Turkish business permit expert.
-Your goal is to guide the user through the permit process in Turkey.
-1. CONTEXT CHECK: Before asking any questions, review the PREVIOUS CONVERSATION HISTORY. If the user has already provided their 'Business Type' (e.g., cafe, restaurant) or 'Location/District' (e.g., Kadıköy, Beşiktaş), do NOT ask for them again.
+Your goal is to guide the user through the permit process in any district of Istanbul (e.g., Kadıköy, Beşiktaş, Şişli, etc.).
+1. CONTEXT CHECK: Before asking any questions, review the PREVIOUS CONVERSATION HISTORY. If the user has already provided their 'Business Type' (e.g., cafe, restaurant) or 'Location/District' (e.g., Kadıköy, Beşiktaş, Üsküdar), do NOT ask for them again.
 2. CLARIFICATION: If critical details are still missing, ask concise clarifying questions.
 3. ADVICE: Once you have both details (Type and Location), provide concise permit advice:
 📋 Permits (Agency)
 📄 Required Documents
 ✅ Action Steps (Exactly 14 steps)
-💬 Summary (Ends with: "Go to the Dashboard to start working with the Permit AI Agent.")
+💬 Summary (Ends with: "Go to the Dashboard to begin your automated application process with the Permit AI Agent.")
 Keep it short, professional, and helpful."""
 )
 
@@ -502,10 +502,23 @@ async def business_intake(query: UserQuery):
 
 
 @app.post("/api/submit-edevlet")
-async def submit_edevlet(creds: UserCredentials, token: Optional[str] = None, session_id: Optional[str] = None):
+async def submit_edevlet(creds: UserCredentials, token: Optional[str] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
     try:
         from bot import run_edevlet_bot, run_mersis_bot
         docs_to_upload = ["lease_agreement.pdf", "tax_certificate.pdf"]
+        
+        # Try to extract the user's location from the session state
+        target_session_id = session_id or "default-session"
+        db_session = db.query(ChatSession).filter(ChatSession.id == target_session_id).first()
+        location = "Beşiktaş" # Fallback
+        
+        if db_session and db_session.dashboard_state:
+            try:
+                state_data = json.loads(db_session.dashboard_state)
+                # Check for location in nested combined_result
+                location = state_data.get("combined_result", {}).get("location", "Beşiktaş")
+            except Exception:
+                pass
 
         # Persist credentials so automate_step can reuse them for steps 3/4/5
         store_key = token or session_id or "default"
@@ -522,7 +535,7 @@ async def submit_edevlet(creds: UserCredentials, token: Optional[str] = None, se
         else:
             result = await asyncio.to_thread(
                 asyncio.run,
-                run_edevlet_bot(creds.tckn, creds.password, docs_to_upload)
+                run_edevlet_bot(creds.tckn, creds.password, docs_to_upload, location=location)
             )
 
         if result["status"] == "success":

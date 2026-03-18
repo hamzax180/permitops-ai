@@ -26,6 +26,8 @@ class CombinedPermitResult(BaseModel):
     steps: List[str] = Field(..., description="Ordered steps the business owner must follow")
     timeline_days: int = Field(..., description="Estimated total days to obtain all permits")
     summary: str = Field(..., description="One-paragraph plain-language summary for the business owner")
+    location: str = Field(..., description="The district of Istanbul (e.g. Kadıköy, Beşiktaş)")
+    business_type: str = Field(..., description="The type of business (e.g. Cafe, Restaurant)")
 
 class DocumentChecklist(BaseModel):
     items: List[str]

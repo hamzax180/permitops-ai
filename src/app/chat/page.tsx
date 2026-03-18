@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, User, Loader2, Link2, Image as ImageIcon, Mic, Plus, ChevronDown, Building2, FileText, Search, Clock, HelpCircle } from 'lucide-react';
+import { Send, Sparkles, User, Mic, Plus, ChevronDown, Building2, FileText, Search, Clock, HelpCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../utils/api';
 
 import Sidebar from '../components/Sidebar';
 
@@ -17,6 +18,7 @@ export default function ChatPage() {
   const { t, isRTL, language } = useLanguage();
   const { token, isAuthenticated, user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionTitle, setSessionTitle] = useState<string>('');
   
   const QUICK_Q = [
     t('chat_q1'),
@@ -37,11 +39,12 @@ export default function ChatPage() {
     const initSession = async () => {
       if (isAuthenticated && token) {
         try {
-          const res = await fetch(`http://localhost:8003/chat/sessions?token=${token}`);
-          if (res.ok) {
+          const res = await apiFetch(`/chat/sessions?token=${token}`);
+          if (res?.ok) {
             const data = await res.json();
             if (data.length > 0 && !sessionId) {
               setSessionId(data[0].id);
+              setSessionTitle(data[0].title || '');
             } else if (data.length === 0) {
               handleNewChat();
             }
@@ -63,8 +66,8 @@ export default function ChatPage() {
       
       if (isAuthenticated && token) {
         try {
-          const res = await fetch(`http://localhost:8003/chat/history/${sessionId}?token=${token}`);
-          if (res.ok) {
+          const res = await apiFetch(`/chat/history/${sessionId}?token=${token}`);
+          if (res?.ok) {
             const data = await res.json();
             setMsgs(data);
             if (data.length > 0) {
@@ -101,8 +104,9 @@ export default function ChatPage() {
     }
     if (sessionId) {
       localStorage.setItem('permitops_active_session_id', sessionId);
-      // Dispatch storage event manually for same-tab updates
-      window.dispatchEvent(new Event('storage'));
+      // Use a specific key so Dashboard only updates when a session is set
+      localStorage.setItem('permitops_workflow_update', Date.now().toString());
+      window.dispatchEvent(new StorageEvent('storage', { key: 'permitops_workflow_update' }));
     }
   }, [msgs, isLoaded, isAuthenticated, sessionId]);
 
@@ -113,8 +117,8 @@ export default function ChatPage() {
   const handleNewChat = async () => {
     if (isAuthenticated && token) {
       try {
-        const res = await fetch(`http://localhost:8003/chat/sessions?token=${token}`, { method: 'POST' });
-        if (res.ok) {
+        const res = await apiFetch(`/chat/sessions?token=${token}`, { method: 'POST' });
+        if (res?.ok) {
           const data = await res.json();
           setSessionId(data.id);
           setMsgs([]);
@@ -130,8 +134,8 @@ export default function ChatPage() {
   const handleDeleteSession = async (id: string) => {
     if (!token) return;
     try {
-      const res = await fetch(`http://localhost:8003/chat/history/${id}?token=${token}`, { method: 'DELETE' });
-      if (res.ok) {
+      const res = await apiFetch(`/chat/history/${id}?token=${token}`, { method: 'DELETE' });
+      if (res?.ok) {
         if (sessionId === id) setSessionId(null);
         else setSessionId(prev => prev); 
       }
@@ -150,16 +154,16 @@ export default function ChatPage() {
     setBusy(true);
 
     try {
-      const res = await fetch(`http://localhost:8003/agent/query${token ? `?token=${token}` : ''}`, {
+      const res = await apiFetch(`/agent/query${token ? `?token=${token}` : ''}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: q, language, context: { session_id: sessionId } }),
       });
-      if (!res.ok) throw new Error();
+      if (!res || !res.ok) throw new Error();
       const data = await res.json();
       setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: data.content ?? data.answer ?? data.response ?? 'Done.' }]);
     } catch {
-      setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: "⚠️ Backend is currently offline." }]);
+      setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: "⚠️ Backend is currently offline. Please make sure the server is running." }]);
     } finally {
       setBusy(false);
     }
@@ -186,7 +190,7 @@ export default function ChatPage() {
     <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden selection:bg-[var(--accent)]/30">
       <Sidebar 
         currentSessionId={sessionId}
-        onSessionSelect={(id) => setSessionId(id)}
+        onSessionSelect={(id, title) => { setSessionId(id); setSessionTitle(title); }}
         onNewChat={handleNewChat}
         onDeleteSession={handleDeleteSession}
         token={token}
@@ -197,7 +201,14 @@ export default function ChatPage() {
         <header className="flex items-center justify-between px-6 py-4 shrink-0 bg-[var(--bg)]/80 backdrop-blur-md z-10 transition-all">
           <div className="flex items-center gap-3">
           </div>
- 
+
+          {/* Current chat title — same font as sidebar item */}
+          {sessionTitle && (
+            <span className="text-sm font-medium text-[var(--text)] truncate max-w-xs text-center">
+              {sessionTitle}
+            </span>
+          )}
+
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4285f4] to-[#9b72cb] p-[1.5px] cursor-pointer hover:shadow-lg transition-shadow">
               <div className="w-full h-full rounded-full bg-[var(--bg)] flex items-center justify-center">
@@ -276,13 +287,23 @@ export default function ChatPage() {
                         Vehicles
                       </button>
                     </div>
-                    <div className="flex items-center gap-3">
-                       <span className="text-xs font-medium text-[var(--muted)] flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors">
+                    <div className="flex items-center gap-1">
+                       <span className="text-xs font-medium text-[var(--muted)] flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors mr-2">
                          Fast <ChevronDown size={14} />
                        </span>
-                       <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all">
-                        <Mic size={20} />
-                      </button>
+                       {input.trim() ? (
+                        <button
+                          onClick={() => send()}
+                          disabled={busy}
+                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--surface-2)] transition-colors"
+                        >
+                          <Send size={20} />
+                        </button>
+                      ) : (
+                        <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all">
+                          <Mic size={20} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

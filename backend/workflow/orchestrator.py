@@ -37,7 +37,9 @@ async def permit_node(state: GraphState):
             agencies=["Municipality", "Tax Office"],
             documents=["ID", "Lease", "Tax ID"],
             steps=["1. Tax ID", "2. Registration", "3. Permit"],
-            timeline_days=30
+            timeline_days=30,
+            location="Istanbul",
+            business_type="Business"
         )
     
     state['state'].combined_result = combined
