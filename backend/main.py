@@ -313,8 +313,13 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
             # Upgrade guest session to user session if they log in
             db_session.user_id = user.id
             db.commit()
-        elif db_session.title == "New Chat":
-            db_session.title = query.query[:50]
+        if db_session and not db_session.title:
+            # Clean up the query for a nice title
+            clean = query.query.split('\n')[0].strip() # Take first line
+            clean = clean.rstrip('?.! ')
+            if len(clean) > 35:
+                clean = clean[:32] + "..."
+            db_session.title = clean if clean else "New Consultation"
             db.commit()
         
         # Save user message
@@ -339,7 +344,7 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
             db.commit()
 
         print(f"[agent_query] Success. Content length: {len(answer)}")
-        return {"role": "assistant", "content": answer}
+        return {"role": "assistant", "content": answer, "session_title": db_session.title if db_session else None}
 
     except Exception as e:
         print(f"[AgentQuery ERROR] {e}")

@@ -34,7 +34,7 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[var(--surface)]/80 backdrop-blur-xl border-b border-[var(--border)] shadow-sm' : 'bg-[var(--surface)]/50 backdrop-blur-sm'
+      className={`fixed inset-x-0 top-0 z-[100] transition-all duration-300 ${scrolled ? 'bg-[var(--surface)]/95 backdrop-blur-xl border-b border-[var(--border)] shadow-md' : 'bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]/30'
         }`}
     >
       <div className="w-full pl-20 pr-6 md:pr-12 h-16 flex items-center justify-between">

@@ -152,6 +152,9 @@ export default function ChatPage() {
     const userMsg: Msg = { id: msgIdRef.current++, role: 'user', content: q };
     setMsgs(p => [...p, userMsg]);
     setBusy(true);
+    if (!sessionTitle && msgs.length === 0) {
+      setSessionTitle(q.length > 35 ? q.slice(0, 32) + '...' : q);
+    }
 
     try {
       const res = await apiFetch(`/agent/query${token ? `?token=${token}` : ''}`, {
@@ -161,6 +164,11 @@ export default function ChatPage() {
       });
       if (!res || !res.ok) throw new Error();
       const data = await res.json();
+      
+      if (data.session_title) {
+        setSessionTitle(data.session_title);
+      }
+      
       setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: data.content ?? data.answer ?? data.response ?? 'Done.' }]);
     } catch {
       setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: "⚠️ Backend is currently offline. Please make sure the server is running." }]);
@@ -187,7 +195,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden selection:bg-[var(--accent)]/30">
+    <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden selection:bg-[var(--accent)]/30 pt-16 relative">
       <Sidebar 
         currentSessionId={sessionId}
         onSessionSelect={(id, title) => { setSessionId(id); setSessionTitle(title); }}
@@ -196,27 +204,21 @@ export default function ChatPage() {
         token={token}
       />
       
+      {/* Centered Chat Title for Screen — High Visibility */}
+      <div className="absolute left-0 right-0 top-[76px] flex justify-center pointer-events-none z-30 px-4">
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="px-6 py-2 rounded-full glass-card border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.15)] backdrop-blur-xl max-w-[70vw] truncate pointer-events-auto"
+        >
+          <span className="text-xs md:text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-300 whitespace-nowrap tracking-widest uppercase drop-shadow-md">
+            {sessionTitle || t('chat_new')}
+          </span>
+        </motion.div>
+      </div>
+
       <main className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative">
-        {/* Header Bar */}
-        <header className="flex items-center justify-between px-6 py-4 shrink-0 bg-[var(--bg)]/80 backdrop-blur-md z-10 transition-all">
-          <div className="flex items-center gap-3">
-          </div>
-
-          {/* Current chat title — same font as sidebar item */}
-          {sessionTitle && (
-            <span className="text-sm font-medium text-[var(--text)] truncate max-w-xs text-center">
-              {sessionTitle}
-            </span>
-          )}
-
-          <div className="flex items-center gap-4">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#4285f4] to-[#9b72cb] p-[1.5px] cursor-pointer hover:shadow-lg transition-shadow">
-              <div className="w-full h-full rounded-full bg-[var(--bg)] flex items-center justify-center">
-                <User size={16} className="text-[var(--text)] opacity-80" />
-              </div>
-            </div>
-          </div>
-        </header>
+        <div className="h-16 shrink-0" /> {/* Spacer for the centered title container */}
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0 relative">
