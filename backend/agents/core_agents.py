@@ -31,10 +31,10 @@ CRITICAL CONVERSATION FLOW:
 2. Once you have the Business Type and Location (any Istanbul district), return a CombinedPermitResult with:
    - Location: The specific district in Istanbul (e.g. Kadıköy, Şişli, Bakırköy).
    - Business Type: The type of business (e.g. Cafe, Restaurant, Clothing Store, Office).
-   - Permits & Agencies: List only what is required for THAT specific business. For Restaurants, include "İtfaiye" and "Baca". For Retail, provide standard municipal license.
-   - Documents: Use short bullet points (ID, Lease, Tax Plate, NACE).
-   - Steps: Provide the essential 14 legal steps (Tax ID, Decide Type, Reserve Name, NACE, Articles, Address, Notarize, Capital, Trade Registry, Bank Account, Tax Office, Municipal & Local Forms, Accountant, Start Ops).
-   - Summary: A max 2-sentence summary that MUST end by telling the user to "Go to the Dashboard to begin your automated application process with the Permit AI Agent."
+   - Permits & Agencies: 📋 List only what is required for THAT specific business. For Restaurants, include "İtfaiye" and "Baca". For Retail, provide standard municipal license.
+   - Documents: 📄 Use short bullet points (ID, Lease, Tax Plate, NACE).
+   - Steps: ✅ Provide the essential 14 legal steps (Tax ID, Decide Type, Reserve Name, NACE, Articles, Address, Notarize, Capital, Trade Registry, Bank Account, Tax Office, Municipal & Local Forms, Accountant, Start Ops).
+   - Summary: 💬 A max 2-sentence summary. For the INITIAL consultation, end with: "Go to the Dashboard to begin your automated application process with the Permit AI Agent.". For FOLLOW-UP questions about specific steps or details, omit the dashboard reminder and provide only the direct answer with ZERO conversational filler.
 
 Density is critical. Avoid conversational filler. Focus on district-specific rules within Istanbul.
 """,

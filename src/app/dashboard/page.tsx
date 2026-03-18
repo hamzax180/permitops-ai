@@ -394,11 +394,11 @@ export default function Dashboard() {
                   <div className="mt-8">
                     <button
                       onClick={submitEDevlet}
-                      disabled={uploading || !tckn || !password}
-                      className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                      disabled={true}
+                      className="w-full py-3 px-4 bg-red-600 cursor-not-allowed opacity-70 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-inner border border-red-400/20"
                     >
-                      {uploading ? <Activity size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                      <span>{uploading ? t('dashboard_processing') : 'Approve Bot Submission'}</span>
+                      <ShieldCheck size={18} />
+                      <span className="uppercase tracking-tight">DISABLED UNTIL LAW APPROVAL</span>
                     </button>
                     <p className="text-[10px] text-center text-gray-400 mt-3 font-medium">Your credentials are used solely for this session and are NEVER logged into our database.</p>
                   </div>

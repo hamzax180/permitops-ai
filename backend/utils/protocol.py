@@ -1,6 +1,11 @@
 def get_localized_steps(lang: str = "en", business_type: str = "Business"):
-    # Determine if this is a food-related business for specific step labeling
-    is_food = any(keyword in business_type.lower() for keyword in ["cafe", "restauran", "food", "kafe", "yemek", "gıda", "mutfak", "pasta"])
+    # Determine if this is a food-related business for specific step labeling (typo-tolerant)
+    food_keywords = [
+        "cafe", "restaur", "food", "kafe", "yemek", "gıda", "mutfak", "pasta", 
+        "bakery", "fırın", "döner", "kebab", "pizza", "burger", "rester", "restr", 
+        "kantin", "lokanta", "aşçı", "patisserie", "tatlı", "dondurma"
+    ]
+    is_food = any(keyword in business_type.lower() for keyword in food_keywords)
     
     # Dynamic labels for Step 12
     step12_labels = {

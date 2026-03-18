@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PermitOps AI 🚀
 
-## Getting Started
+PermitOps AI is a professional permit consulting platform designed to simplify the complex process of obtaining business licenses in Istanbul. It leverages AI agents to provide personalized, district-specific guidance for various business types (Restaurant, Cafe, Retail, etc.) across all 39 districts of Istanbul.
 
-First, run the development server:
+## 🌟 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **AI-Powered Consultation**: Real-time chat with a specialized permit agent to generate a customized 14-step permit path.
+- **Dynamic Dashboard**: A state-of-the-art interface that tracks compliance scores and workflow progress.
+- **District-Agnostic Support**: Intelligent detection and support for all 39 districts in Istanbul (e.g., Beşiktaş, Kadıköy, Bakırköy, Zeytinburnu).
+- **Industry-Specific Logic**: Tailored permit requirements for Restaurants, Cafes, and Retail businesses.
+- **Automation Ready**: Built-in (legal-approval-pending) support for e-Devlet and MERSİS automation via RPA bots.
+- **Multi-Language Support**: Fully localized in English, Turkish, and Arabic.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Technical Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js, Framer Motion, Tailwind CSS / Vanilla CSS.
+- **Backend**: FastAPI, SQLAlchemy, LangGraph (for agent orchestration).
+- **AI Engine**: Google Gemini 2.5 Flash / Pro.
+- **Automation**: Playwright for e-Devlet/MERSİS bot integration.
+- **Database**: SQLite (SQLAlchemy).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Getting Started
 
-## Learn More
+1.  **Backend**:
+    ```bash
+    cd backend
+    npm run server
+    ```
+2.  **Frontend**:
+    ```bash
+    npm run dev
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+## ⚖️ Legal Disclaimer
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The bot automation features are currently disabled pending legal and law approval. Users can view the automated steps but must approve and wait for regulatory clearance before final execution.
