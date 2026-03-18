@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -9,6 +9,7 @@ import {
   Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { apiFetch } from '../utils/api';
 
 type Status = 'completed' | 'in-progress' | 'pending';
 
@@ -25,7 +26,7 @@ function StepBadge({ status }: { status: Status }) {
   const { t } = useLanguage();
   if (status === 'completed') return <span className="badge badge-green">{t('status_completed')}</span>;
   if (status === 'in-progress') return <span className="badge badge-purple">{t('status_in_progress')}</span>;
-  return <span className="badge status-pending">{t('status_pending')}</span>;
+  return <span className="badge badge-amber">{t('status_pending')}</span>;
 }
 
 function StepIcon({ status }: { status: Status }) {
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const { t, isRTL, language } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
+  const [showAllSteps, setShowAllSteps] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -50,54 +52,41 @@ export default function Dashboard() {
   const [password, setPassword] = useState('••••••••••••');
   const [automatedStepId, setAutomatedStepId] = useState<number | null>(null);
 
-  useEffect(() => {
-    async function fetchState() {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('permitops_token');
-        const sid = localStorage.getItem('permitops_active_session_id');
-        let url = `http://localhost:8003/workflow/latest`;
-        const params = new URLSearchParams();
-        if (token) params.append('token', token);
-        if (sid) params.append('session_id', sid);
-        if (params.toString()) url += `?${params.toString()}`;
-
-        const res = await fetch(url);
-        if (res.ok) {
-          const json = await res.json();
-          setData(json); // Call even if empty to clear previous session state
-        }
-      } catch (e) {
-        console.error("Failed to fetch dashboard data", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchState();
-
-    const handleStorage = () => fetchState();
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, [language]);
-
-  const refresh = async () => {
+  const fetchState = useCallback(async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('permitops_token');
       const sid = localStorage.getItem('permitops_active_session_id');
-      let url = `http://localhost:8003/workflow/latest`;
       const params = new URLSearchParams();
       if (token) params.append('token', token);
       if (sid) params.append('session_id', sid);
-      if (params.toString()) url += `?${params.toString()}`;
-      
-      const res = await fetch(url);
-      if (res.ok) {
+      const query = params.toString() ? `?${params.toString()}` : '';
+
+      const res = await apiFetch(`/workflow/latest${query}`);
+      if (res?.ok) {
         const json = await res.json();
         setData(json);
       }
     } catch (e) {
-      console.error("Manual refresh failed", e);
+      console.error("Failed to fetch dashboard data", e);
+    } finally {
+      setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchState();
+
+    // listen only for explicit app-dispatched events, not all storage changes
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'permitops_workflow_update') fetchState();
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [fetchState]);
+
+  const refresh = async () => {
+    await fetchState();
   };
 
   const automateStep = async (id: number) => {
@@ -113,15 +102,14 @@ export default function Dashboard() {
       setLoading(true);
       const token = localStorage.getItem('permitops_token');
       const sid = localStorage.getItem('permitops_active_session_id');
-      let url = `http://localhost:8003/workflow/step/automate/${id}`;
       const params = new URLSearchParams();
       if (token) params.append('token', token);
       if (sid) params.append('session_id', sid);
-      url += `?${params.toString()}`;
+      const query = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url, { method: 'POST' });
-      if (res.ok) {
-        refresh();
+      const res = await apiFetch(`/workflow/step/automate/${id}${query}`, { method: 'POST' });
+      if (res?.ok) {
+        await refresh();
       }
     } catch (e) {
       console.error("Failed to automate step", e);
@@ -134,17 +122,14 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('permitops_token');
       const sid = localStorage.getItem('permitops_active_session_id');
-      let url = `http://localhost:8003/workflow/step/complete/${id}`;
       const params = new URLSearchParams();
       if (token) params.append('token', token);
       if (sid) params.append('session_id', sid);
-      url += `?${params.toString()}`;
+      const query = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(url, {
-        method: 'POST'
-      });
-      if (res.ok) {
-        refresh();
+      const res = await apiFetch(`/workflow/step/complete/${id}${query}`, { method: 'POST' });
+      if (res?.ok) {
+        await refresh();
       }
     } catch (e) {
       console.error("Failed to mark step complete", e);
@@ -183,12 +168,15 @@ export default function Dashboard() {
 
   const currentAutomatedStep = automatedStepId ? steps.find(s => s.id === automatedStepId) : null;
   const isMersis = currentAutomatedStep && (
-    (currentAutomatedStep.title || "") + 
-    (currentAutomatedStep.detail || "") + 
-    (currentAutomatedStep.summary || "")
-  ).toLowerCase().includes("mersis");
+    [3, 4, 5].includes(currentAutomatedStep.id) ||
+    (
+      (currentAutomatedStep.title || "") + 
+      (currentAutomatedStep.detail || "") + 
+      (currentAutomatedStep.summary || "")
+    ).toLowerCase().includes("mersis")
+  );
   const portalName = isMersis ? "MERSİS" : "e-Devlet";
-  const portalUrl = isMersis ? "https://mersis.ticaret.gov.tr/Portal/KullaniciIslemleri/GirisIslemleri" : "turkiye.gov.tr";
+  const portalUrl = isMersis ? "https://mersis.ticaret.gov.tr/Portal/KullaniciIslemleri/GirisIslemleri" : "https://giris.turkiye.gov.tr/Giris/";
 
   const handleUploadClick = () => {
     setShowModal(true);
@@ -200,13 +188,20 @@ export default function Dashboard() {
     const portalWin = window.open('about:blank', '_blank');
     
     try {
-      const res = await fetch('http://localhost:8003/api/submit-edevlet', {
+      const token = localStorage.getItem('permitops_token');
+      const sid = localStorage.getItem('permitops_active_session_id');
+      const params = new URLSearchParams();
+      if (token) params.append('token', token);
+      if (sid) params.append('session_id', sid);
+      const query = params.toString() ? `?${params.toString()}` : '';
+
+      const res = await apiFetch(`/api/submit-edevlet${query}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ tckn, password, portal_url: portalUrl })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tckn, password, portal_url: portalUrl, step_id: automatedStepId })
       });
+
+      if (!res) throw new Error('Backend offline');
 
       const json = await res.json();
 
@@ -242,7 +237,7 @@ export default function Dashboard() {
     } catch (e) {
       if (portalWin) portalWin.close();
       setToastType("error");
-      setToastMessage("Network error communicating with backend.");
+      setToastMessage("Backend offline. Please make sure the server is running.");
     } finally {
       setUploading(false);
       setShowToast(true);
@@ -262,23 +257,32 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
+    <main className="min-h-screen relative overflow-hidden bg-[var(--bg)]">
       {/* Video Background */}
-      <div className="absolute inset-0 z-0 w-full h-full">
+      <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
+        {/* Fallback Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
+        
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-full object-cover"
+          onLoadedData={(e) => {
+            const video = e.currentTarget;
+            video.style.opacity = '1';
+          }}
+          style={{ opacity: 0, transition: 'opacity 1s ease' }}
+          className="absolute inset-0 w-full h-full object-cover z-10"
         >
           <source src="/dashboard_bg.mp4" type="video/mp4" />
         </video>
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-black/40 dark:bg-black/60 z-[5]" />
-        {/* Subtle gradient to blend with edges */}
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--bg)] to-transparent z-10" />
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--bg)] to-transparent z-10" />
+
+        {/* Dynamic mesh gradient overlays */}
+        <div className="absolute inset-0 z-20 pointer-events-none opacity-40">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse [animation-delay:2s]" />
+        </div>
       </div>
 
       <div className="relative z-20 pt-24 pb-20 px-6">
@@ -418,8 +422,8 @@ export default function Dashboard() {
                 <Activity size={10} className="animate-pulse" />
                 {t('dashboard_live_session')} · #IST-BŞK-4221
               </span>
-              <h1 className="text-2xl md:text-4xl font-black text-[var(--text)] tracking-tight">{t('dashboard_title')}</h1>
-              <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium">
+              <h1 className="text-3xl md:text-5xl font-bold text-[var(--text)] tracking-tight drop-shadow-sm dark:drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">{t('dashboard_title')}</h1>
+              <p className="text-sm text-[var(--muted)] flex items-center gap-3 flex-wrap font-medium dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
                 <span className="flex items-center gap-1.5"><MapPin size={12} className="text-purple-500" /> {data?.business_profile?.raw_query || (isRTL ? 'مطعم في بشكتاش' : 'Beşiktaş Restaurant')}, Istanbul</span>
                 <span className="h-3 w-px bg-[var(--border)]" />
                 <span className="flex items-center gap-1.5" suppressHydrationWarning><Calendar size={12} className="text-purple-500" /> {data?.last_updated ? `${t('dashboard_updated')} ${new Date(data.last_updated).toLocaleDateString()}` : t('dashboard_no_session')}</span>
@@ -455,13 +459,13 @@ export default function Dashboard() {
               { label: t('dashboard_est_days'), value: `${Math.max(0, steps.length * 2 - done * 2)} ${t('dashboard_days')}`, color: 'text-amber-500', icon: Clock, bg: 'bg-amber-500/10' },
               { label: t('dashboard_active_agents'), value: `${data?.execution_plan?.assigned_agents?.length || 0} ${t('dashboard_active')}`, color: 'text-fuchsia-500', icon: Cpu, bg: 'bg-fuchsia-500/10' },
             ].map((s, i) => (
-              <div key={i} className="glass-card p-5 flex items-center gap-4 hover:border-white/20 transition-all shadow-xl group">
-                <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} border border-white/5`}>
+              <div key={i} className="glass-card p-5 flex items-center gap-4 hover:border-[var(--border-2)] transition-all shadow-xl group">
+                <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${s.bg} border border-[var(--border)] group-hover:scale-110 transition-transform`}>
                   <s.icon size={20} className={s.color} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[12px] text-white/50 font-bold uppercase tracking-wider truncate">{s.label}</p>
-                  <p className={`text-xl font-black leading-tight ${s.color}`}>{s.value}</p>
+                  <p className="text-[11px] text-[var(--muted)] font-bold uppercase tracking-widest truncate">{s.label}</p>
+                  <p className={`text-2xl font-bold leading-tight ${s.color}`}>{s.value}</p>
                 </div>
               </div>
             ))}
@@ -469,13 +473,13 @@ export default function Dashboard() {
 
           {/* ── Progress Bar ── */}
           <div className="glass-card p-5 flex items-center gap-6 shadow-xl">
-            <span className="text-sm font-bold text-white/60 uppercase tracking-widest whitespace-nowrap shrink-0">{t('dashboard_overall_progress')}</span>
-            <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
+            <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-widest whitespace-nowrap shrink-0">{t('dashboard_overall_progress')}</span>
+            <div className="flex-1 h-2 bg-[var(--surface-2)] rounded-full overflow-hidden border border-[var(--border)]">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
-                className="h-full rounded-full bg-purple-500"
+                className="h-full rounded-full bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)]"
               />
             </div>
             <span className="text-sm font-black text-[var(--text)] shrink-0">{progress}%</span>
@@ -486,38 +490,39 @@ export default function Dashboard() {
 
             {/* Workflow Steps */}
             <div className="lg:col-span-8 space-y-2.5">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 px-0.5">{t('dashboard_workflow_steps')}</h2>
-              {steps.map((s, i) => (
+              <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] px-0.5">{t('dashboard_workflow_steps')}</h2>
+              {(showAllSteps ? steps : steps.slice(0, 3)).map((s, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06, ease: 'easeOut', duration: 0.4 }}
-                  className={`glass-card overflow-hidden cursor-pointer transition-all hover:bg-white/5 ${s.status === 'in-progress' ? 'border-purple-500/40 shadow-purple-500/10' : 'shadow-xl'
-                    }`}
+                  className={`glass-card overflow-hidden cursor-pointer transition-all hover:bg-white/5 ${s.status === 'in-progress' ? 'border-purple-500/40 shadow-purple-500/10' :
+                    s.status === 'pending' ? 'border-amber-500/20' : 'shadow-xl'
+                  }`}
                   onClick={() => setExpanded(expanded === i ? null : i)}
                 >
                   <div className="p-4 flex items-center gap-4">
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${s.status === 'completed' ? 'bg-emerald-500/20 border border-emerald-500/30' :
                       s.status === 'in-progress' ? 'bg-purple-500/20 border border-purple-500/30' :
-                        'bg-white/5 border border-white/10'
+                        'bg-amber-500/10 border border-amber-500/20'
                       }`}>
                       <StepIcon status={s.status} />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <h3 className="font-bold text-white text-[16px]">{s.title}</h3>
+                        <h3 className="font-bold text-[var(--text)] text-[16px]">{s.title}</h3>
                         <StepBadge status={s.status} />
                       </div>
-                      <p className="text-sm text-white/60 mt-1 font-medium truncate">{s.summary}</p>
+                      <p className="text-sm text-[var(--muted)] mt-1 font-medium truncate">{s.summary}</p>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-white/50 hidden sm:block font-bold uppercase tracking-wider" suppressHydrationWarning>{s.date}</span>
+                      <span className="text-xs text-[var(--muted)] hidden sm:block font-bold uppercase tracking-wider" suppressHydrationWarning>{s.date}</span>
                       <ChevronDown
                         size={16}
-                        className={`text-white/40 transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}
+                        className={`text-[var(--muted)] transition-transform duration-300 ${expanded === i ? 'rotate-180' : ''}`}
                       />
                     </div>
                   </div>
@@ -531,7 +536,7 @@ export default function Dashboard() {
                         transition={{ duration: 0.25, ease: 'easeInOut' }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 pt-3 border-t border-gray-100 space-y-4">
+                        <div className="px-4 pb-4 pt-3 border-t border-[var(--border)] space-y-4">
                           <p className="text-sm text-[var(--text)] leading-relaxed font-medium">{s.detail}</p>
 
                           {s.docs.length > 0 && (
@@ -579,6 +584,17 @@ export default function Dashboard() {
                   </AnimatePresence>
                 </motion.div>
               ))}
+
+              {/* Show More / Less */}
+              {steps.length > 3 && (
+                <button
+                  onClick={() => setShowAllSteps(!showAllSteps)}
+                  className="w-full py-3 rounded-2xl border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--border-2)] hover:bg-[var(--surface-2)] transition-all text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  <ChevronDown size={16} className={`transition-transform duration-300 ${showAllSteps ? 'rotate-180' : ''}`} />
+                  {showAllSteps ? `Show less` : `Show ${steps.length - 3} more steps`}
+                </button>
+              )}
             </div>
 
             {/* Sidebar */}
