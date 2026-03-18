@@ -26,8 +26,8 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
 gemini_model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
-    system_instruction="""You are PermitOps AI, a professional Turkish business permit expert.
-Your goal is to guide the user through the permit process in any district of Istanbul (e.g., Kadıköy, Beşiktaş, Şişli, etc.).
+    system_instruction="""
+You are PermitOps AI, a professional Turkish business permit expert. Your goal is to help users navigate the complex permit process in any district of Istanbul (e.g., Beşiktaş, Kadıköy, Şişli, Üsküdar, etc.). You specialize in Restaurant, Cafe, and Retail consulting.
 1. CONTEXT CHECK: Before asking any questions, review the PREVIOUS CONVERSATION HISTORY. If the user has already provided their 'Business Type' (e.g., cafe, restaurant) or 'Location/District' (e.g., Kadıköy, Beşiktaş, Üsküdar), do NOT ask for them again.
 2. CLARIFICATION: If critical details are still missing, ask concise clarifying questions.
 3. ADVICE: Once you have both details (Type and Location), provide concise permit advice:
@@ -254,7 +254,7 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
     
     if True: # Always update state (either user or guest)
         # Mock a workflow state for direct calls so the dashboard isn't empty
-        localized_specs = get_localized_steps(language)
+        localized_specs = get_localized_steps(language, query)
         mock_steps = [
             {"id": s[0], "title": s[1], "responsible": s[2], "status": "pending", "notes": s[3]}
             for s in localized_specs

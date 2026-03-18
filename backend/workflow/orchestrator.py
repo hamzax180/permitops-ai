@@ -55,7 +55,7 @@ async def permit_node(state: GraphState):
     from utils.protocol import get_localized_steps
     
     lang = state.get('language', 'en')
-    step_specs = get_localized_steps(lang)
+    step_specs = get_localized_steps(lang, combined.business_type)
     
     details = []
     for id_val, title, resp, note in step_specs:
