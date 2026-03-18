@@ -1,11 +1,14 @@
 import os
 import asyncio
 import datetime
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 import google.generativeai as genai
 from dotenv import load_dotenv
 import json
@@ -93,9 +96,32 @@ async def get_current_user(token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
+# --- Rate Limiting ---
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+def user_id_key(request: Request):
+    # Try to get user from token for more precise rate limiting (URL param or Auth Header)
+    token = request.query_params.get("token")
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+    
+    if token:
+        try:
+            payload = decode_access_token(token)
+            if payload and "sub" in payload:
+                return f"user:{payload['sub']}"
+        except:
+            pass
+    return f"ip:{get_remote_address(request)}"
+
 # --- Auth Endpoints ---
 @app.post("/auth/register", response_model=Token)
-async def register(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute", key_func=user_id_key)
+async def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(DBUser).filter(DBUser.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -110,7 +136,8 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer", "email": new_user.email, "full_name": new_user.full_name}
 
 @app.post("/auth/login", response_model=Token)
-async def login(user: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute", key_func=user_id_key)
+async def login(request: Request, user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(DBUser).filter(DBUser.email == user.email).first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -121,13 +148,15 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 import uuid
 
 @app.get("/chat/sessions")
-async def get_chat_sessions(token: str, db: Session = Depends(get_db)):
+@limiter.limit("20/minute", key_func=user_id_key)
+async def get_chat_sessions(request: Request, token: str, db: Session = Depends(get_db)):
     user = await get_current_user(token, db)
     sessions = db.query(ChatSession).filter(ChatSession.user_id == user.id).order_by(ChatSession.created_at.desc()).all()
     return [{"id": s.id, "title": s.title or "New Chat", "created_at": s.created_at} for s in sessions]
 
 @app.post("/chat/sessions")
-async def create_chat_session(token: str, db: Session = Depends(get_db)):
+@limiter.limit("20/minute", key_func=user_id_key)
+async def create_chat_session(request: Request, token: str, db: Session = Depends(get_db)):
     user = await get_current_user(token, db)
     session_id = str(uuid.uuid4())
     new_session = ChatSession(id=session_id, user_id=user.id, title="New Chat")
@@ -296,7 +325,8 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
 
 
 @app.post("/agent/query")
-async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session = Depends(get_db)):
+@limiter.limit("5/minute", key_func=user_id_key)
+async def agent_query(request: Request, query: UserQuery, token: Optional[str] = None, db: Session = Depends(get_db)):
     user = None
     if token:
         try:

@@ -10,3 +10,4 @@ python-dotenv
 httpx
 google-generativeai
 playwright
+slowapi
