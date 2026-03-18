@@ -26,14 +26,16 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY", ""))
 gemini_model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
-    system_instruction="""You are PermitOps AI, a Turkish business permit expert.
-If the user's request is vague or missing critical details (like Business Type or Location/District), you MUST first ask clarifying questions: "Where is your business located?" and "What type of business are you opening?".
-Once you have the details, provide concise permit advice:
+    system_instruction="""You are PermitOps AI, a professional Turkish business permit expert.
+Your goal is to guide the user through the permit process in Turkey.
+1. CONTEXT CHECK: Before asking any questions, review the PREVIOUS CONVERSATION HISTORY. If the user has already provided their 'Business Type' (e.g., cafe, restaurant) or 'Location/District' (e.g., Kadıköy, Beşiktaş), do NOT ask for them again.
+2. CLARIFICATION: If critical details are still missing, ask concise clarifying questions.
+3. ADVICE: Once you have both details (Type and Location), provide concise permit advice:
 📋 Permits (Agency)
 📄 Required Documents
 ✅ Action Steps (Exactly 14 steps)
 💬 Summary (Ends with: "Go to the Dashboard to start working with the Permit AI Agent.")
-Keep it short and professional."""
+Keep it short, professional, and helpful."""
 )
 
 app = FastAPI(title="PermitOps AI Backend")
@@ -64,10 +66,15 @@ except Exception as e:
 # Global states for guests (non-persistent across restarts, keyed by session_id)
 guest_dashboard_states = {}
 
+# Credential store — populated when user submits the e-Devlet/MERSİS modal
+# Keyed by token (authenticated) or session_id (guest)
+user_credentials_store: dict = {}
+
 class UserCredentials(BaseModel):
     tckn: str
     password: str
     portal_url: Optional[str] = None
+    step_id: Optional[int] = None
 
 # --- Auth Dependency ---
 async def get_current_user(token: str, db: Session = Depends(get_db)):
@@ -125,6 +132,36 @@ async def create_chat_session(token: str, db: Session = Depends(get_db)):
     return {"id": session_id, "title": "New Chat"}
 
 
+async def _get_history_context(session_id: str, db: Session, limit: int = 10, current_query: Optional[str] = None) -> str:
+    """Fetch recent chat history to provide context for the AI."""
+    try:
+        # Fetch more to allow for filtering
+        msgs = db.query(ChatMessage).filter(ChatMessage.session_id == session_id)\
+                 .order_by(ChatMessage.timestamp.desc()).limit(limit + 1).all()
+        if not msgs:
+            return ""
+        
+        # If the most recent message is the current query, skip it to avoid duplication
+        if current_query and msgs and msgs[0].role == "user" and msgs[0].content.strip() == current_query.strip():
+            msgs = msgs[1:]
+        
+        # Take only the intended limit
+        msgs = msgs[:limit]
+        
+        if not msgs:
+            return ""
+
+        context = "\n--- PREVIOUS CONVERSATION HISTORY ---\n"
+        # Reverse to get chronological order
+        for m in reversed(msgs):
+            role = "User" if m.role == "user" else "Assistant"
+            context += f"[{role}]: {m.content}\n"
+        context += "-------------------------------------\n"
+        return context
+    except Exception as e:
+        print(f"[_get_history_context error] {e}")
+        return ""
+
 async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Session = None, language: str = "en", session_id: str = "default-session") -> str:
     """Run the multi-agent langgraph workflow."""
     if not _agents_available:
@@ -137,11 +174,17 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
     }
 
     try:
+        # Inject history context into the user request
+        history = await _get_history_context(session_id, db)
+        full_query = f"{history}\nCURRENT USER REQUEST: {query}"
+        
         # Enforce language in the query for the agent if not English
         if language == "ar":
-            initial_state["user_request"] = f"(Answer strictly in Arabic / بالعربية) {query}"
+            initial_state["user_request"] = f"(Answer strictly in Arabic / بالعربية) {full_query}"
         elif language == "tr":
-            initial_state["user_request"] = f"(Lütfen Türkçe cevap veriniz) {query}"
+            initial_state["user_request"] = f"(Lütfen Türkçe cevap veriniz) {full_query}"
+        else:
+            initial_state["user_request"] = full_query
             
         print(f"[_run_with_agents] Invoking orchestrator for session {session_id}")
         config = {"configurable": {"thread_id": session_id}}
@@ -195,11 +238,17 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
 
 async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session") -> str:
     """Direct Gemini call — fast and reliable fallback."""
-    localized_query = query
+    history = ""
+    if db:
+        history = await _get_history_context(session_id, db, current_query=query)
+        
+    full_query = f"{history}\nCURRENT USER REQUEST: {query}"
+    
+    localized_query = full_query
     if language == "ar":
-        localized_query = f"Answer in Arabic: {query}"
+        localized_query = f"Answer in Arabic: {full_query}"
     elif language == "tr":
-        localized_query = f"Answer in Turkish: {query}"
+        localized_query = f"Answer in Turkish: {full_query}"
         
     response = await asyncio.to_thread(gemini_model.generate_content, localized_query)
     
@@ -254,20 +303,24 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
     try:
         # Get or create session
         session_id = query.context.get("session_id") if query.context else "default-session"
-        if user:
-            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
-            if not db_session:
-                db_session = ChatSession(id=session_id, user_id=user.id, title=query.query[:50])
-                db.add(db_session)
-                db.commit()
-            elif db_session.title == "New Chat":
-                db_session.title = query.query[:50]
-                db.commit()
-            
-            # Save user message
-            user_msg = ChatMessage(session_id=session_id, role="user", content=query.query)
-            db.add(user_msg)
+        
+        db_session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
+        if not db_session:
+            db_session = ChatSession(id=session_id, user_id=user.id if user else None, title=query.query[:50])
+            db.add(db_session)
             db.commit()
+        elif user and not db_session.user_id:
+            # Upgrade guest session to user session if they log in
+            db_session.user_id = user.id
+            db.commit()
+        elif db_session.title == "New Chat":
+            db_session.title = query.query[:50]
+            db.commit()
+        
+        # Save user message
+        user_msg = ChatMessage(session_id=session_id, role="user", content=query.query)
+        db.add(user_msg)
+        db.commit()
 
         if _agents_available:
             try:
@@ -279,7 +332,7 @@ async def agent_query(query: UserQuery, token: Optional[str] = None, db: Session
         else:
             answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
         
-        if user:
+        if True: # Always save assistant message now that we have session tracking
             # Save assistant message
             assistant_msg = ChatMessage(session_id=session_id, role="assistant", content=answer)
             db.add(assistant_msg)
@@ -404,16 +457,40 @@ async def complete_step(step_id: int, token: Optional[str] = None, session_id: O
 @app.post("/workflow/step/automate/{step_id}")
 async def automate_step(step_id: int, token: Optional[str] = None, session_id: Optional[str] = None, db: Session = Depends(get_db)):
     try:
-        # Simulate bot starting
+        # Mark step as in-progress
         await _get_and_update_state(step_id, token, session_id, db, "in-progress")
-        
-        # Simulate work
+
+        # Steps 3, 4, 5 → MERSİS automation using stored credentials
+        if step_id in (3, 4, 5):
+            store_key = token or session_id
+            creds = user_credentials_store.get(store_key)
+            if not creds:
+                await _get_and_update_state(step_id, token, session_id, db, "pending")
+                return {"status": "error", "message": "No credentials found. Please submit your credentials via the portal modal first."}
+
+            from bot import run_mersis_bot, MERSIS_URL
+            result = await asyncio.to_thread(
+                asyncio.run,
+                run_mersis_bot(
+                    tckn=creds["tckn"],
+                    password=creds["password"],
+                    portal_url=MERSIS_URL,
+                    step_id=step_id,
+                )
+            )
+
+            if result["status"] == "success":
+                await _get_and_update_state(step_id, token, session_id, db, "completed")
+                return {"status": "success", "message": result["message"]}
+            else:
+                await _get_and_update_state(step_id, token, session_id, db, "pending")
+                return {"status": "error", "message": result["message"]}
+
+        # All other steps → simple simulate + complete
         await asyncio.sleep(3)
-        
-        # Complete
         await _get_and_update_state(step_id, token, session_id, db, "completed")
-        
         return {"status": "success", "message": f"Step {step_id} automated successfully"}
+
     except Exception as e:
         if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
@@ -425,28 +502,30 @@ async def business_intake(query: UserQuery):
 
 
 @app.post("/api/submit-edevlet")
-async def submit_edevlet(creds: UserCredentials):
+async def submit_edevlet(creds: UserCredentials, token: Optional[str] = None, session_id: Optional[str] = None):
     try:
         from bot import run_edevlet_bot, run_mersis_bot
-        # Simulate passing the required documents to the bot based on latest workflow
         docs_to_upload = ["lease_agreement.pdf", "tax_certificate.pdf"]
-        
-        # Decide which bot function to run
+
+        # Persist credentials so automate_step can reuse them for steps 3/4/5
+        store_key = token or session_id or "default"
+        user_credentials_store[store_key] = {"tckn": creds.tckn, "password": creds.password}
+        print(f"[Credentials] Stored for key={store_key}")
+
         use_mersis = creds.portal_url and "mersis" in creds.portal_url.lower()
-        
+
         if use_mersis:
             result = await asyncio.to_thread(
                 asyncio.run,
-                run_mersis_bot(creds.tckn, creds.password, creds.portal_url)
+                run_mersis_bot(creds.tckn, creds.password, creds.portal_url, creds.step_id or 0)
             )
         else:
             result = await asyncio.to_thread(
                 asyncio.run,
                 run_edevlet_bot(creds.tckn, creds.password, docs_to_upload)
             )
-        
+
         if result["status"] == "success":
-            # Update the mock workflow state to show progression
             if "execution_plan" in latest_workflow:
                 if len(latest_workflow["execution_plan"]["steps"]) > 1:
                     latest_workflow["execution_plan"]["steps"][1] = "Completed: " + latest_workflow["execution_plan"]["steps"][1]
