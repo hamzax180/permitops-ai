@@ -290,7 +290,19 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
         
     response = await asyncio.to_thread(gemini_model.generate_content, localized_query)
     
-    if True: # Always update state (either user or guest)
+    # Only mock state if we don't already have one for this session
+    has_state = False
+    if user and db:
+        db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+        if db_session and db_session.dashboard_state:
+            has_state = True
+        elif not db_session and user.latest_dashboard_state:
+            has_state = True
+    else:
+        if session_id in guest_dashboard_states:
+            has_state = True
+
+    if not has_state:
         # Mock a workflow state for direct calls so the dashboard isn't empty
         localized_specs = get_localized_steps(language, query)
         mock_steps = [
@@ -368,7 +380,16 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
 
         if _agents_available:
             try:
-                answer = await _run_with_agents(query.query, user, db, query.language, session_id)
+                # If it's a specific question about a step or general follow up, bypass LangGraph orchestrator
+                # and just use Gemini directly so it doesn't try to build a whole new permit plan
+                lower_q = query.query.lower()
+                is_question = "i need more information about step" in lower_q or "can you explain this in more detail" in lower_q
+                
+                if is_question:
+                    print(f"[agent_query] Routing directly to Gemini for follow-up question")
+                    answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
+                else:
+                    answer = await _run_with_agents(query.query, user, db, query.language, session_id)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
                 # Use current gemini_model for fallback
