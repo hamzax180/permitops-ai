@@ -50,7 +50,7 @@ async def permit_node(state: GraphState):
         agencies=combined.agencies,
         documents=combined.documents,
     )
-    # Define the required 14 steps with their responsibility
+    # Build dynamic steps based on detected business type
     from models.schemas import StepDetail
     from utils.protocol import get_localized_steps
     

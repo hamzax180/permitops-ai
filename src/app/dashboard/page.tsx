@@ -147,7 +147,7 @@ export default function Dashboard() {
       status: s.status as Status,
       date: data.last_updated ? new Date(data.last_updated).toLocaleDateString() : 'Recent',
       summary: s.notes || `Step ${i + 1} of the permit process.`,
-      detail: `${s.responsible} is handling this step.`,
+      detail: s.notes || `${s.responsible} is handling this step.`,
       docs: i === 1 ? (data.permit_plan?.documents || []) : [],
     })))
   ] : [
@@ -552,25 +552,44 @@ export default function Dashboard() {
                           )}
 
                           {s.status !== 'completed' && (
-                            <div className="flex gap-3">
+                            <div className="flex flex-wrap gap-3 items-center">
                               {(s.responsible.includes('Agent') || s.responsible.includes('Ajan') || s.responsible.includes('وكيل')) ? (
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    automateStep(s.id);
-                                  }} 
-                                  disabled={loading}
-                                  className="btn btn-purple !py-2 !px-4 !text-sm flex items-center gap-2"
-                                >
-                                  <Sparkles size={13} className={s.status === 'in-progress' ? 'animate-pulse' : ''} />
-                                  {s.status === 'in-progress' ? t('dashboard_processing') : t('dashboard_auto_execute')}
-                                </button>
+                                <>
+                                  {/* Bot button — disabled until law approval */}
+                                  <button
+                                    disabled
+                                    className="btn !py-2 !px-4 !text-sm flex items-center gap-2 opacity-50 cursor-not-allowed bg-gray-500/20 border border-gray-500/30 text-gray-400 rounded-xl"
+                                    title="Bot automation is disabled pending legal approval"
+                                  >
+                                    <Lock size={13} />
+                                    {language === 'ar' ? 'معطّل — بانتظار الموافقة القانونية' : language === 'tr' ? 'Devre Dışı — Yasal Onay Bekleniyor' : 'Disabled — Pending Law Approval'}
+                                  </button>
+                                  {/* Manual portal link */}
+                                  <a
+                                    href={
+                                      ((s.title || '') + (s.summary || '')).toLowerCase().includes('mersis')
+                                        ? 'https://mersis.ticaret.gov.tr/Portal/KullaniciIslemleri/GirisIslemleri'
+                                        : ((s.title || '') + (s.summary || '')).toLowerCase().includes('gıda') ||
+                                          ((s.title || '') + (s.summary || '')).toLowerCase().includes('food') ||
+                                          ((s.title || '') + (s.summary || '')).toLowerCase().includes('tarim')
+                                        ? 'https://www.tarim.gov.tr'
+                                        : 'https://www.turkiye.gov.tr'
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="btn btn-outline !py-2 !px-4 !text-sm flex items-center gap-2"
+                                  >
+                                    <ExternalLink size={13} />
+                                    {language === 'ar' ? 'افعلها يدوياً' : language === 'tr' ? 'Manuel Yap' : 'Do Manually'}
+                                  </a>
+                                </>
                               ) : (
-                                <button 
+                                <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     markComplete(s.id);
-                                  }} 
+                                  }}
                                   className="btn btn-emerald !py-2 !px-4 !text-sm flex items-center gap-2"
                                 >
                                   <CheckCircle2 size={13} /> {t('dashboard_mark_complete')}

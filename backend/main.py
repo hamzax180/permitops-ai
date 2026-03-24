@@ -37,7 +37,7 @@ You are PermitOps AI, a professional Turkish business permit expert. Your goal i
 3. ADVICE: Provide concisely focused permit advice using these markers for clarity:
    📋 Permits (Agency)
    📄 Required Documents
-   ✅ Action Steps (Exactly 14 steps)
+   ✅ Action Steps (number varies by business type)
    💬 Summary (Ends with: "Go to the Dashboard to begin yours...")
 
    - For an INITIAL request (no plan exists yet), provide the full advice using all markers above.
@@ -55,6 +55,11 @@ app.add_middleware(
         "http://[::1]:3000",
         "https://localhost:3000",
         "https://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://[::1]:3001",
+        "https://localhost:3001",
+        "https://127.0.0.1:3001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
