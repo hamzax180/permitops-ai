@@ -45,6 +45,17 @@ You are PermitOps AI, a professional Turkish business permit expert. Your goal i
 """,
 )
 
+chat_model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction="""
+You are PermitOps AI, a professional Turkish business permit expert. Your goal is to help users navigate the complex permit process in Istanbul.
+You specialize in answering specific follow-up questions about permit steps.
+1. Answer the user's specific question directly, concisely, and clearly.
+2. DO NOT output repetitive summaries.
+3. DO NOT append lists of permits, documents, or action steps. Just answer the question.
+""",
+)
+
 app = FastAPI(title="PermitOps AI Backend")
 
 app.add_middleware(
@@ -291,7 +302,10 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
     elif language == "tr":
         localized_query = f"Answer in Turkish: {full_query}"
         
-    response = await asyncio.to_thread(gemini_model.generate_content, localized_query)
+    if is_followup:
+        response = await asyncio.to_thread(chat_model.generate_content, localized_query)
+    else:
+        response = await asyncio.to_thread(gemini_model.generate_content, localized_query)
     
     # Only mock state if we don't already have one for this session
     has_state = False
