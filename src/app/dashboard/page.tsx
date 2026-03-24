@@ -453,20 +453,20 @@ export default function Dashboard() {
             transition={{ ease: 'easeOut', duration: 0.4, delay: 0.07 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-3"
           >
-            {[
-              { label: t('dashboard_compliance_score'), value: `${progress > 0 ? progress : '0'}%`, grad: 'stat-value-emerald', icon: ShieldCheck, bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', glow: 'group-hover:shadow-emerald-500/20' },
-              { label: t('dashboard_steps_complete'), value: `${done}/${steps.length}`, grad: 'stat-value-purple', icon: CheckCircle2, bg: 'bg-purple-500/10', border: 'border-purple-500/20', glow: 'group-hover:shadow-purple-500/20' },
-              { label: t('dashboard_est_days'), value: `${Math.max(0, steps.length * 2 - done * 2)}d`, grad: 'stat-value-amber', icon: Clock, bg: 'bg-amber-500/10', border: 'border-amber-500/20', glow: 'group-hover:shadow-amber-500/20' },
-              { label: t('dashboard_active_agents'), value: `${data?.execution_plan?.assigned_agents?.length || 0}`, grad: 'stat-value-fuchsia', icon: Cpu, bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/20', glow: 'group-hover:shadow-fuchsia-500/20' },
-            ].map((s, i) => (
-              <div key={i} className={`glass-card p-5 flex items-center gap-4 transition-all group cursor-default hover:scale-[1.02] ${s.glow} hover:shadow-lg relative overflow-hidden`}>
+            {([
+              { label: t('dashboard_compliance_score'), value: `${progress > 0 ? progress : '0'}%`,  from: '#34d399', to: '#10b981', icon: ShieldCheck,  iconColor: '#34d399', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)'  },
+              { label: t('dashboard_steps_complete'),   value: `${done}/${steps.length}`,            from: '#c084fc', to: '#a855f7', icon: CheckCircle2, iconColor: '#c084fc', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.25)' },
+              { label: t('dashboard_est_days'),         value: `${Math.max(0, steps.length*2 - done*2)}d`, from: '#fcd34d', to: '#f59e0b', icon: Clock,    iconColor: '#fcd34d', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)'  },
+              { label: t('dashboard_active_agents'),    value: `${data?.execution_plan?.assigned_agents?.length || 0}`, from: '#f0abfc', to: '#e879f9', icon: Cpu, iconColor: '#f0abfc', bg: 'rgba(232,121,249,0.12)', border: 'rgba(232,121,249,0.25)' },
+            ] as const).map((s, i) => (
+              <div key={i} className="glass-card p-5 flex items-center gap-4 transition-all group cursor-default hover:scale-[1.02] hover:shadow-lg relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${s.bg} border ${s.border} group-hover:scale-110 transition-transform shadow-inner`}>
-                  <s.icon size={22} className={s.grad.replace('stat-value-', 'text-').replace('emerald','emerald-400').replace('purple','purple-400').replace('amber','amber-400').replace('fuchsia','fuchsia-400')} />
+                <div style={{ background: s.bg, border: `1px solid ${s.border}` }} className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner">
+                  <s.icon size={22} style={{ color: s.iconColor }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest truncate mb-0.5">{s.label}</p>
-                  <p className={`text-2xl font-black leading-tight ${s.grad}`}>{s.value}</p>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest truncate mb-1">{s.label}</p>
+                  <p className="text-2xl font-black leading-tight" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.value}</p>
                 </div>
               </div>
             ))}

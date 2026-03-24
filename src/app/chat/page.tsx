@@ -195,7 +195,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden selection:bg-[var(--accent)]/30 pt-16 relative">
+    <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 pt-16 relative" style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #0f0a1a 50%, #0a0f1a 100%)' }}>
       <Sidebar 
         currentSessionId={sessionId}
         onSessionSelect={(id, title) => { setSessionId(id); setSessionTitle(title); }}
@@ -231,18 +231,19 @@ export default function ChatPage() {
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl mb-8"
               >
                 {[
-                  { icon: Building2, label: t('chat_suggestion_business'), color: 'text-blue-400' },
-                  { icon: FileText, label: t('chat_suggestion_permit'), color: 'text-purple-400' },
-                  { icon: Search, label: t('chat_suggestion_location'), color: 'text-green-400' },
-                  { icon: Clock, label: t('chat_suggestion_duration'), color: 'text-orange-400' },
-                  { icon: Sparkles, label: t('chat_suggestion_cost'), color: 'text-yellow-400' },
-                  { icon: HelpCircle, label: t('chat_suggestion_help'), color: 'text-indigo-400' }
+                  { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa',  bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.2)'  },
+                  { icon: FileText,  label: t('chat_suggestion_permit'),   color: '#c084fc',  bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.2)' },
+                  { icon: Search,    label: t('chat_suggestion_location'), color: '#4ade80',  bg: 'rgba(74,222,128,0.1)',  border: 'rgba(74,222,128,0.2)'  },
+                  { icon: Clock,     label: t('chat_suggestion_duration'), color: '#fb923c',  bg: 'rgba(251,146,60,0.1)',  border: 'rgba(251,146,60,0.2)'  },
+                  { icon: Sparkles,  label: t('chat_suggestion_cost'),     color: '#facc15',  bg: 'rgba(250,204,21,0.1)',  border: 'rgba(250,204,21,0.2)'  },
+                  { icon: HelpCircle,label: t('chat_suggestion_help'),     color: '#818cf8',  bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.2)' }
                 ].map((chip, i) => (
                   <div
                     key={i}
-                    className="bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none shadow-sm"
+                    style={{ background: chip.bg, border: `1px solid ${chip.border}` }}
+                    className="text-white/70 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm"
                   >
-                    {chip.icon && <chip.icon size={14} className={chip.color} />}
+                    {chip.icon && <chip.icon size={14} style={{ color: chip.color }} />}
                     {chip.label}
                   </div>
                 ))}
@@ -256,53 +257,41 @@ export default function ChatPage() {
                      {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-[var(--text)]">
+                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
                   {t('chat_begin')}
                 </h1>
               </motion.div>
 
-              {/* Chat Input Pill (for empty state it's centered) */}
+              {/* Chat Input Pill (empty state, centered) */}
               <div className="w-full max-w-3xl mb-12">
-                <div className="bg-[var(--surface)] rounded-[32px] p-2 pr-3 min-h-[140px] flex flex-col border border-[var(--border)] hover:border-[var(--border-2)] transition-all group shadow-xl">
+                <div className="rounded-[28px] p-2 pr-3 min-h-[140px] flex flex-col border border-white/10 hover:border-white/20 transition-all" style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}>
                   <textarea
                     ref={inputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        send();
-                      }
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
                     }}
                     placeholder={t('chat_placeholder_alt')}
-                    className="flex-1 bg-transparent text-[18px] p-4 text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none"
+                    className="flex-1 bg-transparent text-[18px] p-4 text-white placeholder:text-white/30 focus:outline-none resize-none"
                   />
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
-                      <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all">
+                      <button className="p-2.5 text-white/30 hover:text-white hover:bg-white/5 rounded-full transition-all">
                         <Plus size={20} />
-                      </button>
-                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-all text-sm font-medium">
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: "linear" }} className="text-[var(--accent)]">
-                           ⚙
-                        </motion.div>
-                        Vehicles
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
-                       <span className="text-xs font-medium text-[var(--muted)] flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors mr-2">
+                       <span className="text-xs font-medium text-white/30 flex items-center gap-1 cursor-pointer hover:text-white/60 transition-colors mr-2">
                          Fast <ChevronDown size={14} />
                        </span>
                        {input.trim() ? (
-                        <button
-                          onClick={() => send()}
-                          disabled={busy}
-                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--surface-2)] transition-colors"
-                        >
+                        <button onClick={() => send()} disabled={busy}
+                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-purple-400 hover:bg-white/10 transition-colors">
                           <Send size={20} />
                         </button>
                       ) : (
-                        <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all">
+                        <button className="p-2.5 text-white/30 hover:text-white hover:bg-white/5 rounded-full transition-all">
                           <Mic size={20} />
                         </button>
                       )}
@@ -324,7 +313,7 @@ export default function ChatPage() {
                   <button
                     key={i}
                     onClick={() => send(chip.label)}
-                    className="bg-[var(--surface)] hover:bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)] text-[15px] py-2.5 px-6 rounded-full transition-all hover:border-[var(--border-2)] font-medium active:scale-95 touch-manipulation shadow-sm"
+                    className="text-white/60 hover:text-white text-[15px] py-2.5 px-6 rounded-full transition-all font-medium active:scale-95 touch-manipulation border border-white/10 hover:border-white/25 hover:bg-white/5 backdrop-blur-sm"
                   >
                     {chip.label}
                   </button>
@@ -348,10 +337,13 @@ export default function ChatPage() {
                     )}
 
                     <div className={`flex flex-col max-w-[85%] md:max-w-[80%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                      <div className={`text-[16px] leading-[1.6] whitespace-pre-wrap ${m.role === 'user'
-                          ? 'bg-[var(--surface)] text-[var(--text)] px-6 py-4 rounded-[28px] border border-[var(--border)] shadow-md'
-                          : 'text-[var(--text)] py-2 w-full font-normal'
-                        }`}>
+                    <div className={`text-[16px] leading-[1.6] whitespace-pre-wrap ${
+                        m.role === 'user'
+                          ? 'px-5 py-3.5 rounded-[22px] border border-white/10 text-white/90'
+                          : 'text-white/80 py-2 w-full font-normal'
+                      }`}
+                      style={m.role === 'user' ? { background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)' } : {}}
+                    >
                         {m.role === 'assistant' ? (
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
@@ -399,9 +391,9 @@ export default function ChatPage() {
 
           {/* Sticky Input Bar (Only visible when NOT empty) */}
           {!isEmpty && (
-            <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[var(--bg)] via-[var(--bg)] to-transparent pt-12 pb-10 px-4 flex justify-center">
+            <div className="absolute bottom-0 left-0 w-full pt-12 pb-10 px-4 flex justify-center" style={{ background: 'linear-gradient(to top, #0a0a0f 60%, transparent)' }}>
               <div className="w-full max-w-3xl relative px-2">
-                <div className={`relative flex flex-col bg-[var(--surface)] rounded-[32px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 group ${busy ? 'opacity-70' : 'hover:bg-[var(--surface-2)] focus-within:bg-[var(--surface-2)] focus-within:ring-1 focus-within:ring-[var(--border-2)]'}`}>
+                <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-white/10 transition-all duration-300 ${busy ? 'opacity-70' : 'hover:border-white/20 focus-within:border-white/20'}`} style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}>
                   
                   <textarea
                     ref={inputRef}
