@@ -114,6 +114,17 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [msgs, busy]);
 
+  // Auto-send a question if navigated from "Ask AI about this step"
+  useEffect(() => {
+    if (!sessionId || !isLoaded) return;
+    const pending = localStorage.getItem('permitops_ask_step');
+    if (!pending) return;
+    localStorage.removeItem('permitops_ask_step');
+    // Small delay so the page settles first
+    const timer = setTimeout(() => send(pending), 600);
+    return () => clearTimeout(timer);
+  }, [sessionId, isLoaded]);
+
   const handleNewChat = async () => {
     if (isAuthenticated && token) {
       try {

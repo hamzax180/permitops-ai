@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
   CheckCircle2, Clock, Circle, AlertCircle,
   ShieldCheck, ArrowRight, MapPin, Calendar, FileText,
-  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock, Sparkles
+  Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock, Sparkles, MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { apiFetch } from '../utils/api';
@@ -37,6 +38,7 @@ function StepIcon({ status }: { status: Status }) {
 
 export default function Dashboard() {
   const { t, isRTL, language } = useLanguage();
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -51,6 +53,12 @@ export default function Dashboard() {
   const [tckn, setTckn] = useState('99945855004');
   const [password, setPassword] = useState('••••••••••••');
   const [automatedStepId, setAutomatedStepId] = useState<number | null>(null);
+
+  const askAiAboutStep = (step: { id: number; title: string; summary: string; detail: string; responsible: string }) => {
+    const q = `I need more information about Step ${step.id}: "${step.title}". ${step.detail ? step.detail.slice(0, 300) : step.summary} Can you explain this in more detail, including what exactly I need to do, which documents I need, and any tips?`;
+    localStorage.setItem('permitops_ask_step', q);
+    router.push('/chat');
+  };
 
   const fetchState = useCallback(async () => {
     try {
@@ -616,6 +624,19 @@ export default function Dashboard() {
                               )}
                             </div>
                           )}
+
+                          {/* Ask AI about this step */}
+                          <div className="pt-1 border-t border-white/[0.06]">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); askAiAboutStep(s); }}
+                              className="flex items-center gap-2 text-[12px] font-bold text-purple-400 hover:text-purple-300 transition-colors group/ai"
+                            >
+                              <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-purple-500/15 border border-purple-500/25 group-hover/ai:bg-purple-500/25 transition-colors">
+                                <MessageSquare size={11} />
+                              </span>
+                              {language === 'ar' ? 'اسأل الذكاء الاصطناعي عن هذه الخطوة ←' : language === 'tr' ? 'Bu Adım Hakkında AI\'a Sor →' : 'Ask AI more about this step →'}
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     )}
