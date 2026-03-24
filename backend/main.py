@@ -274,13 +274,16 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
     raise ValueError("Empty agent result")
 
 
-async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session") -> str:
+async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False) -> str:
     """Direct Gemini call — fast and reliable fallback."""
     history = ""
     if db:
         history = await _get_history_context(session_id, db, current_query=query)
         
     full_query = f"{history}\nCURRENT USER REQUEST: {query}"
+    
+    if is_followup:
+        full_query = f"SYSTEM INSTRUCTION: This is a specific follow-up question. YOU MUST NOT append the 'Permits (Agencies)', 'Required Docs', or 'Action Steps' lists to your answer. Just answer the user's specific question concisely.\n\n{full_query}"
     
     localized_query = full_query
     if language == "ar":
@@ -387,7 +390,7 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
                 
                 if is_question:
                     print(f"[agent_query] Routing directly to Gemini for follow-up question")
-                    answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
+                    answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
                 else:
                     answer = await _run_with_agents(query.query, user, db, query.language, session_id)
             except Exception as agent_err:
