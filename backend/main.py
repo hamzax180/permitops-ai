@@ -427,15 +427,27 @@ async def get_latest(token: Optional[str] = None, session_id: Optional[str] = No
         if session_id:
             db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
             if db_session and db_session.dashboard_state:
-                return json.loads(db_session.dashboard_state)
+                state = json.loads(db_session.dashboard_state)
+                state['_session_id'] = session_id
+                return state
         
         # Fallback to user latest if no session state
         if user.latest_dashboard_state:
-            return json.loads(user.latest_dashboard_state)
+            state = json.loads(user.latest_dashboard_state)
+            # Try to find which session this belongs to
+            latest_session = db.query(ChatSession).filter(
+                ChatSession.user_id == user.id,
+                ChatSession.dashboard_state.isnot(None)
+            ).order_by(ChatSession.updated_at.desc()).first()
+            if latest_session:
+                state['_session_id'] = latest_session.id
+            return state
     
     # Fallback to guest states
     if session_id and session_id in guest_dashboard_states:
-        return json.loads(guest_dashboard_states[session_id])
+        state = json.loads(guest_dashboard_states[session_id])
+        state['_session_id'] = session_id
+        return state
             
     print(f"[get_latest] Returning empty state for session {session_id}")
     return {}

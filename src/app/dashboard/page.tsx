@@ -53,13 +53,13 @@ export default function Dashboard() {
   const [tckn, setTckn] = useState('99945855004');
   const [password, setPassword] = useState('••••••••••••');
   const [automatedStepId, setAutomatedStepId] = useState<number | null>(null);
+  const [dashboardSessionId, setDashboardSessionId] = useState<string | null>(null);
 
   const askAiAboutStep = (step: { id: number; title: string; summary: string; detail: string; responsible: string }) => {
     const q = `I need more information about Step ${step.id}: "${step.title}". ${step.detail ? step.detail.slice(0, 300) : step.summary} Can you explain this in more detail, including what exactly I need to do, which documents I need, and any tips?`;
     localStorage.setItem('permitops_ask_step', q);
-    // Also preserve the current active session so chat continues in same history
-    const sid = localStorage.getItem('permitops_active_session_id');
-    if (sid) localStorage.setItem('permitops_ask_step_session', sid);
+    // Use the session that THIS dashboard loaded data from — not whatever was last visited in chat
+    if (dashboardSessionId) localStorage.setItem('permitops_ask_step_session', dashboardSessionId);
     router.push('/chat');
   };
 
@@ -77,6 +77,9 @@ export default function Dashboard() {
       if (res?.ok) {
         const json = await res.json();
         setData(json);
+        // _session_id is the authoritative session this data belongs to
+        const resolvedSession = json._session_id || sid;
+        if (resolvedSession) setDashboardSessionId(resolvedSession);
       }
     } catch (e) {
       console.error("Failed to fetch dashboard data", e);
