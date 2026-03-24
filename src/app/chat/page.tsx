@@ -37,19 +37,22 @@ export default function ChatPage() {
   // Load sessions on mount or when auth changes
   useEffect(() => {
     const initSession = async () => {
+      // If navigated from 'Ask AI about this step', restore that exact session
+      const forcedSessionId = localStorage.getItem('permitops_ask_step_session');
+      if (forcedSessionId) {
+        localStorage.removeItem('permitops_ask_step_session');
+        setSessionId(forcedSessionId);
+        return; // session + history will load via the history useEffect
+      }
+
       if (isAuthenticated && token) {
         try {
           const res = await apiFetch(`/chat/sessions?token=${token}`);
           if (res?.ok) {
             const data = await res.json();
             if (data.length > 0 && !sessionId) {
-              // Prefer the session the user was last in (especially when coming from 'Ask AI')
-              const preferredId = localStorage.getItem('permitops_ask_step_session');
-              localStorage.removeItem('permitops_ask_step_session');
-              const preferred = preferredId ? data.find((s: any) => s.id === preferredId) : null;
-              const target = preferred || data[0];
-              setSessionId(target.id);
-              setSessionTitle(target.title || '');
+              setSessionId(data[0].id);
+              setSessionTitle(data[0].title || '');
             } else if (data.length === 0) {
               handleNewChat();
             }
