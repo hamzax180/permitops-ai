@@ -36,24 +36,42 @@ export default function ChatPage() {
 
   // Load sessions on mount or when auth changes
   useEffect(() => {
+    let mounted = true;
     const initSession = async () => {
-      // If navigated from 'Ask AI about this step', restore that exact session
-      const forcedSessionId = localStorage.getItem('permitops_ask_step_session');
-      if (forcedSessionId) {
-        localStorage.removeItem('permitops_ask_step_session');
-        setSessionId(forcedSessionId);
-        return; // session + history will load via the history useEffect
-      }
-
       if (isAuthenticated && token) {
         try {
           const res = await apiFetch(`/chat/sessions?token=${token}`);
           if (res?.ok) {
             const data = await res.json();
-            if (data.length > 0 && !sessionId) {
-              setSessionId(data[0].id);
-              setSessionTitle(data[0].title || '');
-            } else if (data.length === 0) {
+            if (!mounted) return;
+            
+            // Read what Dashboard requested (if any)
+            const forcedSessionId = localStorage.getItem('permitops_ask_step_session');
+            if (forcedSessionId) {
+              localStorage.removeItem('permitops_ask_step_session');
+              
+              // Find the title for the forced session to update UI nicely
+              const fSession = data.find((s: any) => s.id === forcedSessionId);
+              
+              // We use a callback in setSessionId just in case it's mid-update
+              setSessionId(prev => {
+                // If it already resolved to something else ignore, otherwise force:
+                return forcedSessionId;
+              });
+              setSessionTitle(fSession ? (fSession.title || '') : '');
+              return;
+            }
+
+            // Normal load: if no session is set, pick the first one
+            setSessionId(prev => {
+              if (!prev && data.length > 0) {
+                setSessionTitle(data[0].title || '');
+                return data[0].id;
+              }
+              return prev;
+            });
+
+            if (data.length === 0) {
               handleNewChat();
             }
           }
@@ -65,6 +83,7 @@ export default function ChatPage() {
       }
     };
     initSession();
+    return () => { mounted = false; };
   }, [token, isAuthenticated]);
 
   // Load messages from backend when sessionId changes
