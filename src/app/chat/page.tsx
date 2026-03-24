@@ -43,8 +43,13 @@ export default function ChatPage() {
           if (res?.ok) {
             const data = await res.json();
             if (data.length > 0 && !sessionId) {
-              setSessionId(data[0].id);
-              setSessionTitle(data[0].title || '');
+              // Prefer the session the user was last in (especially when coming from 'Ask AI')
+              const preferredId = localStorage.getItem('permitops_ask_step_session');
+              localStorage.removeItem('permitops_ask_step_session');
+              const preferred = preferredId ? data.find((s: any) => s.id === preferredId) : null;
+              const target = preferred || data[0];
+              setSessionId(target.id);
+              setSessionTitle(target.title || '');
             } else if (data.length === 0) {
               handleNewChat();
             }

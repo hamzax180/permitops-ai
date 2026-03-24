@@ -57,6 +57,9 @@ export default function Dashboard() {
   const askAiAboutStep = (step: { id: number; title: string; summary: string; detail: string; responsible: string }) => {
     const q = `I need more information about Step ${step.id}: "${step.title}". ${step.detail ? step.detail.slice(0, 300) : step.summary} Can you explain this in more detail, including what exactly I need to do, which documents I need, and any tips?`;
     localStorage.setItem('permitops_ask_step', q);
+    // Also preserve the current active session so chat continues in same history
+    const sid = localStorage.getItem('permitops_active_session_id');
+    if (sid) localStorage.setItem('permitops_ask_step_session', sid);
     router.push('/chat');
   };
 
