@@ -554,10 +554,15 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                 # If the dashboard state is already built, this is ALWAYS a follow-up conversational question.
                 # Running the orchestrator again would maliciously overwrite their dashboard.
                 has_state = False
+                import json
                 if db_session and db_session.dashboard_state:
-                    has_state = True
+                    state_obj = json.loads(db_session.dashboard_state)
+                    if state_obj.get("combined_result") is not None:
+                        has_state = True
                 elif session_id in guest_dashboard_states:
-                    has_state = True
+                    state_obj = json.loads(guest_dashboard_states[session_id])
+                    if state_obj.get("combined_result") is not None:
+                        has_state = True
                 
                 # Also fallback if the query explicitly mentions asking about a specific step
                 lower_q = query_text.lower()
