@@ -293,7 +293,7 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
     raise ValueError("Empty agent result")
 
 
-async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False) -> str:
+async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False, file_obj=None) -> str:
     """Direct Gemini call — fast and reliable fallback."""
     global guest_dashboard_states
     history = ""
@@ -311,10 +311,14 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
     elif language == "tr":
         localized_query = f"Answer in Turkish: {full_query}"
         
+    prompt_list = [localized_query]
+    if file_obj:
+        prompt_list.insert(0, file_obj)
+        
     if is_followup:
-        response = await asyncio.to_thread(chat_model.generate_content, localized_query)
+        response = await asyncio.to_thread(chat_model.generate_content, prompt_list)
     else:
-        response = await asyncio.to_thread(gemini_model.generate_content, localized_query)
+        response = await asyncio.to_thread(gemini_model.generate_content, prompt_list)
     
     # Only mock state if we don't already have one for this session
     has_state = False
@@ -368,7 +372,41 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
 
 @app.post("/agent/query")
 @limiter.limit("5/minute", key_func=user_id_key)
-async def agent_query(request: Request, query: UserQuery, token: Optional[str] = None, db: Session = Depends(get_db)):
+async def agent_query(request: Request, db: Session = Depends(get_db)):
+    content_type = request.headers.get("content-type", "")
+    
+    file_obj = None
+    query_text = ""
+    language = "en"
+    session_id = "default-session"
+    token = None
+    
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        query_text = form.get("query", "")
+        language = form.get("language", "en")
+        session_id = form.get("session_id", "default-session")
+        token = form.get("token")
+        upload_file = form.get("file")
+        
+        if upload_file and upload_file.filename:
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(upload_file.filename)[1]) as tmp:
+                content = await upload_file.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            file_obj = genai.upload_file(tmp_path)
+            query_text = f"📎 [Attached: {upload_file.filename}]\n{query_text}"
+            
+    else:
+        body = await request.json()
+        query_text = body.get("query", "")
+        language = body.get("language", "en")
+        session_id = body.get("context", {}).get("session_id", "default-session")
+        # Token might be passed in URL instead of body for JSON requests, handle it below.
+    
+    if request.query_params.get("token"):
+        token = request.query_params.get("token")
     user = None
     if token:
         try:
@@ -378,11 +416,9 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
 
     try:
         # Get or create session
-        session_id = query.context.get("session_id") if query.context else "default-session"
-        
         db_session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
         if not db_session:
-            db_session = ChatSession(id=session_id, user_id=user.id if user else None, title=query.query[:50])
+            db_session = ChatSession(id=session_id, user_id=user.id if user else None, title=query_text[:50])
             db.add(db_session)
             db.commit()
         elif user and not db_session.user_id:
@@ -391,7 +427,7 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
             db.commit()
         if db_session and not db_session.title:
             # Clean up the query for a nice title
-            clean = query.query.split('\n')[0].strip() # Take first line
+            clean = query_text.split('\n')[-1].strip() # Take last line if file attachment is first
             clean = clean.rstrip('?.! ')
             if len(clean) > 35:
                 clean = clean[:32] + "..."
@@ -399,7 +435,7 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
             db.commit()
         
         # Save user message
-        user_msg = ChatMessage(session_id=session_id, role="user", content=query.query)
+        user_msg = ChatMessage(session_id=session_id, role="user", content=query_text)
         db.add(user_msg)
         db.commit()
 
@@ -415,22 +451,22 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
                     has_state = True
                 
                 # Also fallback if the query explicitly mentions asking about a specific step
-                lower_q = query.query.lower()
+                lower_q = query_text.lower()
                 is_explicit_q = "i need more information about step" in lower_q or "can you explain" in lower_q or "step " in lower_q
                 
-                is_followup = has_state or is_explicit_q
+                is_followup = has_state or is_explicit_q or (file_obj is not None)
                 
                 if is_followup:
                     print(f"[agent_query] Routing directly to Gemini for follow-up question (has_state={has_state})")
-                    answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
+                    answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj)
                 else:
                     print(f"[agent_query] Routing to Orchestrator to generate new permit plan")
-                    answer = await _run_with_agents(query.query, user, db, query.language, session_id)
+                    answer = await _run_with_agents(query_text, user, db, language, session_id)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
-                answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
+                answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj)
         else:
-            answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
+            answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj)
         
         if True: # Always save assistant message now that we have session tracking
             # Bruteforce strip any leftover permit boilerplate just in case the LLM stubbornly generated it

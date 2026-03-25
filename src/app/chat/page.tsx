@@ -28,10 +28,12 @@ export default function ChatPage() {
   ];
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const msgIdRef = useRef(1);
 
   // Load sessions on mount or when auth changes
@@ -184,21 +186,42 @@ export default function ChatPage() {
 
   const send = async (text?: string) => {
     const q = (text ?? input).trim();
-    if (!q || busy || !sessionId) return;
+    if ((!q && !file) || busy || !sessionId) return;
     setInput('');
 
-    const userMsg: Msg = { id: msgIdRef.current++, role: 'user', content: q };
+    const displayQ = file ? `📎 [Attached: ${file.name}]\n${q}` : q;
+    const userMsg: Msg = { id: msgIdRef.current++, role: 'user', content: displayQ };
     setMsgs(p => [...p, userMsg]);
     setBusy(true);
     if (!sessionTitle && msgs.length === 0) {
-      setSessionTitle(q.length > 35 ? q.slice(0, 32) + '...' : q);
+      setSessionTitle(q.length > 35 ? q.slice(0, 32) + '...' : q || "Document Analysis");
     }
+    
+    const currentFile = file;
+    setFile(null);
 
     try {
+      let body;
+      let headers: HeadersInit = {};
+      
+      if (currentFile) {
+        const formData = new FormData();
+        formData.append('query', q);
+        formData.append('language', language);
+        formData.append('session_id', sessionId);
+        if (token) formData.append('token', token);
+        formData.append('file', currentFile);
+        body = formData;
+        // Browser sets Content-Type multipart/form-data boundary automatically
+      } else {
+        headers = { 'Content-Type': 'application/json' };
+        body = JSON.stringify({ query: q, language, context: { session_id: sessionId } });
+      }
+
       const res = await apiFetch(`/agent/query${token ? `?token=${token}` : ''}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, language, context: { session_id: sessionId } }),
+        headers,
+        body,
       });
       if (!res || !res.ok) throw new Error();
       const data = await res.json();
@@ -303,6 +326,18 @@ export default function ChatPage() {
               {/* Chat Input Pill (empty state, centered) */}
               <div className="w-full max-w-3xl mb-12">
                 <div className="rounded-[28px] p-2 pr-3 min-h-[140px] flex flex-col border border-[var(--border)] hover:border-[var(--border-2)] transition-all bg-[var(--surface-2)]">
+                  {/* File Preview Chip */}
+                  {file && (
+                    <div className="px-4 pt-2 flex items-center">
+                      <div className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-[13px] text-[var(--text)]">
+                        <FileText size={14} className="text-[var(--accent)]" />
+                        <span className="truncate max-w-[200px]">{file.name}</span>
+                        <button onClick={() => setFile(null)} className="ml-1 text-[var(--muted)] hover:text-red-400 transition-colors">
+                           <Plus size={14} className="rotate-45" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <textarea
                     ref={inputRef}
                     value={input}
@@ -315,7 +350,20 @@ export default function ChatPage() {
                   />
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
-                      <button className="p-2.5 text-white/30 hover:text-white hover:bg-white/5 rounded-full transition-all">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) setFile(e.target.files[0]);
+                          e.target.value = '';
+                        }} 
+                        className="hidden" 
+                      />
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-2.5 text-white/30 hover:text-white hover:bg-white/5 rounded-full transition-all"
+                        title="Upload Document"
+                      >
                         <Plus size={20} />
                       </button>
                     </div>
@@ -446,6 +494,19 @@ export default function ChatPage() {
               <div className="w-full max-w-3xl relative px-2">
                 <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 bg-[var(--surface-2)] ${busy ? 'opacity-70' : 'hover:border-[var(--border-2)] focus-within:border-[var(--border-2)]'}`}>
                   
+                  {/* File Preview Chip */}
+                  {file && (
+                    <div className="px-4 pt-2 -mb-2 flex items-center">
+                      <div className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-[13px] text-[var(--text)]">
+                        <FileText size={14} className="text-[var(--accent)]" />
+                        <span className="truncate max-w-[200px]">{file.name}</span>
+                        <button onClick={() => setFile(null)} className="ml-1 text-[var(--muted)] hover:text-red-400 transition-colors">
+                           <Plus size={14} className="rotate-45" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <textarea
                     ref={inputRef}
                     value={input}
@@ -469,7 +530,20 @@ export default function ChatPage() {
 
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
-                      <button className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] transition-colors">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) setFile(e.target.files[0]);
+                          e.target.value = '';
+                        }} 
+                        className="hidden" 
+                      />
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                        title="Upload Document"
+                      >
                         <Plus size={20} />
                       </button>
                     </div>
