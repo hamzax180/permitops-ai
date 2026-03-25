@@ -63,7 +63,7 @@ export default function Home() {
       <Navbar />
       <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
 
-      {/* ═══════════════ GEMINI STYLE CONTENT ═══════════════ */}
+      {/* ═══════════════ PERMIT ASSISTANT CONTENT ═══════════════ */}
       <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 pt-24 pb-10 px-6 relative">
 
         {/* Animated Header Group */}

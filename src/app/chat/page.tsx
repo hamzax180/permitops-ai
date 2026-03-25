@@ -270,20 +270,15 @@ export default function ChatPage() {
         <Navbar isAppPage />
         <div className="h-4 shrink-0" /> {/* Slight top padding */}
 
-        {/* Centered Chat Title for Screen — Constrained to main width for the perfect sidebar push! */}
-        <div className="absolute left-0 right-0 top-3 flex justify-center pointer-events-none z-30 px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }} 
-            animate={{ opacity: 1, y: 0 }}
-            className="px-6 py-2 rounded-full glass-card border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.15)] backdrop-blur-xl max-w-[70vw] truncate pointer-events-auto"
-          >
-            <span className="text-xs md:text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-300 whitespace-nowrap tracking-widest uppercase drop-shadow-md">
-              {sessionTitle || t('chat_new')}
+        {/* Gemini-Style Content Header */}
+        <div className="h-16 flex items-center px-6 shrink-0 z-30">
+          <div className="flex items-center gap-2">
+            <span className="text-xl md:text-2xl font-medium text-[var(--text)] opacity-90 tracking-tight">
+              Permit Assistant
             </span>
-          </motion.div>
+            <ChevronDown size={16} className="text-[var(--muted)] opacity-50 mt-1" />
+          </div>
         </div>
-
-        <div className="h-12 shrink-0" /> {/* Spacer Below the Header */}
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0 relative">
@@ -296,17 +291,16 @@ export default function ChatPage() {
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl mb-8"
               >
                 {[
-                  { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa',  bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.2)'  },
-                  { icon: FileText,  label: t('chat_suggestion_permit'),   color: '#c084fc',  bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.2)' },
-                  { icon: Search,    label: t('chat_suggestion_location'), color: '#4ade80',  bg: 'rgba(74,222,128,0.1)',  border: 'rgba(74,222,128,0.2)'  },
-                  { icon: Clock,     label: t('chat_suggestion_duration'), color: '#fb923c',  bg: 'rgba(251,146,60,0.1)',  border: 'rgba(251,146,60,0.2)'  },
-                  { icon: Sparkles,  label: t('chat_suggestion_cost'),     color: '#facc15',  bg: 'rgba(250,204,21,0.1)',  border: 'rgba(250,204,21,0.2)'  },
-                  { icon: HelpCircle,label: t('chat_suggestion_help'),     color: '#818cf8',  bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.2)' }
+                  { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa',  mesh: 'mesh-indigo' },
+                  { icon: FileText,  label: t('chat_suggestion_permit'),   color: '#c084fc',  mesh: 'mesh-purple' },
+                  { icon: Search,    label: t('chat_suggestion_location'), color: '#4ade80',  mesh: 'mesh-emerald' },
+                  { icon: Clock,     label: t('chat_suggestion_duration'), color: '#fb923c',  mesh: 'mesh-amber' },
+                  { icon: Sparkles,  label: t('chat_suggestion_cost'),     color: '#facc15',  mesh: 'mesh-amber' },
+                  { icon: HelpCircle,label: t('chat_suggestion_help'),     color: '#818cf8',  mesh: 'mesh-indigo' }
                 ].map((chip, i) => (
                   <div
                     key={i}
-                    style={{ background: chip.bg, border: `1px solid ${chip.border}` }}
-                    className="text-[var(--text)] opacity-80 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm"
+                    className={`glass-mesh ${chip.mesh} text-[var(--text)] opacity-80 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm transition-all hover:scale-105 cursor-pointer`}
                   >
                     {chip.icon && <chip.icon size={14} style={{ color: chip.color }} />}
                     {chip.label}
@@ -315,21 +309,21 @@ export default function ChatPage() {
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-                className="w-full mb-8"
+                className="w-full mb-10 text-left"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl md:text-2xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
+                  <span className="text-4xl md:text-6xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
                      {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-[var(--text)] opacity-90">
+                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-[#c4c7c5] dark:text-[#444746]">
                   {t('chat_begin')}
                 </h1>
               </motion.div>
 
               {/* Chat Input Pill (empty state, centered) */}
               <div className="w-full max-w-3xl mb-12">
-                <div className="rounded-[28px] p-2 pr-3 min-h-[140px] flex flex-col border border-[var(--border)] hover:border-[var(--border-2)] transition-all bg-[var(--surface-2)]">
+                <div className="rounded-[28px] p-2 pr-3 min-h-[140px] flex flex-col glass-mesh mesh-indigo hover:border-[var(--border-2)] transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
                   {/* File Preview Chip */}
                   {file && (
                     <div className="px-4 pt-2 flex items-center">
@@ -496,7 +490,7 @@ export default function ChatPage() {
           {!isEmpty && (
             <div className="absolute bottom-0 left-0 w-full pt-12 pb-10 px-4 flex justify-center bg-gradient-to-t from-[var(--bg)] via-[var(--bg)] to-transparent">
               <div className="w-full max-w-3xl relative px-2">
-                <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 bg-[var(--surface-2)] ${busy ? 'opacity-70' : 'hover:border-[var(--border-2)] focus-within:border-[var(--border-2)]'}`}>
+                <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 bg-[var(--surface-2)] backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none ${busy ? 'opacity-70' : 'hover:border-[var(--border-2)] focus-within:border-[var(--border-2)]'}`}>
                   
                   {/* File Preview Chip */}
                   {file && (

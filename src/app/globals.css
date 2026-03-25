@@ -5,16 +5,16 @@
 
 /* ─── Flexible Theme Tokens ─── */
 :root {
-  --bg: #f8f9fa;
-  --surface: #ffffff;
-  --surface-2: #f1f3f4;
-  --border: rgba(0, 0, 0, 0.1);
-  --border-2: rgba(0, 0, 0, 0.16);
-  --accent: #4f46e5;
-  --text: #202124;
-  --muted: #5f6368;
-  --radius: 16px;
-  --nav-bg: rgba(255, 255, 255, 0.9);
+  --bg: #ffffff;
+  --surface: #f0f4f9;
+  --surface-2: #dde3ea;
+  --border: rgba(0, 0, 0, 0.05);
+  --border-2: rgba(0, 0, 0, 0.1);
+  --accent: #1a73e8;
+  --text: #1f1f1f;
+  --muted: #474747;
+  --radius: 24px;
+  --nav-bg: rgba(255, 255, 255, 0.7);
 }
 
 .dark {
@@ -325,3 +325,66 @@ body {
 
 .dark .agent-chip { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.3); color: #c084fc; }
 .dark .human-chip { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.25); color: #7dd3fc; }
+
+/* ─── Mesh Gradients (Gradual UI) ─── */
+.glass-mesh {
+  @apply backdrop-blur-md border border-[var(--border)] transition-all duration-500;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Indigo Mesh (Info/Metrics) */
+.mesh-indigo {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(79, 70, 229, 0.05) 0px, transparent 50%);
+}
+.dark .mesh-indigo {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(138, 180, 248, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.08) 0px, transparent 50%);
+}
+
+/* Purple Mesh (AI/Agentic) */
+.mesh-purple {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(192, 132, 252, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.06) 0px, transparent 50%);
+}
+.dark .mesh-purple {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(192, 132, 252, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.1) 0px, transparent 50%);
+}
+
+/* Amber Mesh (Warning/Action) */
+.mesh-amber {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(251, 146, 60, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.06) 0px, transparent 50%);
+}
+.dark .mesh-amber {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(251, 146, 60, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(217, 119, 6, 0.1) 0px, transparent 50%);
+}
+
+/* Success Mesh (Completed) */
+.mesh-emerald {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(52, 211, 153, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.06) 0px, transparent 50%);
+}
+.dark .mesh-emerald {
+  background: var(--surface);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(52, 211, 153, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(5, 150, 105, 0.1) 0px, transparent 50%);
+}

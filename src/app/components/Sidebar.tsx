@@ -54,35 +54,35 @@ export default function Sidebar({
     <motion.aside
       initial={false}
       animate={{ width: isExpanded ? 280 : 68 }}
-      className="h-full bg-[var(--surface)] flex flex-col shrink-0 transition-all duration-300 ease-in-out relative z-50 shadow-2xl border-r border-[var(--border)]"
+      className="h-full bg-[var(--surface)] flex flex-col shrink-0 transition-all duration-300 ease-in-out relative z-50 border-r border-[var(--border)]"
     >
       {/* Top Menu Button */}
-      <div className="p-4 mb-2">
+      <div className="p-4 mb-1">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="p-2.5 rounded-full hover:bg-[var(--surface-2)] text-[var(--text)] transition-colors"
-          title="Collapse menu"
+          title="Toggle menu"
         >
           <Menu size={20} />
         </button>
       </div>
 
       {/* New Chat Button */}
-      <div className="px-3 mb-4">
+      <div className="px-3 mb-6">
         <button
           onClick={onNewChat}
-          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[var(--surface-2)] hover:bg-[var(--border-2)]/10 border border-[var(--border)] shadow-sm overflow-hidden ${
-            isExpanded ? 'w-36 px-4' : 'w-10 px-2.5 ml-1'
+          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[var(--surface-2)] hover:shadow-md border border-[var(--border)] overflow-hidden ${
+            isExpanded ? 'w-40 px-5' : 'w-12 px-3.5'
           }`}
         >
-          <Plus size={20} className="text-[#8ab4f8] shrink-0" />
+          <Plus size={20} className="text-[var(--accent)] shrink-0" />
           <AnimatePresence>
             {isExpanded && (
               <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="text-sm font-medium text-[var(--text)] opacity-90 whitespace-nowrap"
+                className="text-sm font-medium text-[var(--text)] whitespace-nowrap"
               >
                  {t('sidebar_new_chat')}
               </motion.span>
@@ -99,14 +99,20 @@ export default function Sidebar({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest px-3 mb-3 mt-4"
+              className="text-[14px] font-medium text-[var(--text)] px-4 mb-3 mt-4"
             >
-               {t('sidebar_recent')}
+               {t('sidebar_recent') || 'Recent'}
             </motion.h3>
           )}
         </AnimatePresence>
 
-        {loading && sessions.length === 0 ? (
+        {!token && isExpanded ? (
+          <div className="mx-1 p-4 rounded-2xl bg-[var(--surface-2)]/60 border border-[var(--border)] space-y-3 mt-4">
+             <p className="text-[13px] font-semibold text-[var(--text)]">Sign in to start saving your chats</p>
+             <p className="text-[12px] text-[var(--muted)] leading-relaxed">Once you're signed in, you can access your recent chats here.</p>
+             <button className="text-[var(--accent)] text-[13px] font-bold hover:underline">Sign in</button>
+          </div>
+        ) : loading && sessions.length === 0 ? (
           <div className="space-y-4 px-3 py-2">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-2 bg-[var(--border)] animate-pulse rounded-full w-full" />
@@ -118,13 +124,13 @@ export default function Sidebar({
               key={s.id}
               className={`group relative flex items-center gap-3 p-3 rounded-full transition-all cursor-pointer ${
                 currentSessionId === s.id
-                  ? 'bg-[var(--surface-2)] text-[var(--accent)] shadow-sm'
-                  : 'hover:bg-[var(--surface-2)] text-[var(--text)] opacity-70 hover:opacity-100'
+                  ? 'bg-[var(--surface-2)] text-[var(--text)]'
+                  : 'hover:bg-[var(--surface-2)] text-[var(--text)] opacity-90'
               }`}
               onClick={() => onSessionSelect(s.id, s.title)}
               title={s.title}
             >
-              <MessageSquare size={18} className={currentSessionId === s.id ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />
+              <MessageSquare size={18} className="text-[var(--muted)]" />
               {isExpanded && (
                 <span className="text-sm font-medium truncate flex-1 pr-6 text-[var(--text)]">{s.title}</span>
               )}

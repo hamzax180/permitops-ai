@@ -471,12 +471,12 @@ export default function Dashboard() {
             className="grid grid-cols-2 md:grid-cols-4 gap-3"
           >
             {([
-              { label: t('dashboard_compliance_score'), value: `${progress > 0 ? progress : '0'}%`,  from: '#34d399', to: '#10b981', icon: ShieldCheck,  iconColor: '#34d399', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)'  },
-              { label: t('dashboard_steps_complete'),   value: `${done}/${steps.length}`,            from: '#c084fc', to: '#a855f7', icon: CheckCircle2, iconColor: '#c084fc', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.25)' },
-              { label: t('dashboard_est_days'),         value: `${Math.max(0, steps.length*2 - done*2)}d`, from: '#fcd34d', to: '#f59e0b', icon: Clock,    iconColor: '#fcd34d', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)'  },
-              { label: t('dashboard_active_agents'),    value: `${data?.execution_plan?.assigned_agents?.length || 0}`, from: '#f0abfc', to: '#e879f9', icon: Cpu, iconColor: '#f0abfc', bg: 'rgba(232,121,249,0.12)', border: 'rgba(232,121,249,0.25)' },
+              { label: t('dashboard_compliance_score'), value: `${progress > 0 ? progress : '0'}%`,  from: '#34d399', to: '#10b981', icon: ShieldCheck,  iconColor: '#34d399', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)', mesh: 'mesh-emerald' },
+              { label: t('dashboard_steps_complete'),   value: `${done}/${steps.length}`,            from: '#c084fc', to: '#a855f7', icon: CheckCircle2, iconColor: '#c084fc', bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.25)', mesh: 'mesh-purple' },
+              { label: t('dashboard_est_days'),         value: `${Math.max(0, steps.length*2 - done*2)}d`, from: '#fcd34d', to: '#f59e0b', icon: Clock,    iconColor: '#fcd34d', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)', mesh: 'mesh-amber'  },
+              { label: t('dashboard_active_agents'),    value: `${data?.execution_plan?.assigned_agents?.length || 0}`, from: '#f0abfc', to: '#e879f9', icon: Cpu, iconColor: '#f0abfc', bg: 'rgba(232,121,249,0.12)', border: 'rgba(232,121,249,0.25)', mesh: 'mesh-indigo' },
             ] as const).map((s, i) => (
-              <div key={i} className="glass-card p-5 flex items-center gap-4 transition-all group cursor-default hover:scale-[1.02] hover:shadow-lg relative overflow-hidden">
+              <div key={i} className={`glass-mesh ${s.mesh} p-5 flex items-center gap-4 transition-all group cursor-default hover:scale-[1.02] hover:shadow-lg relative overflow-hidden`}>
                 <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
                 <div style={{ background: s.bg, border: `1px solid ${s.border}` }} className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner">
                   <s.icon size={22} style={{ color: s.iconColor }} />
@@ -692,7 +692,7 @@ export default function Dashboard() {
             <div className="lg:col-span-4 space-y-4">
 
               {/* Action Required */}
-              <div className="glass-card p-5 space-y-4 border-amber-500/40 bg-amber-500/10 shadow-xl overflow-hidden relative">
+              <div className="glass-mesh mesh-amber p-5 space-y-4 shadow-xl overflow-hidden relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
                 <div className="flex items-start gap-3 relative z-10">
                   <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
@@ -731,7 +731,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-3">
                   {(data?.execution_plan?.assigned_agents || ['Planner', 'Classifier']).map((name: string, i: number) => (
-                    <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-[var(--surface-2)] bg-[var(--surface)] border border-[var(--border)] shadow-sm">
+                    <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-[var(--surface-2)] glass-mesh mesh-purple shadow-sm">
                       <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-purple-600 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/20 shadow-sm">
                         <Cpu size={14} />
                       </div>
