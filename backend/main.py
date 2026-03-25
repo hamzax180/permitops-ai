@@ -405,22 +405,32 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
 
         if _agents_available:
             try:
-                # If it's a specific question about a step or general follow up, bypass LangGraph orchestrator
-                # and just use Gemini directly so it doesn't try to build a whole new permit plan
-                lower_q = query.query.lower()
-                is_question = "i need more information about step" in lower_q or "can you explain this in more detail" in lower_q
+                # Determine if this is an initial permit query or a follow-up
+                # If the dashboard state is already built, this is ALWAYS a follow-up conversational question.
+                # Running the orchestrator again would maliciously overwrite their dashboard.
+                has_state = False
+                if db_session and db_session.dashboard_state:
+                    has_state = True
+                elif session_id in guest_dashboard_states:
+                    has_state = True
                 
-                if is_question:
-                    print(f"[agent_query] Routing directly to Gemini for follow-up question")
+                # Also fallback if the query explicitly mentions asking about a specific step
+                lower_q = query.query.lower()
+                is_explicit_q = "i need more information about step" in lower_q or "can you explain" in lower_q or "step " in lower_q
+                
+                is_followup = has_state or is_explicit_q
+                
+                if is_followup:
+                    print(f"[agent_query] Routing directly to Gemini for follow-up question (has_state={has_state})")
                     answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
                 else:
+                    print(f"[agent_query] Routing to Orchestrator to generate new permit plan")
                     answer = await _run_with_agents(query.query, user, db, query.language, session_id)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
-                # Use current gemini_model for fallback
-                answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
+                answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
         else:
-            answer = await _run_direct_gemini(query.query, user, db, query.language, session_id)
+            answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
         
         if True: # Always save assistant message now that we have session tracking
             # Save assistant message
