@@ -318,6 +318,85 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
         )
     raise ValueError("Empty agent result")
 
+async def _run_with_student_agents(query: str, user: Optional[DBUser] = None, db: Session = None, language: str = "en", session_id: str = "default-session") -> str:
+    """Run the multi-agent langgraph workflow specifically for Students."""
+    if not _agents_available:
+        return await _run_direct_gemini(query, user, db, language, session_id, assistant_type="student")
+        
+    try:
+        from workflow.student_orchestrator import student_orchestrator
+    except ImportError as e:
+        print(f"[_run_with_student_agents] Import Error: {e}")
+        return await _run_direct_gemini(query, user, db, language, session_id, assistant_type="student")
+
+    from models.schemas import PermitState
+    
+    initial_state = {
+        "state": PermitState(business_profile={"raw_query": query, "language": language, "session_id": session_id}),
+        "user_request": query,
+        "language": language
+    }
+
+    try:
+        history = await _get_history_context(session_id, db)
+        full_query = f"{history}\nCURRENT USER REQUEST: {query}"
+        
+        if language == "ar":
+            initial_state["user_request"] = f"(Answer strictly in Arabic / بالعربية) {full_query}"
+        elif language == "tr":
+            initial_state["user_request"] = f"(Lütfen Türkçe cevap veriniz) {full_query}"
+        else:
+            initial_state["user_request"] = full_query
+            
+        print(f"[_run_with_student_agents] Invoking Student orchestrator for session {session_id}")
+        config = {"configurable": {"thread_id": session_id}}
+        result = await student_orchestrator.ainvoke(initial_state, config=config)
+        state = result["state"]
+        print("[_run_with_student_agents] Orchestrator completed successfully")
+    except Exception as e:
+        print(f"[_run_with_student_agents ERROR] Orchestrator failed: {e}")
+        raise
+
+    import json
+    import datetime
+    dashboard_data = state.model_dump()
+    if "last_updated" in dashboard_data and dashboard_data["last_updated"]:
+        if hasattr(dashboard_data["last_updated"], "isoformat"):
+            dashboard_data["last_updated"] = dashboard_data["last_updated"].isoformat()
+            
+    if user and db:
+        try:
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if db_session:
+                print(f"[_run_with_student_agents] Saving for session {session_id}")
+                db_session.dashboard_state = json.dumps(dashboard_data)
+                db.commit()
+            else:
+                user.latest_dashboard_state = json.dumps(dashboard_data)
+                db.commit()
+        except Exception as e:
+            print(f"[Dashboard Update Error] {e}")
+    else:
+        global guest_dashboard_states
+        print(f"[_run_with_student_agents] Updating guest_dashboard_states for {session_id}")
+        guest_dashboard_states[session_id] = json.dumps(dashboard_data)
+
+    if state.clarifying_question:
+        return state.clarifying_question
+
+    combined = state.combined_result
+    if combined:
+        steps_list = [s.title for s in state.execution_plan.steps]
+        
+        return (
+            f"💬 {combined.summary}\n\n"
+            f"📋 **Institutions/Agencies:** {', '.join(combined.agencies)}\n"
+            f"📄 **Required Docs:** {', '.join(combined.documents[:6])}...\n"
+            f"✅ **Action Steps:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps_list)) +
+            f"\n\n⏱️ **Timeline:** {combined.timeline_days} days"
+        )
+    raise ValueError("Empty agent result")
+
 
 async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False, file_obj=None, assistant_type: str = "permit") -> str:
     """Direct Gemini call — fast and reliable fallback."""
@@ -484,15 +563,19 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                 lower_q = query_text.lower()
                 is_explicit_q = "i need more information about step" in lower_q or "can you explain" in lower_q or "step " in lower_q
                 
-                is_direct = has_state or is_explicit_q or (file_obj is not None) or assistant_type == "student"
+                is_direct = has_state or is_explicit_q or (file_obj is not None)
                 is_followup_prompt = has_state or is_explicit_q or (file_obj is not None)
                 
                 if is_direct:
                     print(f"[agent_query] Routing directly to Gemini for follow-up/student question (has_state={has_state})")
                     answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=is_followup_prompt, file_obj=file_obj, assistant_type=assistant_type)
                 else:
-                    print(f"[agent_query] Routing to Orchestrator to generate new permit plan")
-                    answer = await _run_with_agents(query_text, user, db, language, session_id)
+                    if assistant_type == "student":
+                        print(f"[agent_query] Routing to STUDENT Orchestrator to generate new student plan")
+                        answer = await _run_with_student_agents(query_text, user, db, language, session_id)
+                    else:
+                        print(f"[agent_query] Routing to PERMIT Orchestrator to generate new permit plan")
+                        answer = await _run_with_agents(query_text, user, db, language, session_id)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
                 answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj, assistant_type=assistant_type)

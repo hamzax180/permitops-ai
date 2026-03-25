@@ -93,6 +93,8 @@ def _n(key, lang):
 
 def _detect_type(business_type: str) -> str:
     bt = business_type.lower()
+    if any(k in bt for k in ["student", "öğrenci", "university", "kimlik", "degree", "academic", "bachelor", "master", "phd", "college"]):
+        return "student"
     if any(k in bt for k in ["cafe","kafe","restaur","lokanta","food","yemek","gıda","mutfak",
                                "pasta","bakery","fırın","döner","kebab","pizza","burger",
                                "kantin","patisserie","tatlı","dondurma","bar","pub"]):
@@ -378,11 +380,40 @@ def _steps_general(lang):
     ]
 
 
+def _steps_student(lang):
+    return [
+        (1,  {"en":"Obtain University Acceptance","tr":"Üniversite Kabulü Al","ar":"الحصول على قبول جامعي"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Receive official acceptance letter or continue enrollment if renewing.","tr":"Okuldan resmi kabul belgesini veya yenileme yazısını alın.","ar":"الحصول على خطاب القبول أو استمرار التسجيل للجامعة."}[lang]),
+        (2,  {"en":"Get Turkish Tax Number","tr":"Vergi Kimlik Numarası Al","ar":"الحصول على الرقم الضريبي"}[lang],
+              {"en":"Agent/Human","tr":"Ajan/İnsan","ar":"وكيل/بشري"}[lang],
+              {"en":"Visit tax office or ivd.gib.gov.tr online with passport. Required for insurance/bank.","tr":"Yerel vergi dairesi veya internet vergi dairesinden pasaportla alınır.","ar":"اذهب لمكتب الضرائب المحلي أو عبر الإنترنت مع الجواز."}[lang]),
+        (3,  {"en":"University Office Enrollment","tr":"Üniversite Kaydını Tamamla","ar":"استكمال التسجيل الجامعي"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Complete tuition payments. Receive official 'Öğrenci Belgesi' (Student Certificate).","tr":"Harç ücretlerini yatırıp resmi 'Öğrenci Belgesi'ni alın.","ar":"أكمل مدفوعات الرسوم واستلم شهادة الطالب."}[lang]),
+        (4,  {"en":"Purchase Health Insurance (Yabancı Sağlık Sigortası)","tr":"Yabancı Sağlık Sigortası Yaptır","ar":"شراء التأمين الصحي"}[lang],
+              {"en":"Agent/Human","tr":"Ajan/İnsan","ar":"وكيل/بشري"}[lang],
+              {"en":"Must cover your 1-2 year stay period completely. SGK or Private accepted.","tr":"Tüm kalış sürenizi kapsayan sağlık sigortası yaptırın.","ar":"يجب أن يغطي فترة إقامتك بالكامل."}[lang]),
+        (5,  {"en":"Notarize Lease Agreement / Dormitory Doc","tr":"Kira/Yurt Belgesini Noter Onaylı Yap","ar":"توثيق عقد الإيجار / السكن"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Proof of address required. Owner must be present at notary or dorm letter needed.","tr":"Adres kanıtı zorunludur. Kira sözleşmesini onaylatın.","ar":"إثبات السكن مطلوب، مع توثيق كاتب العدل."}[lang]),
+        (6,  {"en":"Apply for Kimlik (e-İkamet system)","tr":"e-İkamet (Kimlik) Başvurusu Yap","ar":"تقديم طلب Kimlik (e-İkamet)"}[lang],
+              {"en":"Agent","tr":"Ajan","ar":"وكيل"}[lang],
+              {"en":"Fill forms at e-ikamet.goc.gov.tr. Reserve your appointment date.","tr":"e-ikamet.goc.gov.tr üzerinden randevu alıp formları doldurun.","ar":"املأ النماذج في e-ikamet.goc.gov.tr واحجز موعداً."}[lang]),
+        (7,  {"en":"Attend Göç İdaresi Appointment","tr":"Göç İdaresi Randevusuna Git","ar":"حضور موعد إدارة الهجرة"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Present pink folder with 4 photos, student cert, insurance, address doc, passport.","tr":"4 biometrik fotoğraf, öğrenci belgesi, sigorta, adres ile gidin.","ar":"أحضر 4 صور حيوية، شهادة طالب، تأمين، إثبات سكن."}[lang]),
+        (8,  {"en":"Receive Student ID (Kimlik)","tr":"Öğrenci Kimliğini Teslim Al","ar":"استلام هوية الطالب (Kimlik)"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Card arrives via PTT mail to your registered address in 15-45 days.","tr":"Kimlik kartı PTT ile 15-45 gün içinde adresinize gelir.","ar":"تصل البطاقة عبر PTT إلى عنوانك خلال 15-45 يوماً."}[lang]),
+    ]
+
 _BUILDERS = {
     "food":    _steps_food,
     "retail":  _steps_retail,
     "service": _steps_service,
     "general": _steps_general,
+    "student": _steps_student,
 }
 
 
