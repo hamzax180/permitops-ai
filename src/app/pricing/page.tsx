@@ -5,12 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ShieldCheck, Sparkles, X, ArrowLeft, RefreshCw, Zap, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../context/LanguageContext';
 import Navbar from '../components/Navbar';
 import { apiFetch } from '../utils/api';
 
 export default function PricingPage() {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const router = useRouter();
   const [isYearly, setIsYearly] = useState(true);
   const [iyzicoFormHtml, setIyzicoFormHtml] = useState<string | null>(null);
@@ -168,11 +168,11 @@ export default function PricingPage() {
                 <h3 className="text-xl font-black text-[var(--text)] mb-2 uppercase tracking-wide">{plan.name}</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-5xl font-black text-[var(--text)]">
-                    {plan.name === 'Free' ? '₺0' : (isYearly ? `₺${Math.round(plan.yearlyPrice / 12)}` : `₺${plan.monthlyPrice}`)}
+                    {plan.name === 'Free' ? '₺0' : (isYearly && plan.yearlyPrice ? `₺${Math.round(plan.yearlyPrice / 12)}` : `₺${plan.monthlyPrice}`)}
                   </span>
                   <span className="text-[var(--muted)] font-medium">/month</span>
                 </div>
-                {plan.isPremium && isYearly && (
+                {plan.isPremium && isYearly && plan.yearlyPrice && (
                   <p className="text-[10px] text-indigo-500 font-bold mt-2">Billed annually at ₺{plan.yearlyPrice}</p>
                 )}
               </div>
