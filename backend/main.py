@@ -2,6 +2,7 @@ import os
 import asyncio
 import datetime
 from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
+from fastapi.responses import RedirectResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -19,6 +20,7 @@ from models.chat import ChatSession, ChatMessage
 from models.schemas import UserCreate, UserLogin, Token, UserQuery
 from utils.auth import get_password_hash, verify_password, create_access_token, decode_access_token
 from utils.protocol import get_localized_steps
+from utils.payment import IyzicoPayment
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -60,18 +62,7 @@ app = FastAPI(title="PermitOps AI Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://[::1]:3000",
-        "https://localhost:3000",
-        "https://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "http://[::1]:3001",
-        "https://localhost:3001",
-        "https://127.0.0.1:3001",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -543,6 +534,7 @@ async def get_latest(token: Optional[str] = None, session_id: Optional[str] = No
             ).order_by(ChatSession.updated_at.desc()).first()
             if latest_session:
                 state['_session_id'] = latest_session.id
+            state['subscription_status'] = user.subscription_status
             return state
     
     # Fallback to guest states
@@ -705,6 +697,90 @@ async def submit_edevlet(creds: UserCredentials, token: Optional[str] = None, se
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+# --- Iyzico Subscription Endpoints ---
+iyzico = IyzicoPayment()
+
+@app.post("/payment/subscribe")
+async def initialize_subscription(
+    token: str, 
+    plan_code: Optional[str] = Query(None), # e.g. "monthly-premium"
+    db: Session = Depends(get_db)
+):
+    print(f"[Payment] Subscribe request with token: {token[:10]}...")
+    user = await get_current_user(token, db)
+    if not user:
+        print("[Payment] Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Use plan_code if provided, else fallback to env or default
+    plan = plan_code or os.getenv("IYZICO_DEFAULT_PLAN_CODE", "P66275815")
+    print(f"[Payment] Initializing form for {user.email} and plan {plan}")
+    
+    callback_url = f"{os.getenv('APP_URL', 'http://localhost:3001')}/payment/callback"
+    
+    res = iyzico.initialize_subscription_checkout_form(
+        user_email=user.email,
+        user_id=str(user.id),
+        pricing_plan_code=plan,
+        callback_url=callback_url
+    )
+    
+    if res.get('status') == 'success':
+        print(f"[Payment] Successfully generated form for {user.email}")
+        return {"status": "success", "checkoutFormContent": res.get('checkoutFormContent'), "token": res.get('token')}
+    else:
+        error_msg = res.get('errorMessage', 'Failed to initialize payment')
+        print(f"[Payment] Initialization FAILED: {error_msg}")
+        raise HTTPException(status_code=400, detail=error_msg)
+
+@app.post("/payment/callback")
+async def payment_callback(request: Request, db: Session = Depends(get_db)):
+    # iyzico returns token as a form field
+    form = await request.form()
+    token = form.get("token")
+    if not token:
+        raise HTTPException(status_code=400, detail="Missing payment token")
+    
+    result = iyzico.get_subscription_result(token)
+    frontend_url = os.getenv('APP_URL', 'http://localhost:3001')
+
+    if result.get('status') == 'success':
+        # Find user by reference or customer token if available
+        sub_data = result.get('data', {})
+        sub_id = sub_data.get('referenceCode')
+        email = sub_data.get('customerEmail')
+        
+        user = db.query(DBUser).filter(DBUser.email == email).first()
+        if user:
+            user.subscription_status = "active"
+            user.subscription_reference_code = sub_id
+            db.commit()
+            return RedirectResponse(url=f"{frontend_url}/dashboard?payment=success", status_code=303)
+    
+    error_msg = result.get('errorMessage', 'Payment failed')
+    return RedirectResponse(url=f"{frontend_url}/dashboard?payment=error&message={error_msg}", status_code=303)
+
+@app.post("/payment/webhook")
+async def payment_webhook(request: Request, db: Session = Depends(get_db)):
+    # Standard iyzico webhook handler
+    # Verify signature in production!
+    body = await request.json()
+    event_type = body.get("iyziEventType")
+    sub_id = body.get("subscriptionReferenceCode")
+    
+    if event_type == "SUBSCRIPTION_PAYMENT_FAILED":
+        user = db.query(DBUser).filter(DBUser.subscription_reference_code == sub_id).first()
+        if user:
+            user.subscription_status = "past_due"
+            db.commit()
+    elif event_type == "SUBSCRIPTION_CANCELED":
+        user = db.query(DBUser).filter(DBUser.subscription_reference_code == sub_id).first()
+        if user:
+            user.subscription_status = "canceled"
+            db.commit()
+            
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn

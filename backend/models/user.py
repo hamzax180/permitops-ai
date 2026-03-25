@@ -10,3 +10,5 @@ class User(Base):
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     latest_dashboard_state = Column(Text, nullable=True) # Serialized JSON
+    subscription_status = Column(String, default="free") # free, active, past_due, canceled
+    subscription_reference_code = Column(String, nullable=True)

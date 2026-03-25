@@ -10,6 +10,7 @@ class ChatSession(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     title = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
     dashboard_state = Column(Text, nullable=True) # Serialized JSON for this specific session

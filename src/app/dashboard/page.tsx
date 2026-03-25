@@ -59,6 +59,10 @@ export default function Dashboard() {
   const [automatedStepId, setAutomatedStepId] = useState<number | null>(null);
   const [dashboardSessionId, setDashboardSessionId] = useState<string | null>(null);
 
+  // Subscription State
+  const [iyzicoFormHtml, setIyzicoFormHtml] = useState<string | null>(null);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
   const askAiAboutStep = (step: { id: number; title: string; summary: string; detail: string; responsible: string }) => {
     const q = `I need more information about Step ${step.id}: "${step.title}". ${step.detail ? step.detail.slice(0, 300) : step.summary} Can you explain this in more detail, including what exactly I need to do, which documents I need, and any tips?`;
     localStorage.setItem('permitops_ask_step', q);
@@ -95,6 +99,21 @@ export default function Dashboard() {
   useEffect(() => {
     fetchState();
 
+    // handle payment redirects
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    if (paymentStatus === 'success') {
+      setToastMessage("Subscription activated! Welcome to Premium.");
+      setToastType("success");
+      setShowToast(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (paymentStatus === 'error') {
+      setToastMessage(params.get('message') || "Payment failed. Please try again.");
+      setToastType("error");
+      setShowToast(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     // listen only for explicit app-dispatched events, not all storage changes
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'permitops_workflow_update') fetchState();
@@ -102,6 +121,38 @@ export default function Dashboard() {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, [fetchState]);
+
+  const handleSubscribe = async () => {
+    try {
+      setIsSubscribing(true);
+      const token = localStorage.getItem('permitops_token');
+      if (!token) {
+        setToastMessage("Please log in to subscribe");
+        setToastType("error");
+        setShowToast(true);
+        return;
+      }
+
+      const res = await apiFetch(`/payment/subscribe?token=${token}`, { method: 'POST' });
+      if (res && res.ok) {
+        const json = await res.json();
+        if (json.status === 'success' && json.checkoutFormContent) {
+          // iyzico returns a <script> tag. We need to inject it.
+          setIyzicoFormHtml(json.checkoutFormContent);
+        } else {
+          throw new Error(json.errorMessage || json.detail || "Initialization failed");
+        }
+      } else {
+        throw new Error("Payment server unreachable");
+      }
+    } catch (e: any) {
+      setToastMessage(e.message || "Failed to start subscription");
+      setToastType("error");
+      setShowToast(true);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   const refresh = async () => {
     await fetchState();
@@ -450,17 +501,41 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="flex gap-2.5 shrink-0">
-              <button onClick={refresh} className="btn btn-outline !py-2 !px-3 !text-sm lg:flex hidden items-center gap-2">
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Subscription Status Badge */}
+              <div className={`px-4 py-2 rounded-full flex items-center gap-2 border shadow-sm transition-all ${
+                data?.subscription_status === 'active' 
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' 
+                  : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500'
+              }`}>
+                <Sparkles size={14} className={data?.subscription_status === 'active' ? '' : 'opacity-40'} />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">
+                  {data?.subscription_status === 'active' ? 'Premium' : 'Free Plan'}
+                </span>
+              </div>
+
+              {data?.subscription_status !== 'active' && (
+                <button 
+                  onClick={handleSubscribe}
+                  disabled={isSubscribing}
+                  className="btn btn-indigo !py-2 !px-4 !text-[12px] !rounded-full shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                >
+                  {isSubscribing ? <RefreshCw size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                  {isSubscribing ? 'Starting...' : 'Upgrade'}
+                </button>
+              )}
+
+              <button onClick={refresh} className="btn btn-outline !py-2 !px-3 !text-sm lg:flex hidden items-center gap-2 !rounded-full">
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                {t('dashboard_sync')}
               </button>
+              
               <Link href="/chat">
-                <button className="btn btn-outline !py-2 !px-4 !text-sm">
+                <button className="btn btn-purple !py-2 !px-5 !text-[12px] flex items-center gap-1.5 !rounded-full group shadow-md hover:shadow-purple-500/20">
                   <ArrowRight size={14} /> {t('dashboard_ask_ai')}
                 </button>
               </Link>
             </div>
+
           </motion.div>
 
           {/* ── Stats ── */}
@@ -782,6 +857,34 @@ export default function Dashboard() {
         token={token}
       />
       {renderContent()}
+      {/* Iyzico CheckOut Form Modal */}
+      <AnimatePresence>
+        {iyzicoFormHtml && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#1e1f20] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col relative"
+              style={{ minHeight: '600px' }}
+            >
+              <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+                <h3 className="font-bold text-[var(--text)]">Complete Your Subscription</h3>
+                <button onClick={() => setIyzicoFormHtml(null)} className="p-2 hover:bg-black/5 rounded-full text-[var(--muted)]">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4" id="iyzico-form-container">
+                 {/* iyzico script injection */}
+                 <div dangerouslySetInnerHTML={{ __html: iyzicoFormHtml }} />
+                 <div id="iyzipay-checkout-form" className="responsive"></div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
+

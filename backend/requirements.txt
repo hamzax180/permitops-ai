@@ -11,3 +11,4 @@ httpx
 google-generativeai
 playwright
 slowapi
+iyzipay
