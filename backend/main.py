@@ -181,7 +181,7 @@ async def create_chat_session(request: Request, token: str, db: Session = Depend
     return {"id": session_id, "title": "New Chat"}
 
 
-async def _get_history_context(session_id: str, db: Session, limit: int = 10, current_query: Optional[str] = None) -> str:
+async def _get_history_context(session_id: str, db: Session, limit: int = 10, current_query: Optional[str] = None, strip_boilerplate: bool = False) -> str:
     """Fetch recent chat history to provide context for the AI."""
     try:
         # Fetch more to allow for filtering
@@ -204,7 +204,15 @@ async def _get_history_context(session_id: str, db: Session, limit: int = 10, cu
         # Reverse to get chronological order
         for m in reversed(msgs):
             role = "User" if m.role == "user" else "Assistant"
-            context += f"[{role}]: {m.content}\n"
+            content = m.content
+            if strip_boilerplate and role == "Assistant":
+                # Find where the rigid output format starts and cut it off to prevent the model from mimicking it
+                for marker in ["📋 **Permits", "📋 Permits", "Permits (Agencies):"]:
+                    idx = content.find(marker)
+                    if idx != -1:
+                        content = content[:idx].strip()
+                        break
+            context += f"[{role}]: {content}\n"
         context += "-------------------------------------\n"
         return context
     except Exception as e:
@@ -289,7 +297,7 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
     """Direct Gemini call — fast and reliable fallback."""
     history = ""
     if db:
-        history = await _get_history_context(session_id, db, current_query=query)
+        history = await _get_history_context(session_id, db, current_query=query, strip_boilerplate=is_followup)
         
     full_query = f"{history}\nCURRENT USER REQUEST: {query}"
     
