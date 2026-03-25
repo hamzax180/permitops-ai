@@ -206,12 +206,12 @@ async def _get_history_context(session_id: str, db: Session, limit: int = 10, cu
             role = "User" if m.role == "user" else "Assistant"
             content = m.content
             if strip_boilerplate and role == "Assistant":
-                # Find where the rigid output format starts and cut it off to prevent the model from mimicking it
-                for marker in ["📋 **Permits", "📋 Permits", "Permits (Agencies):"]:
-                    idx = content.find(marker)
+                lower_content = content.lower()
+                for marker in ["permits (agencies)", "required docs", "action steps", "📋"]:
+                    idx = lower_content.find(marker.lower())
                     if idx != -1:
                         content = content[:idx].strip()
-                        break
+                        lower_content = content.lower() # update for next iterations
             context += f"[{role}]: {content}\n"
         context += "-------------------------------------\n"
         return context
@@ -434,12 +434,14 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
         
         if True: # Always save assistant message now that we have session tracking
             # Bruteforce strip any leftover permit boilerplate just in case the LLM stubbornly generated it
+            # Perform a case-insensitive search to catch any bolding/emoji variations
             if is_followup:
-                for marker in ["📋 **Permits", "📋 Permits", "Permits (Agencies):", "📄 **Required", "✅ **Action"]:
-                    idx = answer.find(marker)
+                lower_answer = answer.lower()
+                for marker in ["permits (agencies)", "required docs", "action steps", "📋"]:
+                    idx = lower_answer.find(marker.lower())
                     if idx != -1:
                         answer = answer[:idx].strip()
-                        break
+                        lower_answer = answer.lower() # update for next iterations
                         
             # Save assistant message
             assistant_msg = ChatMessage(session_id=session_id, role="assistant", content=answer)
