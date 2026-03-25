@@ -96,6 +96,8 @@ const translations: Record<Language, Record<string, string>> = {
     sidebar_help: 'Help',
     sidebar_activity: 'Activity',
     sidebar_settings: 'Settings',
+    navbar_pricing: 'Pricing',
+    sidebar_upgrade: 'Upgrade',
   },
   tr: {
     navbar_home: 'Ana Sayfa',
@@ -181,6 +183,8 @@ const translations: Record<Language, Record<string, string>> = {
     sidebar_help: 'Yardım',
     sidebar_activity: 'Etkinlik',
     sidebar_settings: 'Ayarlar',
+    navbar_pricing: 'Fiyatlandırma',
+    sidebar_upgrade: 'Yükselt',
   },
   ar: {
     navbar_home: 'الرئيسية',
@@ -266,6 +270,8 @@ const translations: Record<Language, Record<string, string>> = {
     sidebar_help: 'المساعدة',
     sidebar_activity: 'النشاط',
     sidebar_settings: 'الإعدادات',
+    navbar_pricing: 'التسعير',
+    sidebar_upgrade: 'ترقية',
   }
 };
 
