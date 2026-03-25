@@ -275,7 +275,7 @@ export default function Dashboard() {
       {/* Video Background */}
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
         {/* Fallback Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-white dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-2)] via-[var(--bg)] to-[var(--surface-2)] dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]" />
         
         <video
           autoPlay
@@ -293,7 +293,7 @@ export default function Dashboard() {
         </video>
 
         {/* Dynamic mesh gradient overlays */}
-        <div className="absolute inset-0 z-20 pointer-events-none opacity-40">
+        <div className="absolute inset-0 z-20 pointer-events-none opacity-20 dark:opacity-40">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse [animation-delay:2s]" />
         </div>
@@ -694,12 +694,12 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-xs font-black text-amber-500 uppercase tracking-widest">{t('dashboard_action_required')}</p>
-                    <p className="text-[15px] font-bold text-white mt-1 leading-tight">
+                    <p className="text-[15px] font-bold text-[var(--text)] mt-1 leading-tight">
                       {steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent')?.title || t('dashboard_all_clear')}
                     </p>
                   </div>
                 </div>
-                <p className="text-[13px] text-white/70 leading-relaxed font-medium relative z-10">
+                <p className="text-[13px] text-[var(--text)] opacity-70 leading-relaxed font-medium relative z-10">
                   {steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent') 
                     ? t('dashboard_action_required_desc').replace('{step}', steps.find(s => s.status !== 'completed' && s.responsible !== 'Agent')?.title || '')
                     : t('dashboard_bot_processing')}
@@ -717,21 +717,21 @@ export default function Dashboard() {
               {/* AI Agents */}
               <div className="glass-card p-5 space-y-5 shadow-xl">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-black text-white/40 uppercase tracking-widest">{t('dashboard_active_agents')}</p>
-                  <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+                  <p className="text-xs font-black text-[var(--muted)] uppercase tracking-widest">{t('dashboard_active_agents')}</p>
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 dark:text-emerald-400">
                     <span className="live-dot w-2 h-2 relative shrink-0" />
                     {data?.execution_plan?.assigned_agents?.length || 0} {t('dashboard_active')}
                   </span>
                 </div>
                 <div className="space-y-3">
                   {(data?.execution_plan?.assigned_agents || ['Planner', 'Classifier']).map((name: string, i: number) => (
-                    <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-white/10 bg-white/5 border border-white/10 shadow-lg">
-                      <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-purple-400 bg-purple-500/20 border border-purple-500/30 shadow-sm">
+                    <div key={i} className="flex items-center gap-3 p-3.5 rounded-2xl transition-all hover:bg-[var(--surface-2)] bg-[var(--surface)] border border-[var(--border)] shadow-sm">
+                      <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-purple-600 dark:text-purple-400 bg-purple-500/10 dark:bg-purple-500/20 border border-purple-500/20 shadow-sm">
                         <Cpu size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-bold text-white">{name}</p>
-                        <p className="text-[11px] text-white/50 font-medium truncate">{t('dashboard_agent_status')}</p>
+                        <p className="text-[14px] font-bold text-[var(--text)]">{name}</p>
+                        <p className="text-[11px] text-[var(--muted)] font-medium truncate">{t('dashboard_agent_status')}</p>
                       </div>
                       <span className="text-[10px] font-black uppercase tracking-widest text-purple-400">
                         {t('dashboard_running')}
@@ -743,8 +743,8 @@ export default function Dashboard() {
 
               {/* Next Step */}
               <div className="glass-card p-5 space-y-4 shadow-xl">
-                <p className="text-xs font-black text-white/40 uppercase tracking-widest">{t('dashboard_whats_next')}</p>
-                <p className="text-[14px] text-white/90 leading-relaxed font-medium">
+                <p className="text-xs font-black text-[var(--muted)] uppercase tracking-widest">{t('dashboard_whats_next')}</p>
+                <p className="text-[14px] text-[var(--text)] opacity-90 leading-relaxed font-medium">
                   {t('dashboard_next_step_desc')}
                 </p>
                 <Link href="/chat" className="text-sm font-bold text-purple-400 hover:text-purple-300 flex items-center gap-2 transition-all hover:translate-x-1">
