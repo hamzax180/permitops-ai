@@ -572,6 +572,19 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                 is_direct = has_state or is_explicit_q or (file_obj is not None)
                 is_followup_prompt = has_state or is_explicit_q or (file_obj is not None)
                 
+                # Topic-switch detection for student mode:
+                # If they already have a completed plan and ask about a totally new topic, redirect to new chat
+                if has_state and assistant_type == "student":
+                    uni_keywords = ["top 10", "top10", "university list", "best uni", "best university", "universities", "top uni", "which university"]
+                    renewal_keywords = ["renew", "renewal", "kimlik", "id card", "student id"]
+                    existing_type = (state_obj.get("combined_result") or {}).get("business_type", "").lower()
+                    q_lower = query_text.lower()
+                    is_uni_q = any(k in q_lower for k in uni_keywords)
+                    is_renewal_q = any(k in q_lower for k in renewal_keywords)
+                    # If they shift topics (e.g. had renewal and now asking uni or vice versa), redirect
+                    if is_uni_q and not is_renewal_q:
+                        return {"content": "REDIRECT_NEW_CHAT:It looks like you're asking about a completely new topic (university search). I'll open a fresh chat for you so we can start your university roadmap from scratch! 🎓", "session_title": db_session.title if db_session else None}
+                
                 if is_direct:
                     print(f"[agent_query] Routing directly to Gemini for follow-up/student question (has_state={has_state})")
                     answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=is_followup_prompt, file_obj=file_obj, assistant_type=assistant_type)

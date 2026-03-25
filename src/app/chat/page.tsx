@@ -246,7 +246,22 @@ export default function ChatPage() {
         setSessionTitle(data.session_title);
       }
       
-      setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: data.content ?? data.answer ?? data.response ?? 'Done.' }]);
+      const rawContent: string = data.content ?? data.answer ?? data.response ?? 'Done.';
+      
+      // Detect topic-switch redirect signal
+      if (rawContent.startsWith('REDIRECT_NEW_CHAT:')) {
+        const displayMsg = rawContent.replace('REDIRECT_NEW_CHAT:', '').trim();
+        setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: displayMsg }]);
+        setBusy(false);
+        // Auto-navigate to a new chat after 2 seconds
+        setTimeout(async () => {
+          await handleNewChat();
+          setMsgs([]);
+        }, 2000);
+        return;
+      }
+      
+      setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: rawContent }]);
     } catch {
       setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: "⚠️ Backend is currently offline. Please make sure the server is running." }]);
     } finally {
