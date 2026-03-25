@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Plus, MessageSquare, Trash2, Menu, Settings, HelpCircle, History } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Plus, MessageSquare, Trash2, Menu, Settings, HelpCircle, History, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 import { apiFetch } from '../utils/api';
@@ -152,6 +153,12 @@ export default function Sidebar({
 
       {/* Bottom Actions — Ensuring crisp separation in both modes */}
       <div className="p-3 space-y-1 mt-auto border-t border-[var(--border)] bg-[var(--surface)]/50">
+        <Link href="/pricing" className="block mb-2">
+          <div className={`group flex items-center gap-3 p-3 rounded-full bg-indigo-500/10 border border-indigo-500/20 cursor-pointer transition-all hover:bg-indigo-500/20 ${!isExpanded ? 'justify-center' : ''}`}>
+             <Zap size={18} className="text-indigo-600 shrink-0" fill="currentColor" />
+             {isExpanded && <span className="text-sm font-black text-indigo-600">Upgrade</span>}
+          </div>
+        </Link>
         {[
           { icon: HelpCircle, label: t('sidebar_help'), color: 'text-[var(--muted)]' },
           { icon: History, label: t('sidebar_activity'), color: 'text-[var(--muted)]' },

@@ -28,6 +28,7 @@ export default function Navbar({ isAppPage = false }: { isAppPage?: boolean }) {
     { href: '/', label: t('navbar_home') },
     { href: '/chat', label: t('navbar_chat') },
     { href: '/dashboard', label: t('navbar_dashboard') },
+    { href: '/pricing', label: t('navbar_pricing') || 'Pricing' },
   ];
 
 
