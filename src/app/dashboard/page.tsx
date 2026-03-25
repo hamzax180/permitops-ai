@@ -454,29 +454,6 @@ export default function Dashboard() {
                   <ArrowRight size={14} /> {t('dashboard_ask_ai')}
                 </button>
               </Link>
-              <button 
-                onClick={handleUploadClick} 
-                disabled={uploading} 
-                title={t('dashboard_upload')}
-                className="flex items-center justify-center w-[42px] h-[42px] bg-[#E30A17] hover:bg-[#C20914] text-white rounded-xl shadow-[0_0_20px_rgba(227,10,23,0.35)] transition-all shrink-0 disabled:opacity-50 border border-white/10 group"
-              >
-                {uploading ? (
-                  <RefreshCw size={18} className="animate-spin" />
-                ) : (
-                  <div className="relative flex items-center justify-center">
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/E-Devlet_Kap%C4%B1s%C4%B1_logo.svg/320px-E-Devlet_Kap%C4%B1s%C4%B1_logo.svg.png" 
-                      alt="e-Devlet"
-                      className="h-7 w-auto object-contain brightness-0 invert group-hover:scale-110 transition-transform" 
-                      onError={(e) => { 
-                        (e.target as HTMLElement).style.display = 'none'; 
-                        (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden'); 
-                      }}
-                    />
-                    <ShieldCheck size={20} className="hidden" />
-                  </div>
-                )}
-              </button>
             </div>
           </motion.div>
 
@@ -613,6 +590,29 @@ export default function Dashboard() {
                             <div className="flex flex-wrap gap-2 items-center pt-1">
                               {(s.responsible.includes('Agent') || s.responsible.includes('Ajan') || s.responsible.includes('وكيل')) ? (
                                 <>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); automateStep(s.id); }}
+                                    disabled={uploading} 
+                                    title={t('dashboard_upload')}
+                                    className="flex items-center justify-center w-[34px] h-[34px] bg-[#E30A17] hover:bg-[#C20914] text-white rounded-[10px] shadow-[0_0_15px_rgba(227,10,23,0.35)] transition-all shrink-0 disabled:opacity-50 border border-white/10 group z-10 mr-1"
+                                  >
+                                    {uploading && automatedStepId === s.id ? (
+                                      <RefreshCw size={16} className="animate-spin" />
+                                    ) : (
+                                      <div className="relative flex items-center justify-center">
+                                        <img 
+                                          src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/E-Devlet_Kap%C4%B1s%C4%B1_logo.svg/320px-E-Devlet_Kap%C4%B1s%C4%B1_logo.svg.png" 
+                                          alt="e-Devlet"
+                                          className="h-5 w-auto object-contain brightness-0 invert group-hover:scale-110 transition-transform" 
+                                          onError={(e) => { 
+                                            (e.target as HTMLElement).style.display = 'none'; 
+                                            (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden'); 
+                                          }}
+                                        />
+                                        <ShieldCheck size={16} className="hidden" />
+                                      </div>
+                                    )}
+                                  </button>
                                   <button
                                     disabled
                                     className="btn !py-2 !px-3.5 !text-xs flex items-center gap-1.5 opacity-40 cursor-not-allowed bg-white/5 border border-white/10 text-white/50 !rounded-lg"
