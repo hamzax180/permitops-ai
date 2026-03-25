@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface AuthContextType {
-    user: { email: string; fullName?: string } | null;
+    user: { email: string; fullName?: string; isAdmin?: boolean } | null;
     token: string | null;
-    login: (token: string, email: string, fullName: string) => void;
+    login: (token: string, email: string, fullName?: string, isAdmin?: boolean) => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -13,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<{ email: string; fullName?: string } | null>(null);
+    const [user, setUser] = useState<{ email: string; fullName?: string; isAdmin?: boolean } | null>(null);
     const [token, setToken] = useState<string | null>(null);
 
     const getFallbackName = (email: string) => {
@@ -21,13 +21,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        const load = () => {
+        const load = async () => {
             const savedToken = localStorage.getItem('permitops_token');
             const savedUser = localStorage.getItem('permitops_user');
             const savedName = localStorage.getItem('permitops_name');
+            const savedIsAdmin = localStorage.getItem('permitops_is_admin') === 'true';
             if (savedToken && savedUser) {
+                // Set state from localStorage immediately for fast hydration
                 setToken(savedToken);
-                setUser({ email: savedUser, fullName: savedName || getFallbackName(savedUser) });
+                setUser({ email: savedUser, fullName: savedName || getFallbackName(savedUser), isAdmin: savedIsAdmin });
+
+                // Then verify and sync is_admin from backend in the background
+                try {
+                    const res = await fetch(`http://localhost:8003/auth/me?token=${savedToken}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const adminStatus = !!data.is_admin;
+                        localStorage.setItem('permitops_is_admin', adminStatus ? 'true' : 'false');
+                        setUser({ email: data.email, fullName: data.full_name || savedName || getFallbackName(savedUser), isAdmin: adminStatus });
+                    }
+                } catch (e) {
+                    // silently fail — offline or backend down
+                }
             } else {
                 setToken(null);
                 setUser(null);
@@ -45,13 +60,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
-    const login = (token: string, email: string, fullName?: string) => {
+    const login = (token: string, email: string, fullName?: string, isAdmin?: boolean) => {
         const name = fullName || getFallbackName(email);
         setToken(token);
-        setUser({ email, fullName: name });
+        setUser({ email, fullName: name, isAdmin: !!isAdmin });
         localStorage.setItem('permitops_token', token);
         localStorage.setItem('permitops_user', email);
         localStorage.setItem('permitops_name', name);
+        localStorage.setItem('permitops_is_admin', isAdmin ? 'true' : 'false');
     };
 
     const logout = () => {
@@ -60,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('permitops_token');
         localStorage.removeItem('permitops_user');
         localStorage.removeItem('permitops_name');
+        localStorage.removeItem('permitops_is_admin');
     };
 
     return (

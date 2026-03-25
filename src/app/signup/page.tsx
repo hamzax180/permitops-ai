@@ -37,7 +37,7 @@ export default function SignupPage() {
             }
 
             const data = await res.json();
-            login(data.access_token, data.email, data.full_name);
+            login(data.access_token, data.email, data.full_name, data.is_admin);
             router.push('/dashboard');
         } catch (err: any) {
             setError(err.message);

@@ -140,7 +140,7 @@ async def register(request: Request, user: UserCreate, db: Session = Depends(get
     db.refresh(new_user)
     
     access_token = create_access_token(data={"sub": new_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "email": new_user.email, "full_name": new_user.full_name}
+    return {"access_token": access_token, "token_type": "bearer", "email": new_user.email, "full_name": new_user.full_name, "is_admin": new_user.is_admin}
 
 @app.post("/auth/login", response_model=Token)
 @limiter.limit("10/minute", key_func=user_id_key)
@@ -150,7 +150,17 @@ async def login(request: Request, user: UserLogin, db: Session = Depends(get_db)
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     
     access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email, "full_name": db_user.full_name}
+    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email, "full_name": db_user.full_name, "is_admin": db_user.is_admin}
+
+@app.get("/auth/me")
+async def get_me(token: str, db: Session = Depends(get_db)):
+    user = await get_current_user(token, db)
+    return {
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_admin": user.is_admin,
+        "subscription_status": user.subscription_status
+    }
 
 import uuid
 
@@ -781,6 +791,25 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
             db.commit()
             
     return {"status": "ok"}
+
+# --- Admin Endpoints ---
+
+@app.get("/admin/subscribers")
+async def get_admin_subscribers(db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    users = db.query(DBUser).all()
+    return [
+        {
+            "id": u.id,
+            "email": u.email,
+            "full_name": u.full_name,
+            "subscription_status": u.subscription_status,
+            "subscription_reference_code": u.subscription_reference_code,
+            "is_admin": u.is_admin
+        } for u in users
+    ]
 
 if __name__ == "__main__":
     import uvicorn

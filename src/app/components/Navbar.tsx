@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Menu, X, FileCheck, Sun, Moon } from 'lucide-react';
+import { Shield, Menu, X, FileCheck, Sun, Moon, ShieldCheck } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,12 +15,38 @@ export default function Navbar({ isAppPage = false }: { isAppPage?: boolean }) {
   const { user, logout, isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 16);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Self-contained admin check — doesn't rely on AuthContext async propagation
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const token = localStorage.getItem('permitops_token');
+      if (!token) { setIsAdmin(false); return; }
+      // Check localStorage first for instant render
+      if (localStorage.getItem('permitops_is_admin') === 'true') {
+        setIsAdmin(true);
+      }
+      // Always sync from backend to get the real-time value
+      try {
+        const res = await fetch(`http://localhost:8003/auth/me?token=${token}`);
+        if (res.ok) {
+          const data = await res.json();
+          const admin = !!data.is_admin;
+          localStorage.setItem('permitops_is_admin', admin ? 'true' : 'false');
+          setIsAdmin(admin);
+        }
+      } catch {
+        // backend offline — keep localStorage value
+      }
+    };
+    checkAdmin();
+  }, [isAuthenticated]); // re-run when login/logout state changes
 
   const { t, isRTL } = useLanguage();
 
@@ -29,8 +55,8 @@ export default function Navbar({ isAppPage = false }: { isAppPage?: boolean }) {
     { href: '/chat', label: t('navbar_chat') },
     { href: '/dashboard', label: t('navbar_dashboard') },
     { href: '/pricing', label: t('navbar_pricing') || 'Pricing' },
+    ...(isAdmin ? [{ href: '/admin/subscribers', label: 'Subscribers' }] : []),
   ];
-
 
 
   return (
