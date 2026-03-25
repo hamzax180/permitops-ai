@@ -21,6 +21,20 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string>('');
   
+  const [assistantType, setAssistantType] = useState<'permit' | 'student'>('permit');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
   const QUICK_Q = [
     t('chat_q1'),
     t('chat_q2'),
@@ -212,11 +226,12 @@ export default function ChatPage() {
         formData.append('session_id', sessionId);
         if (token) formData.append('token', token);
         formData.append('file', currentFile);
+        formData.append('assistant_type', assistantType);
         body = formData;
         // Browser sets Content-Type multipart/form-data boundary automatically
       } else {
         headers = { 'Content-Type': 'application/json' };
-        body = JSON.stringify({ query: q, language, context: { session_id: sessionId } });
+        body = JSON.stringify({ query: q, language, context: { session_id: sessionId }, assistant_type: assistantType });
       }
 
       const res = await apiFetch(`/agent/query${token ? `?token=${token}` : ''}`, {
@@ -271,13 +286,68 @@ export default function ChatPage() {
         <div className="h-4 shrink-0" /> {/* Slight top padding */}
 
         {/* Gemini-Style Content Header */}
-        <div className="h-16 flex items-center px-6 shrink-0 z-30">
-          <div className="flex items-center gap-2">
+        <div className="h-16 flex items-center px-6 shrink-0 z-30 relative" ref={dropdownRef}>
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
             <span className="text-xl md:text-2xl font-medium text-[var(--text)] opacity-90 tracking-tight">
-              Permit Assistant
+              {assistantType === 'permit' ? 'Permit Assistant' : 'Student Assistant'}
             </span>
-            <ChevronDown size={16} className="text-[var(--muted)] opacity-50 mt-1" />
+            <ChevronDown size={16} className={`text-[var(--muted)] opacity-50 mt-1 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </div>
+
+          <AnimatePresence>
+            {isDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute top-16 left-6 bg-[var(--surface-2)]/90 backdrop-blur-2xl border border-[var(--border-2)] rounded-[24px] shadow-[0_24px_80px_rgba(0,0,0,0.5)] p-2.5 min-w-[300px] z-[100] flex flex-col gap-2 overflow-hidden"
+              >
+                <div className="px-4 pt-3 pb-1">
+                   <p className="text-[12px] font-bold tracking-widest uppercase text-[var(--text)] opacity-40">Select Interface</p>
+                </div>
+                
+                <button
+                  onClick={() => { setAssistantType('permit'); setIsDropdownOpen(false); }}
+                  className={`flex items-center justify-between px-4 py-3.5 w-full rounded-[16px] text-left transition-all duration-300 relative group overflow-hidden ${assistantType === 'permit' ? 'bg-[var(--surface)] border border-[var(--border-2)] shadow-md' : 'border border-transparent hover:bg-[var(--surface)]/60'}`}
+                >
+                  <div className="flex items-center gap-4 z-10 relative">
+                     <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center border transition-all duration-300 ${assistantType === 'permit' ? 'bg-[var(--bg)] border-[var(--border)] shadow-sm' : 'bg-transparent border-transparent group-hover:bg-[var(--surface-1)] group-hover:border-[var(--border)]'}`}>
+                       <Building2 size={22} className="text-[var(--text)] opacity-90" />
+                     </div>
+                     <div className="flex flex-col gap-0.5">
+                       <span className="text-xl md:text-2xl font-semibold tracking-tight text-[var(--text)]">Permit Assistant</span>
+                       <span className="text-[12.5px] text-[var(--text)] opacity-60 font-medium">Municipal & Business</span>
+                     </div>
+                  </div>
+                  {assistantType === 'permit' && (
+                     <div className="w-2.5 h-2.5 rounded-full bg-[var(--text)] opacity-80 shadow-[0_0_12px_rgba(255,255,255,0.7)] z-10 mt-1" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => { setAssistantType('student'); setIsDropdownOpen(false); }}
+                  className={`flex items-center justify-between px-4 py-3.5 w-full rounded-[16px] text-left transition-all duration-300 relative group overflow-hidden ${assistantType === 'student' ? 'bg-[var(--surface)] border border-[var(--border-2)] shadow-md' : 'border border-transparent hover:bg-[var(--surface)]/60'}`}
+                >
+                  <div className="flex items-center gap-4 z-10 relative">
+                     <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center border transition-all duration-300 ${assistantType === 'student' ? 'bg-[var(--bg)] border-[var(--border)] shadow-sm' : 'bg-transparent border-transparent group-hover:bg-[var(--surface-1)] group-hover:border-[var(--border)]'}`}>
+                       <FileText size={22} className="text-[var(--text)] opacity-90" />
+                     </div>
+                     <div className="flex flex-col gap-0.5">
+                       <span className="text-xl md:text-2xl font-semibold tracking-tight text-[var(--text)]">Student Assistant</span>
+                       <span className="text-[12.5px] text-[var(--text)] opacity-60 font-medium">Academic & Formatting</span>
+                     </div>
+                  </div>
+                  {assistantType === 'student' && (
+                     <div className="w-2.5 h-2.5 rounded-full bg-[var(--text)] opacity-80 shadow-[0_0_12px_rgba(255,255,255,0.7)] z-10 mt-1" />
+                  )}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Content Area */}
@@ -290,16 +360,24 @@ export default function ChatPage() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl mb-8"
               >
-                {[
+                {(assistantType === 'student' ? [
+                  { icon: FileText,  label: "Renew Kimlik/ID", color: '#60a5fa',  mesh: 'mesh-indigo' },
+                  { icon: Building2, label: "Best Universities", color: '#c084fc',  mesh: 'mesh-purple' },
+                  { icon: Search,    label: "Register Roadmap", color: '#4ade80',  mesh: 'mesh-emerald' },
+                  { icon: Clock,     label: "Deadlines", color: '#fb923c',  mesh: 'mesh-amber' },
+                  { icon: Sparkles,  label: "Student Visas", color: '#facc15',  mesh: 'mesh-amber' },
+                  { icon: HelpCircle,label: "Student Help", color: '#818cf8',  mesh: 'mesh-indigo' }
+                ] : [
                   { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa',  mesh: 'mesh-indigo' },
                   { icon: FileText,  label: t('chat_suggestion_permit'),   color: '#c084fc',  mesh: 'mesh-purple' },
                   { icon: Search,    label: t('chat_suggestion_location'), color: '#4ade80',  mesh: 'mesh-emerald' },
                   { icon: Clock,     label: t('chat_suggestion_duration'), color: '#fb923c',  mesh: 'mesh-amber' },
                   { icon: Sparkles,  label: t('chat_suggestion_cost'),     color: '#facc15',  mesh: 'mesh-amber' },
                   { icon: HelpCircle,label: t('chat_suggestion_help'),     color: '#818cf8',  mesh: 'mesh-indigo' }
-                ].map((chip, i) => (
+                ]).map((chip, i) => (
                   <div
                     key={i}
+                    onClick={() => send(chip.label)}
                     className={`glass-mesh ${chip.mesh} text-[var(--text)] opacity-80 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm transition-all hover:scale-105 cursor-pointer`}
                   >
                     {chip.icon && <chip.icon size={14} style={{ color: chip.color }} />}
@@ -389,11 +467,15 @@ export default function ChatPage() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl"
               >
-                {[
+                {(assistantType === 'student' ? [
+                  { label: "Steps to renew my Kimlik/ID" },
+                  { label: "Show me the best universities" },
+                  { label: "Roadmap to register as a student" }
+                ] : [
                   { label: t('chat_suggestion_obtain') },
                   { label: t('chat_suggestion_steps') },
                   { label: t('chat_suggestion_docs') }
-                ].map((chip, i) => (
+                ]).map((chip, i) => (
                   <button
                     key={i}
                     onClick={() => send(chip.label)}

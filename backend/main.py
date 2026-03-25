@@ -58,6 +58,31 @@ You specialize in answering specific follow-up questions about permit steps.
 """,
 )
 
+student_model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction="""
+You are Student Assistant AI, a professional student advisor in Turkey. Your goal is to help students navigate university registrations, Kimlik renewals, and studying in Turkey.
+
+1. CONTEXT CHECK: Review PREVIOUS CONVERSATION HISTORY. If they stated their university or status, don't ask again.
+2. SPECIFIC QUERIES: Give exact guidance for specific questions.
+3. ADVICE: Provide concisely focused student advice using these markers:
+   🎓 Institution/Agency
+   📄 Required Documents
+   ✅ Action Steps
+   💬 Summary
+"""
+)
+
+student_chat_model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction="""
+You are Student Assistant AI, a professional student advisor in Turkey.
+You specialize in answering specific follow-up questions about student procedures.
+1. Answer the user's specific question directly, concisely, and clearly.
+2. DO NOT output repetitive summaries or append boilerplate lists.
+"""
+)
+
 app = FastAPI(title="PermitOps AI Backend")
 
 app.add_middleware(
@@ -294,7 +319,7 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
     raise ValueError("Empty agent result")
 
 
-async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False, file_obj=None) -> str:
+async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False, file_obj=None, assistant_type: str = "permit") -> str:
     """Direct Gemini call — fast and reliable fallback."""
     global guest_dashboard_states
     history = ""
@@ -304,7 +329,7 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
     full_query = f"{history}\nCURRENT USER REQUEST: {query}"
     
     if is_followup:
-        full_query = f"SYSTEM INSTRUCTION: This is a specific follow-up question. YOU MUST NOT append the 'Permits (Agencies)', 'Required Docs', or 'Action Steps' lists to your answer. Just answer the user's specific question concisely.\n\n{full_query}"
+        full_query = f"SYSTEM INSTRUCTION: This is a specific follow-up question. YOU MUST NOT append the 'Permits/Institutions', 'Required Docs', or 'Action Steps' lists to your answer. Just answer the user's specific question concisely.\n\n{full_query}"
     
     localized_query = full_query
     if language == "ar":
@@ -317,9 +342,11 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
         prompt_list.insert(0, file_obj)
         
     if is_followup:
-        response = await asyncio.to_thread(chat_model.generate_content, prompt_list)
+        model_to_use = student_chat_model if assistant_type == "student" else chat_model
+        response = await asyncio.to_thread(model_to_use.generate_content, prompt_list)
     else:
-        response = await asyncio.to_thread(gemini_model.generate_content, prompt_list)
+        model_to_use = student_model if assistant_type == "student" else gemini_model
+        response = await asyncio.to_thread(model_to_use.generate_content, prompt_list)
     
     # Only mock state if we don't already have one for this session
     has_state = False
@@ -389,6 +416,7 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         session_id = form.get("session_id", "default-session")
         token = form.get("token")
         upload_file = form.get("file")
+        assistant_type = form.get("assistant_type", "permit")
         
         if upload_file and upload_file.filename:
             import tempfile
@@ -404,6 +432,7 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         query_text = body.get("query", "")
         language = body.get("language", "en")
         session_id = body.get("context", {}).get("session_id", "default-session")
+        assistant_type = body.get("assistant_type", "permit")
         # Token might be passed in URL instead of body for JSON requests, handle it below.
     
     if request.query_params.get("token"):
@@ -455,19 +484,20 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                 lower_q = query_text.lower()
                 is_explicit_q = "i need more information about step" in lower_q or "can you explain" in lower_q or "step " in lower_q
                 
-                is_followup = has_state or is_explicit_q or (file_obj is not None)
+                is_direct = has_state or is_explicit_q or (file_obj is not None) or assistant_type == "student"
+                is_followup_prompt = has_state or is_explicit_q or (file_obj is not None)
                 
-                if is_followup:
-                    print(f"[agent_query] Routing directly to Gemini for follow-up question (has_state={has_state})")
-                    answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj)
+                if is_direct:
+                    print(f"[agent_query] Routing directly to Gemini for follow-up/student question (has_state={has_state})")
+                    answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=is_followup_prompt, file_obj=file_obj, assistant_type=assistant_type)
                 else:
                     print(f"[agent_query] Routing to Orchestrator to generate new permit plan")
                     answer = await _run_with_agents(query_text, user, db, language, session_id)
             except Exception as agent_err:
                 print(f"[AgentPipeline ERROR] {agent_err}")
-                answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj)
+                answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj, assistant_type=assistant_type)
         else:
-            answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj)
+            answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj, assistant_type=assistant_type)
         
         if True: # Always save assistant message now that we have session tracking
             # Bruteforce strip any leftover permit boilerplate just in case the LLM stubbornly generated it
