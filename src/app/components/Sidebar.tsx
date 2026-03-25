@@ -71,7 +71,7 @@ export default function Sidebar({
       <div className="px-3 mb-4">
         <button
           onClick={onNewChat}
-          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[var(--bg)] hover:bg-[var(--surface-2)] border border-[var(--border)] shadow-md overflow-hidden ${
+          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[var(--surface-2)] hover:bg-[var(--border-2)]/10 border border-[var(--border)] shadow-sm overflow-hidden ${
             isExpanded ? 'w-36 px-4' : 'w-10 px-2.5 ml-1'
           }`}
         >
@@ -144,8 +144,8 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Bottom Actions */}
-      <div className="p-3 space-y-1 mt-auto border-t border-white/5">
+      {/* Bottom Actions — Ensuring crisp separation in both modes */}
+      <div className="p-3 space-y-1 mt-auto border-t border-[var(--border)] bg-[var(--surface)]/50">
         {[
           { icon: HelpCircle, label: t('sidebar_help'), color: 'text-[var(--muted)]' },
           { icon: History, label: t('sidebar_activity'), color: 'text-[var(--muted)]' },

@@ -306,7 +306,7 @@ export default function ChatPage() {
                   <div
                     key={i}
                     style={{ background: chip.bg, border: `1px solid ${chip.border}` }}
-                    className="text-white/70 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm"
+                    className="text-[var(--text)] opacity-80 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm"
                   >
                     {chip.icon && <chip.icon size={14} style={{ color: chip.color }} />}
                     {chip.label}
@@ -322,7 +322,7 @@ export default function ChatPage() {
                      {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
+                <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-[var(--text)] opacity-90">
                   {t('chat_begin')}
                 </h1>
               </motion.div>
@@ -365,19 +365,19 @@ export default function ChatPage() {
                       />
                       <button 
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-2.5 text-white/30 hover:text-white hover:bg-white/5 rounded-full transition-all"
+                        className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all"
                         title="Upload Document"
                       >
                         <Plus size={20} />
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
-                       <span className="text-xs font-medium text-white/30 flex items-center gap-1 cursor-pointer hover:text-white/60 transition-colors mr-2">
+                       <span className="text-xs font-medium text-[var(--muted)]/50 flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors mr-2">
                          Fast <ChevronDown size={14} />
                        </span>
                        {input.trim() ? (
                         <button onClick={() => send()} disabled={busy}
-                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-purple-400 hover:bg-white/10 transition-colors">
+                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-purple-600 dark:text-purple-400 hover:bg-[var(--surface-2)] transition-colors">
                           <Send size={20} />
                         </button>
                       ) : (
@@ -445,10 +445,10 @@ export default function ChatPage() {
                               code: ({ node, className, children, ...props }) => {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const isInline = !match && !className?.includes('language-');
-                                return isInline
-                                  ? <code className="bg-[var(--surface-2)] text-[#f28b82] px-1.5 py-0.5 rounded text-[14px] font-mono" {...props}>{children}</code>
-                                  : <div className="bg-[#0e0e0e] rounded-xl border border-white/5 overflow-hidden my-6"><div className="px-4 py-2 bg-white/5 text-[11px] text-white/40 font-mono uppercase tracking-widest border-b border-white/5">{match?.[1] || 'code'}</div><pre className="p-4 overflow-x-auto text-[14px] text-gray-300 font-mono leading-relaxed"><code {...props}>{children}</code></pre></div>
-                              }
+                                  return isInline
+                                   ? <code className="bg-[var(--surface-2)] text-[#f28b82] px-1.5 py-0.5 rounded text-[14px] font-mono" {...props}>{children}</code>
+                                   : <div className="bg-[#0e0e0e] rounded-xl border border-white/10 overflow-hidden my-6"><div className="px-4 py-2 bg-white/5 text-[11px] text-white/40 font-mono uppercase tracking-widest border-b border-white/10">{match?.[1] || 'code'}</div><pre className="p-4 overflow-x-auto text-[14px] text-gray-300 font-mono leading-relaxed"><code {...props}>{children}</code></pre></div>
+                               }
                             }}
                           >
                             {m.content}
@@ -470,13 +470,13 @@ export default function ChatPage() {
                 >
                   <div className="relative h-8 w-8 shrink-0 mr-4">
                     {/* Glowing rotating ring */}
-                    <div className="absolute inset-[-4px] rounded-full border-2 border-transparent border-t-purple-500 border-r-indigo-500 animate-spin opacity-70" />
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                      <Sparkles size={14} className="text-purple-300 animate-pulse" />
+                    <div className="absolute inset-[-4px] rounded-full border-2 border-transparent border-t-indigo-500 border-r-purple-500 animate-spin opacity-70" />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-md flex items-center justify-center border border-[var(--border)] shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                      <Sparkles size={14} className="text-purple-500 dark:text-purple-300 animate-pulse" />
                     </div>
                   </div>
-                  <div className="py-2.5 px-5 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[shimmer-sweep_1.5s_infinite]" style={{ backgroundSize: '200% 100%' }} />
+                  <div className="py-2.5 px-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] relative overflow-hidden shadow-sm">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--accent)]/5 to-transparent animate-[shimmer-sweep_1.5s_infinite]" style={{ backgroundSize: '200% 100%' }} />
                     <span className="text-[14px] font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2">
                        Agent is thinking 
                        <span className="flex gap-0.5 ml-1">

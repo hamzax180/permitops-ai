@@ -574,7 +574,7 @@ export default function Dashboard() {
                         transition={{ duration: 0.22, ease: 'easeInOut' }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 pt-3 border-t border-white/[0.07] space-y-4">
+                        <div className="px-4 pb-4 pt-3 border-t border-[var(--border)] space-y-4">
                           {/* Manual instructions box */}
                           <div className="rounded-xl bg-[var(--surface-2)] border border-[var(--border)] p-3">
                             <p className="text-[13px] text-[var(--text)] opacity-80 leading-relaxed font-medium">{s.detail}</p>

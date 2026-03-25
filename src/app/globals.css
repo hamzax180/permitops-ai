@@ -5,16 +5,16 @@
 
 /* ─── Flexible Theme Tokens ─── */
 :root {
-  --bg: #ffffff;
+  --bg: #f8f9fa;
   --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: rgba(0, 0, 0, 0.09);
-  --border-2: rgba(0, 0, 0, 0.15);
-  --accent: #a855f7;
-  --text: #111827;
-  --muted: #64748b;
+  --surface-2: #f1f3f4;
+  --border: rgba(0, 0, 0, 0.1);
+  --border-2: rgba(0, 0, 0, 0.16);
+  --accent: #4f46e5;
+  --text: #202124;
+  --muted: #5f6368;
   --radius: 16px;
-  --nav-bg: rgba(255, 255, 255, 0.95);
+  --nav-bg: rgba(255, 255, 255, 0.9);
 }
 
 .dark {
@@ -129,40 +129,47 @@ body {
   }
 
   .badge-purple {
-    background: rgba(168,85,247,0.15);
-    border: 1px solid rgba(168,85,247,0.35);
-    color: #d8b4fe;
-    backdrop-filter: blur(4px);
+    background: rgba(79, 70, 229, 0.1);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    color: #4f46e5;
   }
   .badge-green {
-    background: rgba(16,185,129,0.12);
-    border: 1px solid rgba(16,185,129,0.3);
-    color: #6ee7b7;
+    background: rgba(5, 150, 105, 0.1);
+    border: 1px solid rgba(5, 150, 105, 0.2);
+    color: #059669;
   }
   .badge-amber {
-    background: rgba(245,158,11,0.12);
-    border: 1px solid rgba(245,158,11,0.3);
-    color: #fcd34d;
+    background: rgba(217, 119, 6, 0.1);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    color: #d97706;
   }
   .badge-rose {
-    background: rgba(239,68,68,0.12);
-    border: 1px solid rgba(239,68,68,0.25);
-    color: #fca5a5;
+    background: rgba(225, 29, 72, 0.1);
+    border: 1px solid rgba(225, 29, 72, 0.2);
+    color: #e11d48;
   }
+  
+  .dark .badge-purple { color: #d8b4fe; background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35); }
+  .dark .badge-green { color: #6ee7b7; background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); }
+  .dark .badge-amber { color: #fcd34d; background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
+  .dark .badge-rose { color: #fca5a5; background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.25); }
 
   /* ----- Status pills ----- */
   .status-done {
     display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
     border-radius: 999px; font-size: 0.65rem; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
-    background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7;
+    background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.2); color: #059669;
   }
   .status-active {
     display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
     border-radius: 999px; font-size: 0.65rem; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
-    background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.3); color: #d8b4fe;
+    background: rgba(79, 70, 229, 0.1); border: 1px solid rgba(79, 70, 229, 0.2); color: #4f46e5;
   }
+  
+  .dark .status-done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: #6ee7b7; }
+  .dark .status-active { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.3); color: #d8b4fe; }
   .status-pending {
     display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
     border-radius: 999px; font-size: 0.65rem; font-weight: 700;
@@ -208,15 +215,18 @@ body {
     color: var(--muted);
   }
   .step-num-completed {
-    background: rgba(16,185,129,0.2);
-    border-color: rgba(16,185,129,0.4);
-    color: #6ee7b7;
+    background: rgba(5, 150, 105, 0.15);
+    border-color: rgba(5, 150, 105, 0.3);
+    color: #059669;
   }
   .step-num-inprogress {
-    background: rgba(168,85,247,0.2);
-    border-color: rgba(168,85,247,0.4);
-    color: #d8b4fe;
+    background: rgba(79, 70, 229, 0.15);
+    border-color: rgba(79, 70, 229, 0.3);
+    color: #4f46e5;
   }
+  
+  .dark .step-num-completed { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.4); color: #6ee7b7; }
+  .dark .step-num-inprogress { background: rgba(168,85,247,0.2); border-color: rgba(168,85,247,0.4); color: #d8b4fe; }
 
   /* ----- Stat card gradient text ----- */
   .stat-value-emerald {
@@ -302,13 +312,16 @@ body {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 800;
   letter-spacing: 0.06em; text-transform: uppercase;
-  background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3);
-  color: #c084fc;
+  background: rgba(79, 70, 229, 0.1); border: 1px solid rgba(79, 70, 229, 0.2);
+  color: #4f46e5;
 }
 .human-chip {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 8px; border-radius: 6px; font-size: 0.6rem; font-weight: 800;
   letter-spacing: 0.06em; text-transform: uppercase;
-  background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.25);
-  color: #7dd3fc;
+  background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.2);
+  color: #0284c7;
 }
+
+.dark .agent-chip { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.3); color: #c084fc; }
+.dark .human-chip { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.25); color: #7dd3fc; }
