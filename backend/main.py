@@ -585,7 +585,7 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         if True: # Always save assistant message now that we have session tracking
             # Bruteforce strip any leftover permit boilerplate just in case the LLM stubbornly generated it
             # Perform a case-insensitive search to catch any bolding/emoji variations
-            if is_followup:
+            if is_followup_prompt:
                 lower_answer = answer.lower()
                 for marker in ["permits (agencies)", "required docs", "action steps", "📋"]:
                     idx = lower_answer.find(marker.lower())
