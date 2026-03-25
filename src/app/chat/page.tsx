@@ -233,7 +233,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 pt-16 relative" style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #0f0a1a 50%, #0a0f1a 100%)' }}>
+    <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 pt-16 relative bg-[var(--bg)]">
       <Sidebar 
         currentSessionId={sessionId}
         onSessionSelect={(id, title) => { setSessionId(id); setSessionTitle(title); }}
@@ -302,7 +302,7 @@ export default function ChatPage() {
 
               {/* Chat Input Pill (empty state, centered) */}
               <div className="w-full max-w-3xl mb-12">
-                <div className="rounded-[28px] p-2 pr-3 min-h-[140px] flex flex-col border border-white/10 hover:border-white/20 transition-all" style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}>
+                <div className="rounded-[28px] p-2 pr-3 min-h-[140px] flex flex-col border border-[var(--border)] hover:border-[var(--border-2)] transition-all bg-[var(--surface-2)]">
                   <textarea
                     ref={inputRef}
                     value={input}
@@ -311,7 +311,7 @@ export default function ChatPage() {
                       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
                     }}
                     placeholder={t('chat_placeholder_alt')}
-                    className="flex-1 bg-transparent text-[18px] p-4 text-white placeholder:text-white/30 focus:outline-none resize-none"
+                    className="flex-1 bg-transparent text-[16px] px-4 py-3 min-h-[44px] max-h-[200px] overflow-y-auto text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none slim-scroll"
                   />
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
@@ -351,7 +351,7 @@ export default function ChatPage() {
                   <button
                     key={i}
                     onClick={() => send(chip.label)}
-                    className="text-white/60 hover:text-white text-[15px] py-2.5 px-6 rounded-full transition-all font-medium active:scale-95 touch-manipulation border border-white/10 hover:border-white/25 hover:bg-white/5 backdrop-blur-sm"
+                    className="text-[var(--muted)] hover:text-[var(--text)] text-[15px] py-2.5 px-6 rounded-full transition-all font-medium active:scale-95 touch-manipulation border border-[var(--border)] hover:border-[var(--border-2)] hover:bg-[var(--surface-2)] bg-[var(--surface)] backdrop-blur-sm"
                   >
                     {chip.label}
                   </button>
@@ -377,10 +377,9 @@ export default function ChatPage() {
                     <div className={`flex flex-col max-w-[85%] md:max-w-[80%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`text-[16px] leading-[1.6] whitespace-pre-wrap ${
                         m.role === 'user'
-                          ? 'px-5 py-3.5 rounded-[22px] border border-white/10 text-white/90'
-                          : 'text-white/80 py-2 w-full font-normal'
+                          ? 'px-5 py-3.5 rounded-[22px] border border-[var(--border)] text-[var(--text)] bg-[var(--surface-2)] shadow-sm'
+                          : 'text-[var(--text)] opacity-90 py-2 w-full font-normal'
                       }`}
-                      style={m.role === 'user' ? { background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)' } : {}}
                     >
                         {m.role === 'assistant' ? (
                           <ReactMarkdown
@@ -412,14 +411,28 @@ export default function ChatPage() {
               </AnimatePresence>
 
               {busy && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex w-full justify-start">
-                  <div className="h-8 w-8 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--accent)] shrink-0 mr-4">
-                    <Sparkles size={16} className="animate-pulse" />
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }} 
+                  animate={{ opacity: 1, scale: 1 }} 
+                  className="flex w-full justify-start items-center"
+                >
+                  <div className="relative h-8 w-8 shrink-0 mr-4">
+                    {/* Glowing rotating ring */}
+                    <div className="absolute inset-[-4px] rounded-full border-2 border-transparent border-t-purple-500 border-r-indigo-500 animate-spin opacity-70" />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                      <Sparkles size={14} className="text-purple-300 animate-pulse" />
+                    </div>
                   </div>
-                  <div className="text-[var(--muted)] py-2 flex items-center space-x-1.5">
-                    <span className="w-1.5 h-1.5 bg-[var(--muted)] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                    <span className="w-1.5 h-1.5 bg-[var(--muted)]/60 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                    <span className="w-1.5 h-1.5 bg-[var(--muted)]/30 rounded-full animate-bounce"></span>
+                  <div className="py-2.5 px-5 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[shimmer-sweep_1.5s_infinite]" style={{ backgroundSize: '200% 100%' }} />
+                    <span className="text-[14px] font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2">
+                       Agent is thinking 
+                       <span className="flex gap-0.5 ml-1">
+                         <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.3s]" />
+                         <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.15s]" />
+                         <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" />
+                       </span>
+                    </span>
                   </div>
                 </motion.div>
               )}
@@ -429,9 +442,9 @@ export default function ChatPage() {
 
           {/* Sticky Input Bar (Only visible when NOT empty) */}
           {!isEmpty && (
-            <div className="absolute bottom-0 left-0 w-full pt-12 pb-10 px-4 flex justify-center" style={{ background: 'linear-gradient(to top, #0a0a0f 60%, transparent)' }}>
+            <div className="absolute bottom-0 left-0 w-full pt-12 pb-10 px-4 flex justify-center bg-gradient-to-t from-[var(--bg)] via-[var(--bg)] to-transparent">
               <div className="w-full max-w-3xl relative px-2">
-                <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-white/10 transition-all duration-300 ${busy ? 'opacity-70' : 'hover:border-white/20 focus-within:border-white/20'}`} style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}>
+                <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 bg-[var(--surface-2)] ${busy ? 'opacity-70' : 'hover:border-[var(--border-2)] focus-within:border-[var(--border-2)]'}`}>
                   
                   <textarea
                     ref={inputRef}

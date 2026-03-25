@@ -275,7 +275,7 @@ export default function Dashboard() {
       {/* Video Background */}
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
         {/* Fallback Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-2)] via-[var(--bg)] to-[var(--surface-2)] dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface-2)] via-[var(--bg)] to-[var(--surface-2)] dark:hidden" />
         
         <video
           autoPlay
@@ -287,7 +287,7 @@ export default function Dashboard() {
             video.style.opacity = '1';
           }}
           style={{ opacity: 0, transition: 'opacity 1s ease' }}
-          className="absolute inset-0 w-full h-full object-cover z-10 hidden dark:block"
+          className="absolute inset-0 w-full h-full object-cover z-10 hidden"
         >
           <source src="/dashboard_bg.mp4" type="video/mp4" />
         </video>
