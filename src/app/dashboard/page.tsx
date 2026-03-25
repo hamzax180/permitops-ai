@@ -596,7 +596,7 @@ export default function Dashboard() {
                 <h2 className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">{t('dashboard_workflow_steps')}</h2>
                 <span className="text-[10px] font-bold text-[var(--muted)] opacity-70 uppercase tracking-widest">{done} of {steps.length} done</span>
               </div>
-              {(showAllSteps ? steps : steps.slice(0, 3)).map((s, i) => (
+              {(showAllSteps && data?.subscription_status === 'active' ? steps : steps.slice(0, 3)).map((s, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -14 }}
@@ -751,15 +751,33 @@ export default function Dashboard() {
                 </motion.div>
               ))}
 
-              {/* Show More / Less */}
+              {/* Show More / Less / Upgrade */}
               {steps.length > 3 && (
-                <button
-                  onClick={() => setShowAllSteps(!showAllSteps)}
-                  className="w-full py-3 rounded-2xl border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--border-2)] hover:bg-[var(--surface-2)] transition-all text-sm font-semibold flex items-center justify-center gap-2"
-                >
-                  <ChevronDown size={16} className={`transition-transform duration-300 ${showAllSteps ? 'rotate-180' : ''}`} />
-                  {showAllSteps ? `Show less` : `Show ${steps.length - 3} more steps`}
-                </button>
+                data?.subscription_status === 'active' ? (
+                  <button
+                    onClick={() => setShowAllSteps(!showAllSteps)}
+                    className="w-full py-3 rounded-2xl border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--border-2)] hover:bg-[var(--surface-2)] transition-all text-sm font-semibold flex items-center justify-center gap-2"
+                  >
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${showAllSteps ? 'rotate-180' : ''}`} />
+                    {showAllSteps ? `Show less` : `Show ${steps.length - 3} more steps`}
+                  </button>
+                ) : (
+                  <Link href="/pricing" className="block">
+                    <div className="w-full py-6 rounded-[28px] border-2 border-dashed border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer relative overflow-hidden">
+                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
+                       <div className="flex items-center gap-2 text-indigo-600">
+                          <Lock size={16} />
+                          <span className="text-sm font-black uppercase tracking-widest">Premium Content</span>
+                       </div>
+                       <p className="text-xs text-[var(--muted)] font-bold text-center px-6">
+                         Unlock {steps.length - 3} more specialized workflow steps and municipal protocols.
+                       </p>
+                       <div className="mt-2 text-xs font-black text-white bg-indigo-600 px-4 py-1.5 rounded-full shadow-lg group-hover:scale-105 transition-transform">
+                          Upgrade to Premium
+                       </div>
+                    </div>
+                  </Link>
+                )
               )}
             </div>
 
