@@ -433,6 +433,14 @@ async def agent_query(request: Request, query: UserQuery, token: Optional[str] =
             answer = await _run_direct_gemini(query.query, user, db, query.language, session_id, is_followup=True)
         
         if True: # Always save assistant message now that we have session tracking
+            # Bruteforce strip any leftover permit boilerplate just in case the LLM stubbornly generated it
+            if is_followup:
+                for marker in ["📋 **Permits", "📋 Permits", "Permits (Agencies):", "📄 **Required", "✅ **Action"]:
+                    idx = answer.find(marker)
+                    if idx != -1:
+                        answer = answer[:idx].strip()
+                        break
+                        
             # Save assistant message
             assistant_msg = ChatMessage(session_id=session_id, role="assistant", content=answer)
             db.add(assistant_msg)
