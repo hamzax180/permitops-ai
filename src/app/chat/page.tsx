@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../utils/api';
 
 import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 type Role = 'assistant' | 'user';
 interface Msg { id: number; role: Role; content: string; }
@@ -256,7 +257,7 @@ export default function ChatPage() {
   const isEmpty = msgs.length === 0;
 
   return (
-    <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 pt-16 relative bg-[var(--bg)]">
+    <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 relative bg-[var(--bg)]">
       <Sidebar 
         currentSessionId={sessionId}
         onSessionSelect={(id, title) => { setSessionId(id); setSessionTitle(title); }}
@@ -265,21 +266,24 @@ export default function ChatPage() {
         token={token}
       />
       
-      {/* Centered Chat Title for Screen — High Visibility */}
-      <div className="absolute left-0 right-0 top-[76px] flex justify-center pointer-events-none z-30 px-4">
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }}
-          className="px-6 py-2 rounded-full glass-card border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.15)] backdrop-blur-xl max-w-[70vw] truncate pointer-events-auto"
-        >
-          <span className="text-xs md:text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-300 whitespace-nowrap tracking-widest uppercase drop-shadow-md">
-            {sessionTitle || t('chat_new')}
-          </span>
-        </motion.div>
-      </div>
-
       <main className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative">
-        <div className="h-16 shrink-0" /> {/* Spacer for the centered title container */}
+        <Navbar isAppPage />
+        <div className="h-4 shrink-0" /> {/* Slight top padding */}
+
+        {/* Centered Chat Title for Screen — Constrained to main width for the perfect sidebar push! */}
+        <div className="absolute left-0 right-0 top-3 flex justify-center pointer-events-none z-30 px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="px-6 py-2 rounded-full glass-card border border-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.15)] backdrop-blur-xl max-w-[70vw] truncate pointer-events-auto"
+          >
+            <span className="text-xs md:text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-300 whitespace-nowrap tracking-widest uppercase drop-shadow-md">
+              {sessionTitle || t('chat_new')}
+            </span>
+          </motion.div>
+        </div>
+
+        <div className="h-12 shrink-0" /> {/* Spacer Below the Header */}
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0 relative">

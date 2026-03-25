@@ -10,7 +10,10 @@ import {
   Activity, Cpu, Upload, ChevronDown, ExternalLink, RefreshCw, X, Fingerprint, Lock, Sparkles, MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../utils/api';
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 
 type Status = 'completed' | 'in-progress' | 'pending';
 
@@ -38,6 +41,7 @@ function StepIcon({ status }: { status: Status }) {
 
 export default function Dashboard() {
   const { t, isRTL, language } = useLanguage();
+  const { token } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [expanded, setExpanded] = useState<number | null>(0);
@@ -259,19 +263,21 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center pt-24">
-        <div className="flex flex-col items-center gap-4 text-gray-500">
-          <Activity size={32} className="animate-pulse text-purple-500" />
-          <p className="text-sm font-medium">{t('dashboard_syncing')}</p>
-        </div>
-      </main>
-    );
-  }
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <main className="flex-1 flex items-center justify-center pt-24 min-w-0">
+          <div className="flex flex-col items-center gap-4 text-gray-500">
+            <Activity size={32} className="animate-pulse text-purple-500" />
+            <p className="text-sm font-medium">{t('dashboard_syncing')}</p>
+          </div>
+        </main>
+      );
+    }
 
-  return (
-    <main className="min-h-screen relative overflow-hidden bg-[var(--bg)]">
+    return (
+      <main className="flex-1 min-w-0 relative overflow-y-auto overflow-x-hidden slim-scroll bg-[var(--bg)]">
+          <Navbar isAppPage />
       {/* Video Background */}
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
         {/* Fallback Gradient */}
@@ -757,5 +763,25 @@ export default function Dashboard() {
         </div>
       </div>
     </main>
+    );
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 relative bg-[var(--bg)]">
+      <Sidebar 
+        currentSessionId={dashboardSessionId}
+        onSessionSelect={(id, title) => {
+          localStorage.setItem('permitops_active_session_id', id);
+          router.push('/chat');
+        }}
+        onNewChat={() => {
+          localStorage.removeItem('permitops_active_session_id');
+          router.push('/chat');
+        }}
+        onDeleteSession={(id) => {}}
+        token={token}
+      />
+      {renderContent()}
+    </div>
   );
 }

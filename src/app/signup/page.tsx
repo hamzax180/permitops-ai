@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import Navbar from '../components/Navbar';
 
 export default function SignupPage() {
     const { t } = useLanguage();
@@ -46,6 +47,8 @@ export default function SignupPage() {
     };
 
     return (
+        <>
+        <Navbar />
         <main className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden">
             {/* Video Background (reuse from dashboard if possible, or just gradient) */}
             <div className="absolute inset-0 bg-[var(--bg)] z-0">
@@ -135,5 +138,6 @@ export default function SignupPage() {
                 </div>
             </motion.div>
         </main>
+        </>
     );
 }

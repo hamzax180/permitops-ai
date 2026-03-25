@@ -7,14 +7,14 @@
 :root {
   --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --border: rgba(0, 0, 0, 0.06);
-  --border-2: rgba(0, 0, 0, 0.12);
+  --surface-2: #f1f5f9;
+  --border: rgba(0, 0, 0, 0.09);
+  --border-2: rgba(0, 0, 0, 0.15);
   --accent: #a855f7;
-  --text: #1f2937;
-  --muted: #6b7280;
+  --text: #111827;
+  --muted: #64748b;
   --radius: 16px;
-  --nav-bg: rgba(255, 255, 255, 0.8);
+  --nav-bg: rgba(255, 255, 255, 0.95);
 }
 
 .dark {

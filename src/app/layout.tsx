@@ -28,7 +28,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased font-gemini">
         <LanguageProvider>
           <AuthProvider>
-            <Navbar />
             {children}
           </AuthProvider>
         </LanguageProvider>

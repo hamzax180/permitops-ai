@@ -10,6 +10,7 @@ import {
 import type { Variants } from 'framer-motion';
 import { useLanguage } from './context/LanguageContext';
 import { useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar';
 
 /* ── Animation Variants ── */
 const fade: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -58,7 +59,9 @@ export default function Home() {
   const { user } = useAuth();
   const stepsData = howItWorksSteps(t);
   return (
-    <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center transition-colors duration-500 overflow-hidden">
 
       {/* ═══════════════ GEMINI STYLE CONTENT ═══════════════ */}
       <section className="w-full max-w-4xl mx-auto flex flex-col items-center text-center space-y-10 pt-24 pb-10 px-6 relative">
@@ -221,5 +224,6 @@ export default function Home() {
         </div>
       </section>
     </main>
+    </>
   );
 }
