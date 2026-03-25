@@ -583,8 +583,11 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                         print(f"[agent_query] Routing to PERMIT Orchestrator to generate new permit plan")
                         answer = await _run_with_agents(query_text, user, db, language, session_id)
             except Exception as agent_err:
+                import traceback
                 print(f"[AgentPipeline ERROR] {agent_err}")
-                answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj, assistant_type=assistant_type)
+                traceback.print_exc()
+                # For student queries, always try the student direct model not the permit one
+                answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=False, file_obj=file_obj, assistant_type=assistant_type)
         else:
             answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj, assistant_type=assistant_type)
         
