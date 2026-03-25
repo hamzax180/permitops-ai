@@ -295,6 +295,7 @@ async def _run_with_agents(query: str, user: Optional[DBUser] = None, db: Sessio
 
 async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False) -> str:
     """Direct Gemini call — fast and reliable fallback."""
+    global guest_dashboard_states
     history = ""
     if db:
         history = await _get_history_context(session_id, db, current_query=query, strip_boilerplate=is_followup)
@@ -359,7 +360,6 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
                 user.latest_dashboard_state = json.dumps(mock_state)
                 db.commit()
         else:
-            global guest_dashboard_states
             print(f"[_run_direct_gemini] Saving to guest_dashboard_states for {session_id}")
             guest_dashboard_states[session_id] = json.dumps(mock_state)
         

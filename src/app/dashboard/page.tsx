@@ -454,8 +454,28 @@ export default function Dashboard() {
                   <ArrowRight size={14} /> {t('dashboard_ask_ai')}
                 </button>
               </Link>
-              <button onClick={handleUploadClick} disabled={uploading} className="btn btn-purple !py-2 !px-4 !text-sm disabled:opacity-50">
-                <Upload size={14} /> {uploading ? t('dashboard_processing') : t('dashboard_upload')}
+              <button 
+                onClick={handleUploadClick} 
+                disabled={uploading} 
+                title={t('dashboard_upload')}
+                className="flex items-center justify-center w-[42px] h-[42px] bg-[#E30A17] hover:bg-[#C20914] text-white rounded-xl shadow-[0_0_20px_rgba(227,10,23,0.35)] transition-all shrink-0 disabled:opacity-50 border border-white/10 group"
+              >
+                {uploading ? (
+                  <RefreshCw size={18} className="animate-spin" />
+                ) : (
+                  <div className="relative flex items-center justify-center">
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/E-Devlet_Kap%C4%B1s%C4%B1_logo.svg/320px-E-Devlet_Kap%C4%B1s%C4%B1_logo.svg.png" 
+                      alt="e-Devlet"
+                      className="h-7 w-auto object-contain brightness-0 invert group-hover:scale-110 transition-transform" 
+                      onError={(e) => { 
+                        (e.target as HTMLElement).style.display = 'none'; 
+                        (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden'); 
+                      }}
+                    />
+                    <ShieldCheck size={20} className="hidden" />
+                  </div>
+                )}
               </button>
             </div>
           </motion.div>
