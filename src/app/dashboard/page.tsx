@@ -275,7 +275,7 @@ export default function Dashboard() {
       {/* Video Background */}
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
         {/* Fallback Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-white dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]" />
         
         <video
           autoPlay
@@ -287,7 +287,7 @@ export default function Dashboard() {
             video.style.opacity = '1';
           }}
           style={{ opacity: 0, transition: 'opacity 1s ease' }}
-          className="absolute inset-0 w-full h-full object-cover z-10"
+          className="absolute inset-0 w-full h-full object-cover z-10 hidden dark:block"
         >
           <source src="/dashboard_bg.mp4" type="video/mp4" />
         </video>
@@ -353,7 +353,7 @@ export default function Dashboard() {
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-[var(--text)]">{portalName} Integration</h3>
-                        <p className="text-white/60 text-sm italic">Simulating Local Municipality API...</p>
+                        <p className="text-[var(--muted)] text-sm italic">Simulating Local Municipality API...</p>
                       </div>
                     </div>
                     <button onClick={() => setShowModal(false)} className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
@@ -476,7 +476,7 @@ export default function Dashboard() {
                   <s.icon size={22} style={{ color: s.iconColor }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest truncate mb-1">{s.label}</p>
+                  <p className="text-[10px] text-[var(--muted)] font-bold uppercase tracking-widest truncate mb-1">{s.label}</p>
                   <p className="text-2xl font-black leading-tight" style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.value}</p>
                 </div>
               </div>
@@ -486,10 +486,10 @@ export default function Dashboard() {
           {/* ── Progress Bar ── */}
           <div className="glass-card p-4 flex items-center gap-5">
             <div className="flex flex-col shrink-0">
-              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">{t('dashboard_overall_progress')}</span>
-              <span className="text-xl font-black text-white mt-0.5">{progress}%</span>
+              <span className="text-[10px] text-[var(--muted)] font-bold uppercase tracking-widest">{t('dashboard_overall_progress')}</span>
+              <span className="text-xl font-black text-[var(--text)] mt-0.5">{progress}%</span>
             </div>
-            <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden border border-white/10 shadow-inner">
+            <div className="flex-1 h-3 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden border border-[var(--border)] shadow-inner">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
@@ -501,8 +501,8 @@ export default function Dashboard() {
               </motion.div>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest block">Steps</span>
-              <span className="text-sm font-black text-white">{done}/{steps.length}</span>
+              <span className="text-[10px] text-[var(--muted)] font-bold uppercase tracking-widest block">Steps</span>
+              <span className="text-sm font-black text-[var(--text)]">{done}/{steps.length}</span>
             </div>
           </div>
 
@@ -512,8 +512,8 @@ export default function Dashboard() {
             {/* Workflow Steps */}
             <div className="lg:col-span-8 space-y-2">
               <div className="flex items-center justify-between px-0.5 mb-1">
-                <h2 className="text-[10px] font-bold uppercase tracking-widest text-white/40">{t('dashboard_workflow_steps')}</h2>
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{done} of {steps.length} done</span>
+                <h2 className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)]">{t('dashboard_workflow_steps')}</h2>
+                <span className="text-[10px] font-bold text-[var(--muted)] opacity-70 uppercase tracking-widest">{done} of {steps.length} done</span>
               </div>
               {(showAllSteps ? steps : steps.slice(0, 3)).map((s, i) => (
                 <motion.div
@@ -538,9 +538,9 @@ export default function Dashboard() {
                       {s.status === 'completed' ? <CheckCircle2 size={13} /> : s.id}
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-white text-[15px] leading-tight">{s.title}</h3>
+                        <h3 className="font-bold text-[var(--text)] text-[15px] leading-tight">{s.title}</h3>
                         <StepBadge status={s.status} />
                         {/* Responsible chip */}
                         <span className={
@@ -550,12 +550,12 @@ export default function Dashboard() {
                           {(s.responsible.includes('Agent') || s.responsible.includes('Ajan') || s.responsible.includes('وكيل')) ? '⚡ Agent' : '👤 Human'}
                         </span>
                       </div>
-                      <p className="text-[13px] text-white/40 mt-0.5 font-medium truncate">{s.summary}</p>
+                      <p className="text-[13px] text-[var(--muted)] mt-0.5 font-medium truncate">{s.summary}</p>
                     </div>
 
                     <ChevronDown
                       size={15}
-                      className={`text-white/30 transition-transform duration-300 shrink-0 ${expanded === i ? 'rotate-180' : ''}`}
+                      className={`text-[var(--muted)] opacity-70 transition-transform duration-300 shrink-0 ${expanded === i ? 'rotate-180' : ''}`}
                     />
                   </div>
 
@@ -570,17 +570,17 @@ export default function Dashboard() {
                       >
                         <div className="px-4 pb-4 pt-3 border-t border-white/[0.07] space-y-4">
                           {/* Manual instructions box */}
-                          <div className="rounded-xl bg-white/[0.04] border border-white/[0.08] p-3">
-                            <p className="text-[13px] text-white/70 leading-relaxed font-medium">{s.detail}</p>
+                          <div className="rounded-xl bg-[var(--surface-2)] border border-[var(--border)] p-3">
+                            <p className="text-[13px] text-[var(--text)] opacity-80 leading-relaxed font-medium">{s.detail}</p>
                           </div>
 
                           {s.docs.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {s.docs.map((doc: string) => (
-                                <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white/50 hover:text-white transition-colors cursor-pointer bg-white/[0.04] border border-white/[0.08]">
+                                <div key={doc} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--muted)] hover:text-[var(--text)] transition-colors cursor-pointer bg-[var(--surface-2)] border border-[var(--border)]">
                                   <FileText size={11} className="text-purple-400 shrink-0" />
                                   {doc}
-                                  <ExternalLink size={9} className="text-white/30" />
+                                  <ExternalLink size={9} className="text-[var(--muted)] opacity-70" />
                                 </div>
                               ))}
                             </div>
@@ -615,7 +615,7 @@ export default function Dashboard() {
                                   </button>
                                   <button
                                     disabled
-                                    className="btn !py-2 !px-3.5 !text-xs flex items-center gap-1.5 opacity-40 cursor-not-allowed bg-white/5 border border-white/10 text-white/50 !rounded-lg"
+                                    className="btn !py-2 !px-3.5 !text-xs flex items-center gap-1.5 opacity-40 cursor-not-allowed bg-[var(--surface-2)] border-[var(--border)] text-[var(--muted)] !rounded-lg"
                                     title="Bot automation disabled pending legal approval"
                                   >
                                     <Lock size={11} />
