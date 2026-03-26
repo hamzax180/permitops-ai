@@ -353,7 +353,9 @@ export default function ChatPage() {
                       onClick={() => { setAssistantType('permit'); setIsDropdownOpen(false); handleNewChat('permit'); }}
                       className={`flex items-center gap-5 px-8 py-5 w-full rounded-full transition-all duration-300 group relative overflow-hidden ${assistantType === 'permit' ? 'glass-mesh mesh-indigo border-indigo-500/50 text-[var(--text)] shadow-[0_0_30px_rgba(99,102,241,0.2)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] border border-transparent hover:border-white/10'}`}
                     >
-                      <span className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">🏢</span>
+                      <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-3xl filter drop-shadow-md">🏢</span>
+                      </div>
                       <div className="flex flex-col text-left">
                         <span className="text-[20px] font-bold tracking-tight leading-none mb-1">Permit Assistant</span>
                         <span className="text-[13px] opacity-60 font-medium">Business & Municipal Protocol</span>
@@ -365,7 +367,9 @@ export default function ChatPage() {
                       onClick={() => { setAssistantType('student'); setIsDropdownOpen(false); handleNewChat('student'); }}
                       className={`flex items-center gap-5 px-8 py-5 w-full rounded-full transition-all duration-300 group relative overflow-hidden ${assistantType === 'student' ? 'glass-mesh mesh-purple border-purple-500/50 text-[var(--text)] shadow-[0_0_30px_rgba(168,85,247,0.2)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] border border-transparent hover:border-white/10'}`}
                     >
-                      <span className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">🎓</span>
+                      <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-3xl filter drop-shadow-md">🎓</span>
+                      </div>
                       <div className="flex flex-col text-left">
                         <span className="text-[20px] font-bold tracking-tight leading-none mb-1">Student Assistant</span>
                         <span className="text-[13px] opacity-60 font-medium">Academic Tasks & ID Renewals</span>
@@ -377,7 +381,9 @@ export default function ChatPage() {
                       onClick={() => { setAssistantType('lawyer'); setIsDropdownOpen(false); handleNewChat('lawyer'); }}
                       className={`flex items-center gap-5 px-8 py-5 w-full rounded-full transition-all duration-300 group relative overflow-hidden ${assistantType === 'lawyer' ? 'glass-mesh mesh-indigo border-indigo-500/50 text-[var(--text)] shadow-[0_0_30px_rgba(59,130,246,0.2)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] border border-transparent hover:border-white/10'}`}
                     >
-                      <span className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">⚖️</span>
+                      <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-3xl filter drop-shadow-md">⚖️</span>
+                      </div>
                       <div className="flex flex-col text-left">
                         <span className="text-[20px] font-bold tracking-tight leading-none mb-1">Lawyer Assistant</span>
                         <span className="text-[13px] opacity-60 font-medium">Legal Advice & Compliance</span>
@@ -402,36 +408,38 @@ export default function ChatPage() {
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl mb-8"
               >
                 {(assistantType === 'student' ? [
-                  { icon: FileText, label: "Renew Kimlik/ID", color: '#60a5fa', mesh: 'mesh-indigo' },
-                  { icon: Building2, label: "Best Universities", color: '#c084fc', mesh: 'mesh-purple' },
-                  { icon: Search, label: "Register Roadmap", color: '#4ade80', mesh: 'mesh-emerald' },
-                  { icon: Clock, label: "Deadlines", color: '#fb923c', mesh: 'mesh-amber' },
-                  { icon: Sparkles, label: "Student Visas", color: '#facc15', mesh: 'mesh-amber' },
-                  { icon: HelpCircle, label: "Student Help", color: '#818cf8', mesh: 'mesh-indigo' }
-                ] : assistantType === 'lawyer' ? [
-                  { icon: Scale, label: "Contract Review", color: '#60a5fa', mesh: 'mesh-indigo' },
-                  { icon: Building2, label: "Company Formation", color: '#c084fc', mesh: 'mesh-purple' },
-                  { icon: FileText, label: "Employment Law", color: '#4ade80', mesh: 'mesh-emerald' },
-                  { icon: Clock, label: "Legal Timelines", color: '#fb923c', mesh: 'mesh-amber' },
-                  { icon: Sparkles, label: "Residency/Work Permit", color: '#facc15', mesh: 'mesh-amber' },
-                  { icon: HelpCircle, label: "Legal Disputes", color: '#818cf8', mesh: 'mesh-indigo' }
-                ] : [
-                  { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa', mesh: 'mesh-indigo' },
-                  { icon: FileText, label: t('chat_suggestion_permit'), color: '#c084fc', mesh: 'mesh-purple' },
-                  { icon: Search, label: t('chat_suggestion_location'), color: '#4ade80', mesh: 'mesh-emerald' },
-                  { icon: Clock, label: t('chat_suggestion_duration'), color: '#fb923c', mesh: 'mesh-amber' },
-                  { icon: Sparkles, label: t('chat_suggestion_cost'), color: '#facc15', mesh: 'mesh-amber' },
-                  { icon: HelpCircle, label: t('chat_suggestion_help'), color: '#818cf8', mesh: 'mesh-indigo' }
-                ]).map((chip, i) => (
+                   { emoji: "🪪", label: "Renew Kimlik/ID", mesh: 'mesh-indigo' },
+                   { emoji: "🏛️", label: "Best Universities", mesh: 'mesh-purple' },
+                   { emoji: "🗺️", label: "Register Roadmap", mesh: 'mesh-emerald' },
+                   { emoji: "📅", label: "Deadlines", mesh: 'mesh-amber' },
+                   { emoji: "🛂", label: "Student Visas", mesh: 'mesh-amber' },
+                   { emoji: "🆘", label: "Student Help", mesh: 'mesh-indigo' }
+                 ] : assistantType === 'lawyer' ? [
+                   { emoji: "📑", label: "Contract Review", mesh: 'mesh-indigo' },
+                   { emoji: "🏗️", label: "Company Formation", mesh: 'mesh-purple' },
+                   { emoji: "🤝", label: "Employment Law", mesh: 'mesh-emerald' },
+                   { emoji: "📊", label: "Legal Timelines", mesh: 'mesh-amber' },
+                   { emoji: "🏠", label: "Residency/Permit", mesh: 'mesh-amber' },
+                   { emoji: "⚖️", label: "Legal Disputes", mesh: 'mesh-indigo' }
+                 ] : [
+                   { emoji: "🏢", label: t('chat_suggestion_business'), mesh: 'mesh-indigo' },
+                   { emoji: "📜", label: t('chat_suggestion_permit'), mesh: 'mesh-purple' },
+                   { emoji: "📍", label: t('chat_suggestion_location'), mesh: 'mesh-emerald' },
+                   { emoji: "⏳", label: t('chat_suggestion_duration'), mesh: 'mesh-amber' },
+                   { emoji: "💰", label: t('chat_suggestion_cost'), mesh: 'mesh-amber' },
+                   { emoji: "❓", label: t('chat_suggestion_help'), mesh: 'mesh-indigo' }
+                 ]).map((chip, i) => (
                    <div
                     key={i}
                     onClick={() => send(chip.label)}
-                    className={`glass-mesh ${chip.mesh} text-[var(--text)] opacity-90 text-[15px] py-3.5 px-6 rounded-full flex items-center gap-3 font-semibold select-none backdrop-blur-md transition-all hover:scale-105 cursor-pointer shadow-lg border border-white/5`}
-                  >
-                    {chip.icon && <chip.icon size={18} style={{ color: chip.color }} />}
-                    {chip.label}
-                  </div>
-                ))}
+                    className={`glass-mesh ${chip.mesh} text-[var(--text)] opacity-95 text-[16px] py-4 px-6 rounded-[28px] flex items-center gap-4 font-bold select-none backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/10 group`}
+                   >
+                     <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shadow-inner group-hover:bg-white/20 transition-colors">
+                       <span className="text-2xl filter drop-shadow-sm">{chip.emoji}</span>
+                     </div>
+                     {chip.label}
+                   </div>
+                 ))}
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
