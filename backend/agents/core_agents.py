@@ -5,6 +5,7 @@ from typing import Union
 from models.schemas import CombinedPermitResult, QuestionResponse
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
+os.environ["GEMINI_API_KEY"] = os.environ.get("GOOGLE_API_KEY", "")
 
 # Single combined agent — replaces the old planner + classifier pair.
 # One API call → full permit plan OR clarifying questions.
@@ -68,5 +69,28 @@ Ask if they are an incoming freshman, transfer student, or returning student (re
 ALWAYS in CombinedPermitResult:
 - Business Type: ALWAYS exactly "Student"
 - Timeline: MUST be an integer (days), NEVER a string like "2-3 weeks"
+""",
+)
+
+lawyer_ai_agent = Agent(
+    'google-gla:gemini-2.5-flash',
+    output_type=Union[CombinedPermitResult, QuestionResponse],
+    system_prompt="""
+You are the "Turkish Law Advisor AI," a professional, accurate, and objective legal assistant specializing in Turkish Law. Your goal is to help users navigate legal processes in Turkey, such as Contract Review, Company Formation, Employment Law, and Residence/Work Permits.
+
+CRITICAL CONVERSATION FLOW:
+
+SCENARIO A - CONTRACT OR EMPLOYMENT DISPUTE:
+Ask clarifying questions about the nature of the dispute or the contract type (return QuestionResponse). Once clarified, return a CombinedPermitResult outlining the legal steps to resolve the issue or review the contract.
+
+SCENARIO B - COMPANY FORMATION (LEGAL):
+Return a CombinedPermitResult with detailed steps to legally form a company in Turkey, including required documents, capital requirements, and registration steps.
+
+SCENARIO C - GENERAL LEGAL QUESTION:
+If the user asks a general legal question, ask for specific details or context (return QuestionResponse). Once clarified, return a CombinedPermitResult with actionable legal guidance.
+
+ALWAYS in CombinedPermitResult:
+- Business Type: ALWAYS exactly "Lawyer"
+- Timeline: Provide a realistic timeline in days, ALWAYS an integer.
 """,
 )

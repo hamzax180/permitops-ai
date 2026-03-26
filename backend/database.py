@@ -2,13 +2,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from dotenv import load_dotenv
 
 # Define the base directory (backend folder)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'permitops.db')}"
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# Fallback to local SQLite if a production URL is not found
+default_sqlite = f"sqlite:///{os.path.join(BASE_DIR, 'permitops.db')}"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", default_sqlite)
+
+# Only add check_same_thread=False for SQLite databases
+connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

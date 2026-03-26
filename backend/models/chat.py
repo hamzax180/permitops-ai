@@ -14,6 +14,8 @@ class ChatSession(Base):
 
     messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
     dashboard_state = Column(Text, nullable=True) # Serialized JSON for this specific session
+    assistant_type = Column(String, default="permit", nullable=True)
+
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"

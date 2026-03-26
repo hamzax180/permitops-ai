@@ -95,6 +95,8 @@ def _detect_type(business_type: str) -> str:
     bt = business_type.lower()
     if any(k in bt for k in ["student", "öğrenci", "university", "kimlik", "degree", "academic", "bachelor", "master", "phd", "college"]):
         return "student"
+    if any(k in bt for k in ["lawyer", "law", "legal", "hukuk", "avukat", "mahkeme", "contract", "sözleşme"]):
+        return "lawyer"
     if any(k in bt for k in ["cafe","kafe","restaur","lokanta","food","yemek","gıda","mutfak",
                                "pasta","bakery","fırın","döner","kebab","pizza","burger",
                                "kantin","patisserie","tatlı","dondurma","bar","pub"]):
@@ -107,7 +109,6 @@ def _detect_type(business_type: str) -> str:
                                "accounting","muhasebe","clinic","klinik","salon","güzellik"]):
         return "service"
     return "general"
-
 
 def _steps_food(lang):
     return [
@@ -408,12 +409,32 @@ def _steps_student(lang):
               {"en":"Card arrives via PTT mail to your registered address in 15-45 days.","tr":"Kimlik kartı PTT ile 15-45 gün içinde adresinize gelir.","ar":"تصل البطاقة عبر PTT إلى عنوانك خلال 15-45 يوماً."}[lang]),
     ]
 
+def _steps_lawyer(lang):
+    return [
+        (1,  {"en":"Initial Legal Consultation","tr":"İlk Hukuki Danışmanlık","ar":"الاستشارة القانونية الأولية"}[lang],
+              {"en":"Agent/Human","tr":"Ajan/İnsan","ar":"وكيل/بشري"}[lang],
+              {"en":"Discuss your legal situation and identify required documents and actions.","tr":"Hukuki durumunuzu tartışın ve gerekli belge ve eylemleri belirleyin.","ar":"ناقش وضعك القانوني وحدد المستندات والإجراءات المطلوبة."}[lang]),
+        (2,  {"en":"Document Collection","tr":"Belgelerin Toplanması","ar":"جمع المستندات"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Gather necessary contracts, IDs, or court documents for review.","tr":"İncelenmesi için gerekli sözleşmeleri, kimlikleri veya mahkeme belgelerini toplayın.","ar":"اجمع العقود أو الهويات أو مستندات المحكمة اللازمة للمراجعة."}[lang]),
+        (3,  {"en":"Power of Attorney (Vekaletname)","tr":"Vekaletname Çıkarılması","ar":"إصدار توكيل"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Visit a Notary Public to issue a Power of Attorney if formal representation is needed.","tr":"Resmi temsil gerekiyorsa vekaletname çıkarmak için Notere gidin.","ar":"قم بزيارة كاتب العدل لإصدار توكيل إذا كانت هناك حاجة للتمثيل الرسمي."}[lang]),
+        (4,  {"en":"Legal Analysis & Drafting","tr":"Hukuki Analiz ve Taslak Oluşturma","ar":"التحليل القانوني والصياغة"}[lang],
+              {"en":"Agent/Human","tr":"Ajan/İnsan","ar":"وكيل/بشري"}[lang],
+              {"en":"The lawyer reviews documents and prepares necessary contracts or petitions.","tr":"Avukat belgeleri inceler ve gerekli sözleşme veya dilekçeleri hazırlar.","ar":"يراجع المحامي المستندات ويعد العقود أو الالتماسات اللازمة."}[lang]),
+        (5,  {"en":"Action Execution","tr":"İşlemin Tesis Edilmesi","ar":"تنفيذ الإجراء"}[lang],
+              {"en":"Agent/Human","tr":"Ajan/İnsan","ar":"وكيل/بشري"}[lang],
+              {"en":"Submit documents to court, registry, or relevant institutions.","tr":"Belgeleri mahkemeye, sicile veya ilgili kurumlara sunun.","ar":"تقديم المستندات إلى المحكمة أو السجل أو المؤسسات ذات الصلة."}[lang]),
+    ]
+
 _BUILDERS = {
     "food":    _steps_food,
     "retail":  _steps_retail,
     "service": _steps_service,
     "general": _steps_general,
     "student": _steps_student,
+    "lawyer":  _steps_lawyer,
 }
 
 

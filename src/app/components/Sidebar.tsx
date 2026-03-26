@@ -9,6 +9,7 @@ interface ChatSession {
   id: string;
   title: string;
   created_at: string;
+  assistant_type?: string;
 }
 
 interface SidebarProps {
@@ -17,6 +18,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onDeleteSession: (id: string) => void;
   token: string | null;
+  assistantType: string;
 }
 
 export default function Sidebar({
@@ -24,7 +26,8 @@ export default function Sidebar({
   onSessionSelect,
   onNewChat,
   onDeleteSession,
-  token
+  token,
+  assistantType
 }: SidebarProps) {
   const { t } = useLanguage();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -69,23 +72,22 @@ export default function Sidebar({
       </div>
 
       {/* New Chat Button */}
-      <div className="px-3 mb-6">
+      <div className="px-4 mb-6">
         <button
           onClick={onNewChat}
-          className={`group flex items-center justify-start gap-3 h-12 transition-all duration-300 rounded-full bg-[var(--surface-2)] hover:shadow-md border border-[var(--border)] overflow-hidden ${
-            isExpanded ? 'w-40 px-5' : 'w-12 px-3.5'
-          }`}
+          className={`group flex items-center justify-start gap-3 h-14 transition-all duration-300 rounded-2xl bg-[var(--surface-1)] hover:bg-[var(--surface-2)] border border-[var(--border)] shadow-sm hover:shadow-md overflow-hidden ${isExpanded ? 'w-full px-5' : 'w-12 px-3.5'
+            }`}
         >
-          <Plus size={20} className="text-[var(--accent)] shrink-0" />
+          <Plus size={22} className="text-indigo-500 shrink-0" />
           <AnimatePresence>
             {isExpanded && (
               <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="text-sm font-medium text-[var(--text)] whitespace-nowrap"
+                className="text-[15px] font-semibold text-[var(--text)] whitespace-nowrap"
               >
-                 {t('sidebar_new_chat')}
+                {t('sidebar_new_chat')}
               </motion.span>
             )}
           </AnimatePresence>
@@ -102,16 +104,16 @@ export default function Sidebar({
               exit={{ opacity: 0 }}
               className="text-[14px] font-medium text-[var(--text)] px-4 mb-3 mt-4"
             >
-               {t('sidebar_recent') || 'Recent'}
+              {t('sidebar_recent') || 'Recent'}
             </motion.h3>
           )}
         </AnimatePresence>
 
         {!token && isExpanded ? (
           <div className="mx-1 p-4 rounded-2xl bg-[var(--surface-2)]/60 border border-[var(--border)] space-y-3 mt-4">
-             <p className="text-[13px] font-semibold text-[var(--text)]">Sign in to start saving your chats</p>
-             <p className="text-[12px] text-[var(--muted)] leading-relaxed">Once you're signed in, you can access your recent chats here.</p>
-             <button className="text-[var(--accent)] text-[13px] font-bold hover:underline">Sign in</button>
+            <p className="text-[13px] font-semibold text-[var(--text)]">Sign in to start saving your chats</p>
+            <p className="text-[12px] text-[var(--muted)] leading-relaxed">Once you're signed in, you can access your recent chats here.</p>
+            <button className="text-[var(--accent)] text-[13px] font-bold hover:underline">Sign in</button>
           </div>
         ) : loading && sessions.length === 0 ? (
           <div className="space-y-4 px-3 py-2">
@@ -120,20 +122,19 @@ export default function Sidebar({
             ))}
           </div>
         ) : (
-          sessions.map((s) => (
+          sessions.filter(s => (s.assistant_type || 'permit') === assistantType).map((s) => (
             <div
               key={s.id}
-              className={`group relative flex items-center gap-3 p-3 rounded-full transition-all cursor-pointer ${
-                currentSessionId === s.id
-                  ? 'bg-[var(--surface-2)] text-[var(--text)]'
-                  : 'hover:bg-[var(--surface-2)] text-[var(--text)] opacity-90'
-              }`}
+              className={`group relative flex items-center gap-3 p-3.5 rounded-xl transition-all cursor-pointer ${currentSessionId === s.id
+                  ? 'bg-[var(--surface-1)] border border-[var(--border)] text-[var(--text)] shadow-sm'
+                  : 'hover:bg-[var(--surface-2)]/50 text-[var(--text)] opacity-80 hover:opacity-100'
+                }`}
               onClick={() => onSessionSelect(s.id, s.title)}
               title={s.title}
             >
-              <MessageSquare size={18} className="text-[var(--muted)]" />
+              <MessageSquare size={18} className={currentSessionId === s.id ? "text-indigo-500" : "text-[var(--muted)]"} />
               {isExpanded && (
-                <span className="text-sm font-medium truncate flex-1 pr-6 text-[var(--text)]">{s.title}</span>
+                <span className={`text-sm tracking-tight truncate flex-1 pr-6 ${currentSessionId === s.id ? 'font-bold' : 'font-medium opacity-90'}`}>{s.title}</span>
               )}
               {isExpanded && (
                 <button
@@ -141,7 +142,7 @@ export default function Sidebar({
                     e.stopPropagation();
                     onDeleteSession(s.id);
                   }}
-                  className="absolute right-3 opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 transition-all"
+                  className="absolute right-3 opacity-0 group-hover:opacity-100 p-1.5 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -155,8 +156,8 @@ export default function Sidebar({
       <div className="p-3 space-y-1 mt-auto border-t border-[var(--border)] bg-[var(--surface)]/50">
         <Link href="/pricing" className="block mb-2">
           <div className={`group flex items-center gap-3 p-3 rounded-full bg-indigo-500/10 border border-indigo-500/20 cursor-pointer transition-all hover:bg-indigo-500/20 ${!isExpanded ? 'justify-center' : ''}`}>
-             <Zap size={18} className="text-indigo-600 shrink-0" fill="currentColor" />
-             {isExpanded && <span className="text-sm font-black text-indigo-600">Upgrade</span>}
+            <Zap size={18} className="text-indigo-600 shrink-0" fill="currentColor" />
+            {isExpanded && <span className="text-sm font-black text-indigo-600">Upgrade</span>}
           </div>
         </Link>
         {[

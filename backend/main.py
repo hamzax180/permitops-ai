@@ -1,3 +1,8 @@
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 import os
 import asyncio
 import datetime
@@ -83,6 +88,32 @@ You specialize in answering specific follow-up questions about student procedure
 3. DO NOT output repetitive summaries or append boilerplate lists.
 """
 )
+
+lawyer_model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction="""
+You are Turkish Law Advisor AI, a professional legal assistant in Turkey. Your goal is to help users navigate contracts, start companies, and resolve disputes.
+
+1. CONTEXT CHECK: Review PREVIOUS CONVERSATION HISTORY. If they stated their problem or contract type, don't ask again.
+2. SPECIFIC QUERIES: Give exact guidance for specific questions.
+3. ADVICE: Provide concisely focused legal advice using these markers:
+   🎓 Institution/Court
+   📄 Required Documents
+   ✅ Action Steps
+   💬 Summary
+"""
+)
+
+lawyer_chat_model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction="""
+You are Turkish Law Advisor AI, a professional legal assistant in Turkey.
+You specialize in answering specific follow-up questions about legal procedures and contract details.
+1. Answer the user's specific question directly, concisely, and clearly.
+2. DO NOT output repetitive summaries or append boilerplate lists.
+"""
+)
+
 
 app = FastAPI(title="PermitOps AI Backend")
 
@@ -195,17 +226,17 @@ import uuid
 async def get_chat_sessions(request: Request, token: str, db: Session = Depends(get_db)):
     user = await get_current_user(token, db)
     sessions = db.query(ChatSession).filter(ChatSession.user_id == user.id).order_by(ChatSession.created_at.desc()).all()
-    return [{"id": s.id, "title": s.title or "New Chat", "created_at": s.created_at} for s in sessions]
+    return [{"id": s.id, "title": s.title or "New Chat", "created_at": s.created_at, "assistant_type": s.assistant_type or "permit"} for s in sessions]
 
 @app.post("/chat/sessions")
 @limiter.limit("20/minute", key_func=user_id_key)
-async def create_chat_session(request: Request, token: str, db: Session = Depends(get_db)):
+async def create_chat_session(request: Request, token: str, assistant_type: str = "permit", db: Session = Depends(get_db)):
     user = await get_current_user(token, db)
     session_id = str(uuid.uuid4())
-    new_session = ChatSession(id=session_id, user_id=user.id, title="New Chat")
+    new_session = ChatSession(id=session_id, user_id=user.id, title="New Chat", assistant_type=assistant_type)
     db.add(new_session)
     db.commit()
-    return {"id": session_id, "title": "New Chat"}
+    return {"id": session_id, "title": "New Chat", "assistant_type": assistant_type}
 
 
 async def _get_history_context(session_id: str, db: Session, limit: int = 10, current_query: Optional[str] = None, strip_boilerplate: bool = False) -> str:
@@ -398,6 +429,85 @@ async def _run_with_student_agents(query: str, user: Optional[DBUser] = None, db
         )
     raise ValueError("Empty agent result")
 
+async def _run_with_lawyer_agents(query: str, user: Optional[DBUser] = None, db: Session = None, language: str = "en", session_id: str = "default-session") -> str:
+    """Run the multi-agent langgraph workflow specifically for Lawyers."""
+    if not _agents_available:
+        return await _run_direct_gemini(query, user, db, language, session_id, assistant_type="lawyer")
+        
+    try:
+        from workflow.lawyer_orchestrator import lawyer_orchestrator
+    except ImportError as e:
+        print(f"[_run_with_lawyer_agents] Import Error: {e}")
+        return await _run_direct_gemini(query, user, db, language, session_id, assistant_type="lawyer")
+
+    from models.schemas import PermitState
+    
+    initial_state = {
+        "state": PermitState(business_profile={"raw_query": query, "language": language, "session_id": session_id}),
+        "user_request": query,
+        "language": language
+    }
+
+    try:
+        history = await _get_history_context(session_id, db)
+        full_query = f"{history}\nCURRENT USER REQUEST: {query}"
+        
+        if language == "ar":
+            initial_state["user_request"] = f"(Answer strictly in Arabic / بالعربية) {full_query}"
+        elif language == "tr":
+            initial_state["user_request"] = f"(Lütfen Türkçe cevap veriniz) {full_query}"
+        else:
+            initial_state["user_request"] = full_query
+            
+        print(f"[_run_with_lawyer_agents] Invoking Lawyer orchestrator for session {session_id}")
+        config = {"configurable": {"thread_id": session_id}}
+        result = await lawyer_orchestrator.ainvoke(initial_state, config=config)
+        state = result["state"]
+        print("[_run_with_lawyer_agents] Orchestrator completed successfully")
+    except Exception as e:
+        print(f"[_run_with_lawyer_agents ERROR] Orchestrator failed: {e}")
+        raise
+
+    import json
+    import datetime
+    dashboard_data = state.model_dump()
+    if "last_updated" in dashboard_data and dashboard_data["last_updated"]:
+        if hasattr(dashboard_data["last_updated"], "isoformat"):
+            dashboard_data["last_updated"] = dashboard_data["last_updated"].isoformat()
+            
+    if user and db:
+        try:
+            db_session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
+            if db_session:
+                print(f"[_run_with_lawyer_agents] Saving for session {session_id}")
+                db_session.dashboard_state = json.dumps(dashboard_data)
+                db.commit()
+            else:
+                user.latest_dashboard_state = json.dumps(dashboard_data)
+                db.commit()
+        except Exception as e:
+            print(f"[Dashboard Update Error] {e}")
+    else:
+        global guest_dashboard_states
+        print(f"[_run_with_lawyer_agents] Updating guest_dashboard_states for {session_id}")
+        guest_dashboard_states[session_id] = json.dumps(dashboard_data)
+
+    if state.clarifying_question:
+        return state.clarifying_question
+
+    combined = state.combined_result
+    if combined:
+        steps_list = [s.title for s in state.execution_plan.steps]
+        
+        return (
+            f"💬 {combined.summary}\n\n"
+            f"📋 **Institutions/Courts:** {', '.join(combined.agencies)}\n"
+            f"📄 **Required Docs:** {', '.join(combined.documents[:6])}...\n"
+            f"✅ **Action Steps:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps_list)) +
+            f"\n\n⏱️ **Timeline:** {combined.timeline_days} days"
+        )
+    raise ValueError("Empty agent result")
+
 
 async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Optional[Session] = None, language: str = "en", session_id: str = "default-session", is_followup: bool = False, file_obj=None, assistant_type: str = "permit") -> str:
     """Direct Gemini call — fast and reliable fallback."""
@@ -422,10 +532,20 @@ async def _run_direct_gemini(query: str, user: Optional[DBUser] = None, db: Opti
         prompt_list.insert(0, file_obj)
         
     if is_followup:
-        model_to_use = student_chat_model if assistant_type == "student" else chat_model
+        if assistant_type == "student":
+            model_to_use = student_chat_model
+        elif assistant_type == "lawyer":
+            model_to_use = lawyer_chat_model
+        else:
+            model_to_use = chat_model
         response = await asyncio.to_thread(model_to_use.generate_content, prompt_list)
     else:
-        model_to_use = student_model if assistant_type == "student" else gemini_model
+        if assistant_type == "student":
+            model_to_use = student_model
+        elif assistant_type == "lawyer":
+            model_to_use = lawyer_model
+        else:
+            model_to_use = gemini_model
         response = await asyncio.to_thread(model_to_use.generate_content, prompt_list)
     
     # Only mock state if we don't already have one for this session
@@ -528,12 +648,16 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         # Get or create session
         db_session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
         if not db_session:
-            db_session = ChatSession(id=session_id, user_id=user.id if user else None, title=query_text[:50])
+            db_session = ChatSession(id=session_id, user_id=user.id if user else None, title=query_text[:50], assistant_type=assistant_type)
             db.add(db_session)
             db.commit()
         elif user and not db_session.user_id:
             # Upgrade guest session to user session if they log in
             db_session.user_id = user.id
+            db.commit()
+        elif db_session and db_session.assistant_type != assistant_type:
+            # Auto-update if missing or they force change via UI
+            db_session.assistant_type = assistant_type
             db.commit()
         if db_session and not db_session.title:
             # Clean up the query for a nice title
@@ -586,12 +710,15 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                         return {"content": "REDIRECT_NEW_CHAT:It looks like you're asking about a completely new topic (university search). I'll open a fresh chat for you so we can start your university roadmap from scratch! 🎓", "session_title": db_session.title if db_session else None}
                 
                 if is_direct:
-                    print(f"[agent_query] Routing directly to Gemini for follow-up/student question (has_state={has_state})")
+                    print(f"[agent_query] Routing directly to Gemini for follow-up/{assistant_type} question (has_state={has_state})")
                     answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=is_followup_prompt, file_obj=file_obj, assistant_type=assistant_type)
                 else:
                     if assistant_type == "student":
                         print(f"[agent_query] Routing to STUDENT Orchestrator to generate new student plan")
                         answer = await _run_with_student_agents(query_text, user, db, language, session_id)
+                    elif assistant_type == "lawyer":
+                        print(f"[agent_query] Routing to LAWYER Orchestrator to generate new lawyer plan")
+                        answer = await _run_with_lawyer_agents(query_text, user, db, language, session_id)
                     else:
                         print(f"[agent_query] Routing to PERMIT Orchestrator to generate new permit plan")
                         answer = await _run_with_agents(query_text, user, db, language, session_id)

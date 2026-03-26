@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, User, Mic, Plus, ChevronDown, Building2, FileText, Search, Clock, HelpCircle } from 'lucide-react';
+import { Send, Sparkles, User, Mic, Plus, ChevronDown, Building2, FileText, Search, Clock, HelpCircle, Scale } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,8 +20,8 @@ export default function ChatPage() {
   const { token, isAuthenticated, user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string>('');
-  
-  const [assistantType, setAssistantType] = useState<'permit' | 'student'>('permit');
+
+  const [assistantType, setAssistantType] = useState<'permit' | 'student' | 'lawyer'>('permit');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +34,7 @@ export default function ChatPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   const QUICK_Q = [
     t('chat_q1'),
     t('chat_q2'),
@@ -61,15 +61,15 @@ export default function ChatPage() {
           if (res?.ok) {
             const data = await res.json();
             if (!mounted) return;
-            
+
             // Read what Dashboard requested (if any)
             const forcedSessionId = localStorage.getItem('permitops_ask_step_session');
             if (forcedSessionId) {
               localStorage.removeItem('permitops_ask_step_session');
-              
+
               // Find the title for the forced session to update UI nicely
               const fSession = data.find((s: any) => s.id === forcedSessionId);
-              
+
               // We use a callback in setSessionId just in case it's mid-update
               setSessionId(prev => {
                 // If it already resolved to something else ignore, otherwise force:
@@ -87,6 +87,16 @@ export default function ChatPage() {
               }
               return prev;
             });
+            // Update assistant type using first item's type to match visually
+            if (data.length > 0 && data[0].assistant_type) {
+              setAssistantType((prevType) => {
+                // Only set if we haven't manually changed it yet
+                if (!prevType || prevType === 'permit') {
+                  return data[0].assistant_type;
+                }
+                return prevType;
+              });
+            }
 
             if (data.length === 0) {
               handleNewChat();
@@ -107,7 +117,7 @@ export default function ChatPage() {
   useEffect(() => {
     const loadHistory = async () => {
       if (!sessionId) return;
-      
+
       if (isAuthenticated && token) {
         try {
           const res = await apiFetch(`/chat/history/${sessionId}?token=${token}`);
@@ -169,10 +179,11 @@ export default function ChatPage() {
     return () => clearTimeout(timer);
   }, [sessionId, isLoaded]);
 
-  const handleNewChat = async () => {
+  const handleNewChat = async (forceType?: string) => {
+    const typeToUse = forceType || assistantType;
     if (isAuthenticated && token) {
       try {
-        const res = await apiFetch(`/chat/sessions?token=${token}`, { method: 'POST' });
+        const res = await apiFetch(`/chat/sessions?token=${token}&assistant_type=${typeToUse}`, { method: 'POST' });
         if (res?.ok) {
           const data = await res.json();
           setSessionId(data.id);
@@ -192,7 +203,7 @@ export default function ChatPage() {
       const res = await apiFetch(`/chat/history/${id}?token=${token}`, { method: 'DELETE' });
       if (res?.ok) {
         if (sessionId === id) setSessionId(null);
-        else setSessionId(prev => prev); 
+        else setSessionId(prev => prev);
       }
     } catch (e) {
       console.error("Failed to delete session", e);
@@ -211,14 +222,14 @@ export default function ChatPage() {
     if (!sessionTitle && msgs.length === 0) {
       setSessionTitle(q.length > 35 ? q.slice(0, 32) + '...' : q || "Document Analysis");
     }
-    
+
     const currentFile = file;
     setFile(null);
 
     try {
       let body;
       let headers: HeadersInit = {};
-      
+
       if (currentFile) {
         const formData = new FormData();
         formData.append('query', q);
@@ -241,13 +252,13 @@ export default function ChatPage() {
       });
       if (!res || !res.ok) throw new Error();
       const data = await res.json();
-      
+
       if (data.session_title) {
         setSessionTitle(data.session_title);
       }
-      
+
       const rawContent: string = data.content ?? data.answer ?? data.response ?? 'Done.';
-      
+
       // Detect topic-switch redirect signal
       if (rawContent.startsWith('REDIRECT_NEW_CHAT:')) {
         const displayMsg = rawContent.replace('REDIRECT_NEW_CHAT:', '').trim();
@@ -260,7 +271,7 @@ export default function ChatPage() {
         }, 2000);
         return;
       }
-      
+
       setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: rawContent }]);
     } catch {
       setMsgs(p => [...p, { id: msgIdRef.current++, role: 'assistant', content: "⚠️ Backend is currently offline. Please make sure the server is running." }]);
@@ -288,79 +299,94 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen overflow-hidden selection:bg-purple-500/30 relative bg-[var(--bg)]">
-      <Sidebar 
+      <Sidebar
         currentSessionId={sessionId}
+        assistantType={assistantType}
         onSessionSelect={(id, title) => { setSessionId(id); setSessionTitle(title); }}
-        onNewChat={handleNewChat}
+        onNewChat={() => handleNewChat()}
         onDeleteSession={handleDeleteSession}
         token={token}
       />
-      
+
       <main className="flex-1 flex flex-col min-w-0 transition-colors duration-300 relative">
         <Navbar isAppPage />
         <div className="h-4 shrink-0" /> {/* Slight top padding */}
 
-        {/* Gemini-Style Content Header */}
-        <div className="h-16 flex items-center px-6 shrink-0 z-30 relative" ref={dropdownRef}>
-          <div 
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        {/* Gemini-Style Content Header - Centered */}
+        <div className="h-20 flex items-center justify-center px-6 shrink-0 z-30 relative" ref={dropdownRef}>
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:bg-[var(--surface-2)] px-4 py-2 rounded-full transition-all border border-transparent hover:border-[var(--border)]"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <span className="text-xl md:text-2xl font-medium text-[var(--text)] opacity-90 tracking-tight">
-              {assistantType === 'permit' ? 'Permit Assistant' : 'Student Assistant'}
+            <span className="text-xl font-semibold text-[var(--text)] opacity-90 tracking-tight">
+              {assistantType === 'permit' ? 'Permit Assistant' : assistantType === 'student' ? 'Student Assistant' : 'Lawyer Assistant'}
             </span>
-            <ChevronDown size={16} className={`text-[var(--muted)] opacity-50 mt-1 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={18} className={`text-[var(--muted)] opacity-50 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </div>
 
           <AnimatePresence>
             {isDropdownOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute top-16 left-6 bg-[var(--surface-2)]/90 backdrop-blur-2xl border border-[var(--border-2)] rounded-[24px] shadow-[0_24px_80px_rgba(0,0,0,0.5)] p-2.5 min-w-[300px] z-[100] flex flex-col gap-2 overflow-hidden"
-              >
-                <div className="px-4 pt-3 pb-1">
-                   <p className="text-[12px] font-bold tracking-widest uppercase text-[var(--text)] opacity-40">Select Interface</p>
-                </div>
-                
-                <button
-                  onClick={() => { setAssistantType('permit'); setIsDropdownOpen(false); }}
-                  className={`flex items-center justify-between px-4 py-3.5 w-full rounded-[16px] text-left transition-all duration-300 relative group overflow-hidden ${assistantType === 'permit' ? 'bg-[var(--surface)] border border-[var(--border-2)] shadow-md' : 'border border-transparent hover:bg-[var(--surface)]/60'}`}
+              <>
+                {/* Backdrop Blur */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/40 backdrop-blur-md z-[90]"
+                  onClick={() => setIsDropdownOpen(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="absolute top-20 left-1/2 -translate-x-1/2 bg-[var(--surface-1)] border border-[var(--border)] rounded-[48px] shadow-[0_32px_80px_rgba(0,0,0,0.6)] p-6 min-w-[420px] z-[100] flex flex-col gap-5 overflow-hidden"
                 >
-                  <div className="flex items-center gap-4 z-10 relative">
-                     <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center border transition-all duration-300 ${assistantType === 'permit' ? 'bg-[var(--bg)] border-[var(--border)] shadow-sm' : 'bg-transparent border-transparent group-hover:bg-[var(--surface-1)] group-hover:border-[var(--border)]'}`}>
-                       <Building2 size={22} className="text-[var(--text)] opacity-90" />
-                     </div>
-                     <div className="flex flex-col gap-0.5">
-                       <span className="text-xl md:text-2xl font-semibold tracking-tight text-[var(--text)]">Permit Assistant</span>
-                       <span className="text-[12.5px] text-[var(--text)] opacity-60 font-medium">Municipal & Business</span>
-                     </div>
+                  <div className="px-5 pb-3 border-b border-[var(--border)]/50 mb-1">
+                    <p className="text-lg font-bold tracking-tight bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
+                      Switch Assistant
+                    </p>
                   </div>
-                  {assistantType === 'permit' && (
-                     <div className="w-2.5 h-2.5 rounded-full bg-[var(--text)] opacity-80 shadow-[0_0_12px_rgba(255,255,255,0.7)] z-10 mt-1" />
-                  )}
-                </button>
 
-                <button
-                  onClick={() => { setAssistantType('student'); setIsDropdownOpen(false); }}
-                  className={`flex items-center justify-between px-4 py-3.5 w-full rounded-[16px] text-left transition-all duration-300 relative group overflow-hidden ${assistantType === 'student' ? 'bg-[var(--surface)] border border-[var(--border-2)] shadow-md' : 'border border-transparent hover:bg-[var(--surface)]/60'}`}
-                >
-                  <div className="flex items-center gap-4 z-10 relative">
-                     <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center border transition-all duration-300 ${assistantType === 'student' ? 'bg-[var(--bg)] border-[var(--border)] shadow-sm' : 'bg-transparent border-transparent group-hover:bg-[var(--surface-1)] group-hover:border-[var(--border)]'}`}>
-                       <FileText size={22} className="text-[var(--text)] opacity-90" />
-                     </div>
-                     <div className="flex flex-col gap-0.5">
-                       <span className="text-xl md:text-2xl font-semibold tracking-tight text-[var(--text)]">Student Assistant</span>
-                       <span className="text-[12.5px] text-[var(--text)] opacity-60 font-medium">Academic & Formatting</span>
-                     </div>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => { setAssistantType('permit'); setIsDropdownOpen(false); handleNewChat('permit'); }}
+                      className={`flex items-center gap-5 px-8 py-5 w-full rounded-full transition-all duration-300 group relative overflow-hidden ${assistantType === 'permit' ? 'glass-mesh mesh-indigo border-indigo-500/50 text-[var(--text)] shadow-[0_0_30px_rgba(99,102,241,0.2)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] border border-transparent hover:border-white/10'}`}
+                    >
+                      <span className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">🏢</span>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[20px] font-bold tracking-tight leading-none mb-1">Permit Assistant</span>
+                        <span className="text-[13px] opacity-60 font-medium">Business & Municipal Protocol</span>
+                      </div>
+                      {assistantType === 'permit' && <div className="ml-auto w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.8)]" />}
+                    </button>
+
+                    <button
+                      onClick={() => { setAssistantType('student'); setIsDropdownOpen(false); handleNewChat('student'); }}
+                      className={`flex items-center gap-5 px-8 py-5 w-full rounded-full transition-all duration-300 group relative overflow-hidden ${assistantType === 'student' ? 'glass-mesh mesh-purple border-purple-500/50 text-[var(--text)] shadow-[0_0_30px_rgba(168,85,247,0.2)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] border border-transparent hover:border-white/10'}`}
+                    >
+                      <span className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">🎓</span>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[20px] font-bold tracking-tight leading-none mb-1">Student Assistant</span>
+                        <span className="text-[13px] opacity-60 font-medium">Academic Tasks & ID Renewals</span>
+                      </div>
+                      {assistantType === 'student' && <div className="ml-auto w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.8)]" />}
+                    </button>
+
+                    <button
+                      onClick={() => { setAssistantType('lawyer'); setIsDropdownOpen(false); handleNewChat('lawyer'); }}
+                      className={`flex items-center gap-5 px-8 py-5 w-full rounded-full transition-all duration-300 group relative overflow-hidden ${assistantType === 'lawyer' ? 'glass-mesh mesh-indigo border-indigo-500/50 text-[var(--text)] shadow-[0_0_30px_rgba(59,130,246,0.2)]' : 'text-[var(--muted)] hover:bg-[var(--surface-2)] border border-transparent hover:border-white/10'}`}
+                    >
+                      <span className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform duration-300">⚖️</span>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[20px] font-bold tracking-tight leading-none mb-1">Lawyer Assistant</span>
+                        <span className="text-[13px] opacity-60 font-medium">Legal Advice & Compliance</span>
+                      </div>
+                      {assistantType === 'lawyer' && <div className="ml-auto w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)]" />}
+                    </button>
                   </div>
-                  {assistantType === 'student' && (
-                     <div className="w-2.5 h-2.5 rounded-full bg-[var(--text)] opacity-80 shadow-[0_0_12px_rgba(255,255,255,0.7)] z-10 mt-1" />
-                  )}
-                </button>
-              </motion.div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>
@@ -376,26 +402,33 @@ export default function ChatPage() {
                 className="flex flex-wrap justify-center gap-2.5 max-w-4xl mb-8"
               >
                 {(assistantType === 'student' ? [
-                  { icon: FileText,  label: "Renew Kimlik/ID", color: '#60a5fa',  mesh: 'mesh-indigo' },
-                  { icon: Building2, label: "Best Universities", color: '#c084fc',  mesh: 'mesh-purple' },
-                  { icon: Search,    label: "Register Roadmap", color: '#4ade80',  mesh: 'mesh-emerald' },
-                  { icon: Clock,     label: "Deadlines", color: '#fb923c',  mesh: 'mesh-amber' },
-                  { icon: Sparkles,  label: "Student Visas", color: '#facc15',  mesh: 'mesh-amber' },
-                  { icon: HelpCircle,label: "Student Help", color: '#818cf8',  mesh: 'mesh-indigo' }
+                  { icon: FileText, label: "Renew Kimlik/ID", color: '#60a5fa', mesh: 'mesh-indigo' },
+                  { icon: Building2, label: "Best Universities", color: '#c084fc', mesh: 'mesh-purple' },
+                  { icon: Search, label: "Register Roadmap", color: '#4ade80', mesh: 'mesh-emerald' },
+                  { icon: Clock, label: "Deadlines", color: '#fb923c', mesh: 'mesh-amber' },
+                  { icon: Sparkles, label: "Student Visas", color: '#facc15', mesh: 'mesh-amber' },
+                  { icon: HelpCircle, label: "Student Help", color: '#818cf8', mesh: 'mesh-indigo' }
+                ] : assistantType === 'lawyer' ? [
+                  { icon: Scale, label: "Contract Review", color: '#60a5fa', mesh: 'mesh-indigo' },
+                  { icon: Building2, label: "Company Formation", color: '#c084fc', mesh: 'mesh-purple' },
+                  { icon: FileText, label: "Employment Law", color: '#4ade80', mesh: 'mesh-emerald' },
+                  { icon: Clock, label: "Legal Timelines", color: '#fb923c', mesh: 'mesh-amber' },
+                  { icon: Sparkles, label: "Residency/Work Permit", color: '#facc15', mesh: 'mesh-amber' },
+                  { icon: HelpCircle, label: "Legal Disputes", color: '#818cf8', mesh: 'mesh-indigo' }
                 ] : [
-                  { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa',  mesh: 'mesh-indigo' },
-                  { icon: FileText,  label: t('chat_suggestion_permit'),   color: '#c084fc',  mesh: 'mesh-purple' },
-                  { icon: Search,    label: t('chat_suggestion_location'), color: '#4ade80',  mesh: 'mesh-emerald' },
-                  { icon: Clock,     label: t('chat_suggestion_duration'), color: '#fb923c',  mesh: 'mesh-amber' },
-                  { icon: Sparkles,  label: t('chat_suggestion_cost'),     color: '#facc15',  mesh: 'mesh-amber' },
-                  { icon: HelpCircle,label: t('chat_suggestion_help'),     color: '#818cf8',  mesh: 'mesh-indigo' }
+                  { icon: Building2, label: t('chat_suggestion_business'), color: '#60a5fa', mesh: 'mesh-indigo' },
+                  { icon: FileText, label: t('chat_suggestion_permit'), color: '#c084fc', mesh: 'mesh-purple' },
+                  { icon: Search, label: t('chat_suggestion_location'), color: '#4ade80', mesh: 'mesh-emerald' },
+                  { icon: Clock, label: t('chat_suggestion_duration'), color: '#fb923c', mesh: 'mesh-amber' },
+                  { icon: Sparkles, label: t('chat_suggestion_cost'), color: '#facc15', mesh: 'mesh-amber' },
+                  { icon: HelpCircle, label: t('chat_suggestion_help'), color: '#818cf8', mesh: 'mesh-indigo' }
                 ]).map((chip, i) => (
-                  <div
+                   <div
                     key={i}
                     onClick={() => send(chip.label)}
-                    className={`glass-mesh ${chip.mesh} text-[var(--text)] opacity-80 text-sm py-2.5 px-5 rounded-full flex items-center gap-2 font-medium select-none backdrop-blur-sm transition-all hover:scale-105 cursor-pointer`}
+                    className={`glass-mesh ${chip.mesh} text-[var(--text)] opacity-90 text-[15px] py-3.5 px-6 rounded-full flex items-center gap-3 font-semibold select-none backdrop-blur-md transition-all hover:scale-105 cursor-pointer shadow-lg border border-white/5`}
                   >
-                    {chip.icon && <chip.icon size={14} style={{ color: chip.color }} />}
+                    {chip.icon && <chip.icon size={18} style={{ color: chip.color }} />}
                     {chip.label}
                   </div>
                 ))}
@@ -406,7 +439,7 @@ export default function ChatPage() {
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-4xl md:text-6xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent">
-                     {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
+                    {t('chat_welcome').replace('{name}', user?.fullName || (user?.email ? user.email.split('@')[0] : 'there'))}
                   </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-[#c4c7c5] dark:text-[#444746]">
@@ -424,7 +457,7 @@ export default function ChatPage() {
                         <FileText size={14} className="text-[var(--accent)]" />
                         <span className="truncate max-w-[200px]">{file.name}</span>
                         <button onClick={() => setFile(null)} className="ml-1 text-[var(--muted)] hover:text-red-400 transition-colors">
-                           <Plus size={14} className="rotate-45" />
+                          <Plus size={14} className="rotate-45" />
                         </button>
                       </div>
                     </div>
@@ -441,16 +474,16 @@ export default function ChatPage() {
                   />
                   <div className="flex items-center justify-between px-2 pb-1">
                     <div className="flex items-center gap-1">
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
+                      <input
+                        type="file"
+                        ref={fileInputRef}
                         onChange={(e) => {
                           if (e.target.files?.[0]) setFile(e.target.files[0]);
                           e.target.value = '';
-                        }} 
-                        className="hidden" 
+                        }}
+                        className="hidden"
                       />
-                      <button 
+                      <button
                         onClick={() => fileInputRef.current?.click()}
                         className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] rounded-full transition-all"
                         title="Upload Document"
@@ -459,10 +492,10 @@ export default function ChatPage() {
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
-                       <span className="text-xs font-medium text-[var(--muted)]/50 flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors mr-2">
-                         Fast <ChevronDown size={14} />
-                       </span>
-                       {input.trim() ? (
+                      <span className="text-xs font-medium text-[var(--muted)]/50 flex items-center gap-1 cursor-pointer hover:text-[var(--text)] transition-colors mr-2">
+                        Fast <ChevronDown size={14} />
+                      </span>
+                      {input.trim() ? (
                         <button onClick={() => send()} disabled={busy}
                           className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-purple-600 dark:text-purple-400 hover:bg-[var(--surface-2)] transition-colors">
                           <Send size={20} />
@@ -486,6 +519,10 @@ export default function ChatPage() {
                   { label: "Steps to renew my Kimlik/ID" },
                   { label: "Show me the best universities" },
                   { label: "Roadmap to register as a student" }
+                ] : assistantType === 'lawyer' ? [
+                  { label: "Can you review my contract?" },
+                  { label: "Steps to form an LLC in Turkey" },
+                  { label: "How to get a work permit?" }
                 ] : [
                   { label: t('chat_suggestion_obtain') },
                   { label: t('chat_suggestion_steps') },
@@ -502,7 +539,7 @@ export default function ChatPage() {
               </motion.div>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 md:px-8 py-8 space-y-12 pb-40 slim-scroll">
+            <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 md:px-8 py-10 space-y-12 pb-44 slim-scroll">
               <AnimatePresence initial={false}>
                 {msgs.map(m => (
                   <motion.div
@@ -517,33 +554,34 @@ export default function ChatPage() {
                       </div>
                     )}
 
-                    <div className={`flex flex-col max-w-[85%] md:max-w-[80%] ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`text-[16px] leading-[1.6] whitespace-pre-wrap ${
-                        m.role === 'user'
-                          ? 'px-5 py-3.5 rounded-[22px] border border-[var(--border)] text-[var(--text)] bg-[var(--surface-2)] shadow-sm'
-                          : 'text-[var(--text)] opacity-90 py-2 w-full font-normal'
-                      }`}
-                    >
+                    <div className={`flex flex-col max-w-[90%] md:max-w-[85%] ${m.role === 'user' ? 'items-end ml-auto' : 'items-start'}`}>
+                      <div className={`text-[17px] leading-[1.8] whitespace-pre-wrap ${m.role === 'user'
+                        ? 'px-6 py-4 rounded-3xl border border-[var(--border)] text-[var(--text)] bg-[var(--surface-1)] shadow-sm'
+                        : 'text-[var(--text)] opacity-95 py-2 w-full font-normal'
+                        }`}
+                      >
                         {m.role === 'assistant' ? (
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              p: ({ node, ...props }) => <p className="mb-6 last:mb-0" {...props} />,
-                              ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-6 space-y-3 marker:text-[#8ab4f8]" {...props} />,
-                              ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-6 space-y-3 marker:text-[#8ab4f8]" {...props} />,
-                              strong: ({ node, ...props }) => <strong className="font-bold text-[var(--text)]" {...props} />,
-                              a: ({ node, ...props }) => <a className="text-[var(--accent)] hover:underline transition-colors" {...props} />,
-                              code: ({ node, className, children, ...props }) => {
-                                const match = /language-(\w+)/.exec(className || '');
-                                const isInline = !match && !className?.includes('language-');
+                          <div className="prose prose-invert max-w-none">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({ node, ...props }) => <p className="mb-6 last:mb-0" {...props} />,
+                                ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-6 space-y-2 marker:text-indigo-500" {...props} />,
+                                ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-6 space-y-2 marker:text-indigo-500" {...props} />,
+                                strong: ({ node, ...props }) => <strong className="font-bold text-[var(--text)]" {...props} />,
+                                a: ({ node, ...props }) => <a className="text-indigo-400 hover:underline transition-colors" {...props} />,
+                                code: ({ node, className, children, ...props }) => {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const isInline = !match && !className?.includes('language-');
                                   return isInline
-                                   ? <code className="bg-[var(--surface-2)] text-[#f28b82] px-1.5 py-0.5 rounded text-[14px] font-mono" {...props}>{children}</code>
-                                   : <div className="bg-[#0e0e0e] rounded-xl border border-white/10 overflow-hidden my-6"><div className="px-4 py-2 bg-white/5 text-[11px] text-white/40 font-mono uppercase tracking-widest border-b border-white/10">{match?.[1] || 'code'}</div><pre className="p-4 overflow-x-auto text-[14px] text-gray-300 font-mono leading-relaxed"><code {...props}>{children}</code></pre></div>
-                               }
-                            }}
-                          >
-                            {m.content}
-                          </ReactMarkdown>
+                                    ? <code className="bg-[var(--surface-2)] text-indigo-300 px-1.5 py-0.5 rounded text-[14px] font-mono" {...props}>{children}</code>
+                                    : <div className="bg-[#0e0e0e] rounded-xl border border-white/10 overflow-hidden my-6"><div className="px-4 py-2 bg-white/5 text-[11px] text-white/40 font-mono uppercase tracking-widest border-b border-white/10">{match?.[1] || 'code'}</div><pre className="p-4 overflow-x-auto text-[14px] text-gray-300 font-mono leading-relaxed"><code {...props}>{children}</code></pre></div>
+                                }
+                              }}
+                            >
+                              {m.content}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
                           m.content
                         )}
@@ -554,9 +592,9 @@ export default function ChatPage() {
               </AnimatePresence>
 
               {busy && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }} 
-                  animate={{ opacity: 1, scale: 1 }} 
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   className="flex w-full justify-start items-center"
                 >
                   <div className="relative h-8 w-8 shrink-0 mr-4">
@@ -569,12 +607,12 @@ export default function ChatPage() {
                   <div className="py-2.5 px-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] relative overflow-hidden shadow-sm">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--accent)]/5 to-transparent animate-[shimmer-sweep_1.5s_infinite]" style={{ backgroundSize: '200% 100%' }} />
                     <span className="text-[14px] font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2">
-                       Agent is thinking 
-                       <span className="flex gap-0.5 ml-1">
-                         <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.3s]" />
-                         <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.15s]" />
-                         <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" />
-                       </span>
+                      Agent is thinking
+                      <span className="flex gap-0.5 ml-1">
+                        <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" />
+                      </span>
                     </span>
                   </div>
                 </motion.div>
@@ -583,20 +621,20 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* Sticky Input Bar (Only visible when NOT empty) */}
+          {/* Sticky Input Bar - Floating Gemini Pill */}
           {!isEmpty && (
-            <div className="absolute bottom-0 left-0 w-full pt-12 pb-10 px-4 flex justify-center bg-gradient-to-t from-[var(--bg)] via-[var(--bg)] to-transparent">
-              <div className="w-full max-w-3xl relative px-2">
-                <div className={`relative flex flex-col rounded-[28px] p-2 pr-3 min-h-[56px] border border-[var(--border)] transition-all duration-300 bg-[var(--surface-2)] backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none ${busy ? 'opacity-70' : 'hover:border-[var(--border-2)] focus-within:border-[var(--border-2)]'}`}>
-                  
+            <div className="absolute bottom-0 left-0 w-full pt-16 pb-8 px-4 flex justify-center bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/90 to-transparent z-40">
+              <div className="w-full max-w-4xl relative">
+                <div className={`relative flex flex-col rounded-[32px] p-2.5 pr-4 border border-[var(--border)] transition-all duration-300 bg-[var(--surface-1)] shadow-[0_8px_32px_rgba(0,0,0,0.15)] ${busy ? 'opacity-70' : 'hover:border-indigo-500/50 focus-within:border-indigo-500/50 focus-within:shadow-[0_8px_36px_rgba(0,0,0,0.2)]'}`}>
+
                   {/* File Preview Chip */}
                   {file && (
                     <div className="px-4 pt-2 -mb-2 flex items-center">
-                      <div className="flex items-center gap-2 bg-[var(--surface-1)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-[13px] text-[var(--text)]">
-                        <FileText size={14} className="text-[var(--accent)]" />
-                        <span className="truncate max-w-[200px]">{file.name}</span>
+                      <div className="flex items-center gap-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-3 py-1.5 text-[13px] text-[var(--text)]">
+                        <FileText size={14} className="text-indigo-400" />
+                        <span className="truncate max-w-[200px] font-medium">{file.name}</span>
                         <button onClick={() => setFile(null)} className="ml-1 text-[var(--muted)] hover:text-red-400 transition-colors">
-                           <Plus size={14} className="rotate-45" />
+                          <Plus size={14} className="rotate-45" />
                         </button>
                       </div>
                     </div>
@@ -618,32 +656,35 @@ export default function ChatPage() {
                       }
                     }}
                     disabled={busy}
-                    placeholder={t('chat_placeholder')}
-                    className="flex-1 max-h-[200px] min-h-[48px] px-4 py-3 bg-transparent text-[16px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none overflow-y-auto slim-scroll"
+                    placeholder={t('chat_placeholder_alt') || "Ask anything..."}
+                    className="flex-1 max-h-[200px] min-h-[56px] px-5 py-4 bg-transparent text-[17px] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none resize-none overflow-y-auto slim-scroll"
                     rows={1}
                   />
 
-                  <div className="flex items-center justify-between px-2 pb-1">
-                    <div className="flex items-center gap-1">
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
+                  <div className="flex items-center justify-between px-3 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
                         onChange={(e) => {
                           if (e.target.files?.[0]) setFile(e.target.files[0]);
                           e.target.value = '';
-                        }} 
-                        className="hidden" 
+                        }}
+                        className="hidden"
                       />
-                      <button 
+                      <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-2.5 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                        className="p-2.5 text-[var(--muted)] hover:text-indigo-400 hover:bg-indigo-500/10 rounded-full transition-all"
                         title="Upload Document"
                       >
-                        <Plus size={20} />
+                        <Plus size={22} />
                       </button>
                     </div>
-                    
-                    <div className="flex items-center gap-1">
+
+                    <div className="flex items-center gap-2">
+                      <button className="p-2.5 rounded-full text-[var(--muted)] hover:text-indigo-400 hover:bg-indigo-500/10 transition-all">
+                        <Mic size={22} />
+                      </button>
                       {input.trim() ? (
                         <button
                           onClick={() => {
@@ -651,20 +692,18 @@ export default function ChatPage() {
                             if (inputRef.current) inputRef.current.style.height = 'auto';
                           }}
                           disabled={busy}
-                          className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--surface-2)] transition-colors"
+                          className="shrink-0 h-11 w-11 flex items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg transition-all scale-105 active:scale-95"
                         >
                           <Send size={20} />
                         </button>
                       ) : (
-                        <button className="p-3 text-[var(--muted)] hover:text-[var(--text)] transition-colors px-2">
-                          <Mic size={20} />
-                        </button>
+                        <div className="w-11 h-11" /> /* Spacer if no input */
                       )}
                     </div>
                   </div>
                 </div>
-                <p className="text-center text-[11px] text-[var(--muted)] mt-4 font-normal tracking-wide">
-                  PermitOps AI Advisor • Municipal Protocol Engine • v2.4
+                <p className="text-center text-[11px] text-[var(--muted)] mt-5 font-normal tracking-wide opacity-50">
+                  PermitOps AI Advisor • Municipal Protocol Engine • v2.5
                 </p>
               </div>
             </div>

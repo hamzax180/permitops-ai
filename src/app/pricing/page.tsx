@@ -1,13 +1,54 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ShieldCheck, Sparkles, X, ArrowLeft, RefreshCw, Zap, Star } from 'lucide-react';
-import Link from 'next/link';
+import { Check, X, ShieldCheck, RefreshCw, ArrowRight, ChevronDown, Lock, Headphones, FileText, Zap, Users, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '../context/LanguageContext';
 import Navbar from '../components/Navbar';
 import { apiFetch } from '../utils/api';
+
+/* ─── Data ────────────────────────────────────────────────────────── */
+
+const FEATURES = [
+  { label: 'AI Permit Consultations', free: 'Limited', premium: 'Unlimited' },
+  { label: 'Active Sessions', free: '1', premium: 'Unlimited' },
+  { label: 'Project History', free: '7 days', premium: 'Unlimited' },
+  { label: 'Document Management', free: false, premium: true },
+  { label: 'Priority Agent Workflows', free: false, premium: true },
+  { label: '1-on-1 Regulatory Support', free: false, premium: true },
+  { label: 'Early Access to New Regulations', free: false, premium: true },
+  { label: 'Multi-language Support (TR/EN/AR)', free: true, premium: true },
+  { label: 'Community Access', free: true, premium: true },
+];
+
+const FAQ = [
+  {
+    q: 'Can I cancel my subscription at any time?',
+    a: 'Yes. You can cancel your Premium subscription at any time from your account settings. You will retain access until the end of your current billing period.'
+  },
+  {
+    q: 'Is my payment information secure?',
+    a: 'All payments are processed by iyzico, a PCI-DSS Level 1 certified payment provider. We never store your card details on our servers.'
+  },
+  {
+    q: 'What happens when I upgrade from Free to Premium?',
+    a: 'Your account is upgraded instantly. All limits are lifted and priority features become available immediately after payment confirmation.'
+  },
+  {
+    q: 'Do you offer invoices for business accounting?',
+    a: 'Yes. A VAT-compliant invoice is automatically issued via iyzico after every successful payment and can be downloaded from your account.'
+  },
+];
+
+const TRUST_ITEMS = [
+  { icon: Lock, label: 'Bank-level encryption', sub: 'TLS 1.3 + AES-256' },
+  { icon: ShieldCheck, label: 'PCI-DSS Compliant', sub: 'via iyzico' },
+  { icon: Headphones, label: 'Priority support', sub: 'avg. 2h response' },
+  { icon: Clock, label: 'Cancel anytime', sub: 'No lock-in contracts' },
+];
+
+/* ─── Component ────────────────────────────────────────────────────── */
 
 export default function PricingPage() {
   const { t } = useLanguage();
@@ -16,248 +57,372 @@ export default function PricingPage() {
   const [iyzicoFormHtml, setIyzicoFormHtml] = useState<string | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const plans = [
-    {
-      name: 'Free',
-      price: '₺0',
-      description: 'Essential business permit guidance for everyone.',
-      features: [
-        'Basic AI Permit Consultation',
-        'Standard Search Capability',
-        'Single Active Session',
-        'Community Support'
-      ],
-      buttonText: 'Current Plan',
-      isPremium: false,
-      color: 'bg-gray-500/10 border-gray-500/20'
-    },
-    {
-      name: 'Premium',
-      monthlyPrice: 299,
-      yearlyPrice: 3157, // (299 * 12) * 0.88 approx
-      description: 'Full capabilities for scaling your business in Istanbul.',
-      features: [
-        'Unlimited AI Permit Consultations',
-        'Priority Agent Workflows',
-        'Unlimited Project Histories',
-        'Advanced Doc Management',
-        '1-on-1 Regulatory Support',
-        'Early Access to New Laws'
-      ],
-      buttonText: 'Upgrade to Premium',
-      isPremium: true,
-      popular: true,
-      color: 'bg-indigo-600/5 border-indigo-500/30'
-    }
-  ];
+  const monthlyPrice = 299;
+  const yearlyTotal = 3157;
+  const yearlyMonthly = Math.round(yearlyTotal / 12);
+
+  const displayPrice = isYearly ? yearlyMonthly : monthlyPrice;
 
   const handleSubscribe = async (planType: 'monthly' | 'yearly') => {
     try {
       setIsSubscribing(true);
       const token = localStorage.getItem('permitops_token');
       if (!token) {
-        setToast({ message: "Please log in to browse plans", type: 'error' });
+        setToast({ message: 'Please log in to browse plans', type: 'error' });
         router.push('/login');
         return;
       }
-
-      // We'll use sandbox codes or placeholder codes
-      // In production, these would be the real iyzico PricingPlanReferenceCodes
       const planCode = planType === 'yearly' ? 'P66275815_YEARLY' : 'P66275815_MONTHLY';
-
       const res = await apiFetch(`/payment/subscribe?token=${token}&plan_code=${planCode}`, { method: 'POST' });
       if (res && res.ok) {
         const json = await res.json();
         if (json.status === 'success' && json.checkoutFormContent) {
           setIyzicoFormHtml(json.checkoutFormContent);
         } else {
-          throw new Error(json.errorMessage || "Initialization failed");
+          throw new Error(json.errorMessage || 'Initialization failed');
         }
       } else {
-        throw new Error("Payment server unreachable");
+        throw new Error('Payment server unreachable');
       }
     } catch (e: any) {
-      setToast({ message: e.message || "Failed to start subscription", type: 'error' });
+      setToast({ message: e.message || 'Failed to start subscription', type: 'error' });
     } finally {
       setIsSubscribing(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-[var(--bg)] font-sans">
       <Navbar />
-      
-      {/* Mesh Background */}
-      <div className="fixed inset-0 pointer-events-none opacity-30 dark:opacity-20 overflow-hidden">
-         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 blur-[120px]" />
-         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/20 blur-[120px]" />
-      </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-20 relative z-10">
-        
-        {/* Header */}
-        <div className="text-center space-y-4 mb-16">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+      <main className="relative z-10">
+
+        {/* ── Hero ── */}
+        <section className="max-w-4xl mx-auto px-6 pt-20 pb-14 text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[12px] font-bold tracking-widest uppercase"
+            className="text-xs font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-4"
           >
-            <Sparkles size={14} />
-            Pricing Plans
-          </motion.div>
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
+            Pricing &amp; Plans
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-black text-[var(--text)] tracking-tight"
+            transition={{ delay: 0.05 }}
+            className="text-3xl md:text-[2.75rem] font-bold text-[var(--text)] leading-tight tracking-tight mb-4"
           >
-            Empower Your Permit <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Journey</span>
+            Simple, transparent pricing
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-[var(--muted)] max-w-2xl mx-auto font-medium"
+            transition={{ delay: 0.1 }}
+            className="text-[var(--muted)] text-base max-w-lg mx-auto leading-relaxed"
           >
-            Choose the plan that fits your business scale. From independent cafes to large-scale retail chains, we've got you covered with automated regulatory compliance.
+            Start free. Upgrade when you need compliance automation that scales.
           </motion.p>
-        </div>
 
-        {/* Toggle */}
-        <div className="flex justify-center items-center gap-4 mb-12">
-          <span className={`text-sm font-bold ${!isYearly ? 'text-indigo-600' : 'text-[var(--muted)]'}`}>Monthly</span>
-          <div 
-            onClick={() => setIsYearly(!isYearly)}
-            className="w-14 h-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] p-1 cursor-pointer flex items-center relative transition-colors hover:border-indigo-500/40"
-          >
-            <motion.div 
-              animate={{ x: isYearly ? 24 : 0 }}
-              className="w-6 h-6 rounded-full bg-indigo-600 shadow-md flex items-center justify-center"
-            />
-          </div>
-          <span className={`text-sm font-bold ${isYearly ? 'text-indigo-600' : 'text-[var(--muted)]'}`}>
-            Yearly
-          </span>
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase"
-          >
-            Save 12%
-          </motion.div>
-        </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {plans.map((plan, idx) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * idx }}
-              className={`relative p-8 rounded-[40px] border shadow-xl flex flex-col transition-all hover:scale-[1.02] ${plan.color} backdrop-blur-md`}
+          {/* Billing toggle */}
+          <div className="mt-8 inline-flex items-center gap-3 bg-[var(--surface)] border border-[var(--border)] rounded-full px-1.5 py-1.5 shadow-sm">
+            <button
+              onClick={() => setIsYearly(false)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${!isYearly ? 'bg-[var(--surface-2)] text-[var(--text)] shadow-sm' : 'text-[var(--muted)] hover:text-[var(--text)]'}`}
             >
-              {plan.popular && (
-                <div className="absolute top-6 right-8 px-3 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg">
-                  Most Popular
+              Monthly
+            </button>
+            <button
+              onClick={() => setIsYearly(true)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isYearly ? 'bg-[var(--surface-2)] text-[var(--text)] shadow-sm' : 'text-[var(--muted)] hover:text-[var(--text)]'}`}
+            >
+              Annual
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+                −12%
+              </span>
+            </button>
+          </div>
+        </section>
+
+        {/* ── Plan Cards ── */}
+        <section className="max-w-3xl mx-auto px-6 pb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {/* Free Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="flex flex-col rounded-xl border border-[var(--border)] bg-[var(--surface)] p-7 shadow-sm"
+            >
+              <div className="mb-6">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">Free</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-4xl font-bold text-[var(--text)]">₺0</span>
+                  <span className="text-sm text-[var(--muted)]">/ month</span>
                 </div>
-              )}
-              
-              <div className="mb-8">
-                <h3 className="text-xl font-black text-[var(--text)] mb-2 uppercase tracking-wide">{plan.name}</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-[var(--text)]">
-                    {plan.name === 'Free' ? '₺0' : (isYearly && plan.yearlyPrice ? `₺${Math.round(plan.yearlyPrice / 12)}` : `₺${plan.monthlyPrice}`)}
-                  </span>
-                  <span className="text-[var(--muted)] font-medium">/month</span>
-                </div>
-                {plan.isPremium && isYearly && plan.yearlyPrice && (
-                  <p className="text-[10px] text-indigo-500 font-bold mt-2">Billed annually at ₺{plan.yearlyPrice}</p>
-                )}
+                <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed">
+                  For individuals exploring permit requirements. No credit card required.
+                </p>
               </div>
 
-              <div className="flex-1 space-y-4 mb-10">
-                {plan.features.map((feat) => (
-                  <div key={feat} className="flex items-start gap-3">
-                    <div className="mt-1 p-0.5 rounded-full bg-indigo-500/10 text-indigo-600">
-                      <Check size={14} strokeWidth={3} />
-                    </div>
-                    <span className="text-sm font-medium text-[var(--text)]">{feat}</span>
+              <div className="flex-1 space-y-2.5 mb-7">
+                {['Basic AI Permit Consultation', 'Standard Search Capability', 'Single Active Session', 'Community Support'].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <Check size={14} className="text-[var(--muted)] flex-shrink-0" strokeWidth={2} />
+                    <span className="text-sm text-[var(--text)]">{f}</span>
                   </div>
                 ))}
               </div>
 
               <button
-                disabled={!plan.isPremium || isSubscribing}
-                onClick={() => handleSubscribe(isYearly ? 'yearly' : 'monthly')}
-                className={`w-full py-4 rounded-3xl font-black text-sm transition-all flex items-center justify-center gap-2 group ${
-                  plan.isPremium 
-                    ? 'bg-indigo-600 text-white shadow-lg hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-95' 
-                    : 'bg-[var(--surface-2)] text-[var(--muted)] cursor-not-allowed opacity-60'
-                }`}
+                disabled
+                className="w-full py-2.5 rounded-lg text-sm font-medium border border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted)] cursor-not-allowed"
               >
-                {isSubscribing && plan.isPremium ? <RefreshCw size={18} className="animate-spin" /> : (plan.isPremium ? <Zap size={18} fill="currentColor" /> : <Star size={18} />)}
-                {plan.buttonText}
+                Current Plan
               </button>
             </motion.div>
-          ))}
-        </div>
 
-        {/* FAQ/Trust */}
-        <div className="mt-20 text-center">
-            <p className="text-[var(--muted)] text-sm font-medium flex items-center justify-center gap-2 flex-wrap">
-              <ShieldCheck className="text-emerald-500" size={16} />
-              Secure payments powered by <strong>iyzico</strong>. Cancel anytime with one click.
+            {/* Premium Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="relative flex flex-col rounded-xl border-2 border-indigo-600 bg-[var(--surface)] p-7 shadow-lg"
+            >
+              {/* Popular badge */}
+              <div className="absolute -top-3.5 left-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-semibold shadow">
+                  Most Popular
+                </span>
+              </div>
+
+              <div className="mb-6 mt-1">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-indigo-500 mb-3">Premium</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-4xl font-bold text-[var(--text)]">₺{displayPrice}</span>
+                  <span className="text-sm text-[var(--muted)]">/ month</span>
+                </div>
+                {isYearly ? (
+                  <p className="mt-1.5 text-xs text-[var(--muted)]">
+                    Billed as <strong className="text-[var(--text)]">₺{yearlyTotal}</strong>/year &nbsp;·&nbsp;
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Save ₺{(monthlyPrice * 12) - yearlyTotal}/yr</span>
+                  </p>
+                ) : (
+                  <p className="mt-1.5 text-xs text-[var(--muted)]">Billed monthly</p>
+                )}
+                <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed">
+                  Full capabilities for businesses managing compliance at scale in Istanbul.
+                </p>
+              </div>
+
+              <div className="flex-1 space-y-2.5 mb-7">
+                {[
+                  'Unlimited AI Permit Consultations',
+                  'Priority Agent Workflows',
+                  'Unlimited Project Histories',
+                  'Advanced Document Management',
+                  '1-on-1 Regulatory Support',
+                  'Early Access to New Laws',
+                ].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <div className="flex-shrink-0 w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                      <Check size={10} className="text-indigo-600 dark:text-indigo-400" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-sm text-[var(--text)]">{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                disabled={isSubscribing}
+                onClick={() => handleSubscribe(isYearly ? 'yearly' : 'monthly')}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex items-center justify-center gap-2 shadow active:scale-[0.98]"
+              >
+                {isSubscribing ? (
+                  <RefreshCw size={15} className="animate-spin" />
+                ) : (
+                  <>Upgrade to Premium <ArrowRight size={15} /></>
+                )}
+              </button>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── Trust Bar ── */}
+        <section className="border-y border-[var(--border)] bg-[var(--surface)] py-8">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {TRUST_ITEMS.map(({ icon: Icon, label, sub }) => (
+                <div key={label} className="flex items-start gap-3">
+                  <div className="mt-0.5 flex-shrink-0 p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <Icon size={15} />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-[var(--text)]">{label}</p>
+                    <p className="text-[11px] text-[var(--muted)]">{sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Feature Comparison Table ── */}
+        <section className="max-w-3xl mx-auto px-6 py-16">
+          <h2 className="text-xl font-bold text-[var(--text)] mb-2">Compare plans</h2>
+          <p className="text-sm text-[var(--muted)] mb-8">Everything you need to make the right decision.</p>
+
+          <div className="rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
+            {/* Table header */}
+            <div className="grid grid-cols-3 bg-[var(--surface-2)] border-b border-[var(--border)] px-5 py-3">
+              <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">Feature</span>
+              <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider text-center">Free</span>
+              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-center">Premium</span>
+            </div>
+
+            {FEATURES.map((row, i) => (
+              <div
+                key={row.label}
+                className={`grid grid-cols-3 px-5 py-3.5 border-b border-[var(--border)] last:border-0 ${i % 2 === 0 ? 'bg-[var(--surface)]' : 'bg-[var(--bg)]'}`}
+              >
+                <span className="text-sm text-[var(--text)]">{row.label}</span>
+                <span className="text-center">
+                  {row.free === true ? (
+                    <Check size={16} className="mx-auto text-[var(--muted)]" strokeWidth={2} />
+                  ) : row.free === false ? (
+                    <X size={16} className="mx-auto text-[var(--muted)] opacity-30" strokeWidth={2} />
+                  ) : (
+                    <span className="text-xs text-[var(--muted)]">{row.free}</span>
+                  )}
+                </span>
+                <span className="text-center">
+                  {row.premium === true ? (
+                    <div className="flex justify-center">
+                      <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                        <Check size={11} className="text-indigo-600 dark:text-indigo-400" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                  ) : row.premium === false ? (
+                    <X size={16} className="mx-auto text-[var(--muted)] opacity-30" strokeWidth={2} />
+                  ) : (
+                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{row.premium}</span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section className="max-w-2xl mx-auto px-6 pb-20">
+          <h2 className="text-xl font-bold text-[var(--text)] mb-2">Frequently asked questions</h2>
+          <p className="text-sm text-[var(--muted)] mb-8">Have a question not listed here? <a href="mailto:support@permitops.ai" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">Contact us</a></p>
+
+          <div className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-xl overflow-hidden shadow-sm">
+            {FAQ.map((item, i) => (
+              <div key={i} className="bg-[var(--surface)]">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[var(--surface-2)] transition-colors"
+                >
+                  <span className="text-sm font-medium text-[var(--text)] pr-4">{item.q}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`flex-shrink-0 text-[var(--muted)] transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                <AnimatePresence>
+                  {openFaq === i && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-5 pb-4 text-sm text-[var(--muted)] leading-relaxed">{item.a}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Bottom CTA ── */}
+        <section className="border-t border-[var(--border)] bg-[var(--surface)]">
+          <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+            <h2 className="text-xl font-bold text-[var(--text)] mb-2">Ready to streamline your compliance?</h2>
+            <p className="text-sm text-[var(--muted)] mb-6 max-w-sm mx-auto">Join businesses across Istanbul using PermitOps to automate their regulatory workflows.</p>
+            <button
+              onClick={() => handleSubscribe(isYearly ? 'yearly' : 'monthly')}
+              disabled={isSubscribing}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow active:scale-[0.98]"
+            >
+              {isSubscribing ? <RefreshCw size={15} className="animate-spin" /> : <>Get started with Premium <ArrowRight size={15} /></>}
+            </button>
+            <p className="mt-4 text-xs text-[var(--muted)]">
+              <ShieldCheck size={12} className="inline mr-1 text-emerald-500" />
+              Secure checkout via iyzico · Cancel anytime · VAT invoice included
             </p>
-        </div>
+          </div>
+        </section>
       </main>
 
-      {/* iyzico Modal */}
+      {/* ── iyzico Modal ── */}
       <AnimatePresence>
         {iyzicoFormHtml && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.95 }}
-               animate={{ opacity: 1, scale: 1 }}
-               exit={{ opacity: 0, scale: 0.95 }}
-               className="bg-white dark:bg-[#1e1f20] w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative border border-[var(--border)]"
-               style={{ minHeight: '650px' }}
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="bg-[var(--surface)] w-full max-w-xl rounded-xl shadow-2xl overflow-hidden flex flex-col border border-[var(--border)]"
+              style={{ minHeight: '600px' }}
             >
-              <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
+              <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
                 <div>
-                  <h3 className="font-black text-xl text-[var(--text)] uppercase tracking-wide">Secure Checkout</h3>
-                  <p className="text-xs text-[var(--muted)] font-medium">Complete your Premium subscription via iyzico</p>
+                  <h3 className="font-semibold text-sm text-[var(--text)]">Secure Checkout</h3>
+                  <p className="text-xs text-[var(--muted)]">Complete your Premium subscription via iyzico</p>
                 </div>
-                <button onClick={() => setIyzicoFormHtml(null)} className="p-2 hover:bg-black/5 rounded-full text-[var(--muted)] transition-colors">
-                  <X size={24} />
+                <button onClick={() => setIyzicoFormHtml(null)} className="p-1.5 hover:bg-[var(--surface-2)] rounded-lg text-[var(--muted)] transition-colors">
+                  <X size={16} />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4" id="iyzico-form-container">
-                 <div dangerouslySetInnerHTML={{ __html: iyzicoFormHtml }} />
-                 <div id="iyzipay-checkout-form" className="responsive"></div>
+                <div dangerouslySetInnerHTML={{ __html: iyzicoFormHtml }} />
+                <div id="iyzipay-checkout-form" className="responsive" />
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200]">
-           <motion.div 
-             initial={{ y: 20, opacity: 0 }}
-             animate={{ y: 0, opacity: 1 }}
-             className={`px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 backdrop-blur-lg border ${
-                toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'
-             }`}
-           >
-              {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
-              <span className="text-sm font-black">{toast.message}</span>
-              <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70"><X size={14} /></button>
-           </motion.div>
-        </div>
-      )}
+      {/* ── Toast ── */}
+      <AnimatePresence>
+        {toast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200]">
+            <motion.div
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 8, opacity: 0 }}
+              className={`px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 border text-sm font-medium bg-[var(--surface)] ${
+                toast.type === 'success'
+                  ? 'border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                  : 'border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400'
+              }`}
+            >
+              {toast.type === 'success' ? <Check size={15} /> : <X size={15} />}
+              {toast.message}
+              <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70 transition-opacity">
+                <X size={12} />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
