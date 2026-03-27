@@ -71,6 +71,8 @@ _NEW_CONSULTATION_PATTERNS = [
     # Lawyer: I need legal help for / I need to form a company
     r"\b(form|create|register|incorporate|set up) (a |my |an )?(company|business|firm|ltd|aş)\b",
     r"\b(i need|i have|i got) (a |an )?(legal|contract|lawyer|employment) (problem|issue|dispute|case|question|matter)\b",
+    # Naked location changes mid-session ("cafe in besiktas")
+    r"\b(cafe|kafe|restaurant|restoran|retail|office|ofis|pharmacy|eczane|bakery|f[ıi]r[ıi]n|barber|berber|gym|spor|shop|store|company|ma[ğg]aza|d[üu]kkan) (in|at) \b",
 ]
 _NEW_CONSULTATION_RE = re.compile(
     "|".join(_NEW_CONSULTATION_PATTERNS), flags=re.IGNORECASE
