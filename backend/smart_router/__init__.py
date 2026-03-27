@@ -73,6 +73,8 @@ _NEW_CONSULTATION_PATTERNS = [
     r"\b(i need|i have|i got) (a |an )?(legal|contract|lawyer|employment) (problem|issue|dispute|case|question|matter)\b",
     # Naked location changes mid-session ("cafe in besiktas")
     r"\b(cafe|kafe|restaurant|restoran|retail|office|ofis|pharmacy|eczane|bakery|f[ıi]r[ıi]n|barber|berber|gym|spor|shop|store|company|ma[ğg]aza|d[üu]kkan) (in|at) \b",
+    # ID Renewal / Replacement
+    r"\b(renew|replace) (my )?(kimlik|id|student id)\b",
 ]
 _NEW_CONSULTATION_RE = re.compile(
     "|".join(_NEW_CONSULTATION_PATTERNS), flags=re.IGNORECASE
@@ -155,28 +157,35 @@ async def smart_router_handle(
             
             # Determine location
             district = "Istanbul"
-            districts = ["Kadikoy", "Kadıköy", "Besiktas", "Beşiktaş", "Sisli", "Şişli", "Uskudar", "Üsküdar", "Zeytinburnu", "Bakirkoy", "Bakırköy", "Beyoglu", "Beyoğlu", "Fatih", "Sariyer", "Sarıyer"]
+            districts = ["Kadikoy", "Kadıköy", "Besiktas", "Beşiktaş", "Sisli", "Şişli", "Uskudar", "Üsküdar", "Zeytinburnu", "Bakirkoy", "Bakırköy", "Beyoglu", "Beyoğlu", "Fatih", "Sariyer", "Sarıyer", "Kagithene", "Kağıthane", "Eyup", "Eyüp", "Maltepe", "Atasehir", "Ataşehir"]
             lower_q = query.lower()
             for d in districts:
                 if d.lower() in lower_q:
                     district = d.title()
                     break
+            
+            # Localized Municipality Name
+            mun_name = f"{district} Belediyesi" if district != "Istanbul" else "District Municipality"
+            if language == "tr":
+                mun_name = f"{district} Belediyesi" if district != "Istanbul" else "İlçe Belediyesi"
+            elif language == "ar":
+                mun_name = f"بلدية {district}" if district != "Istanbul" else "بلدية المنطقة"
 
             if language == "tr":
-                permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
-                agencies = ["Belediye", "Vergi Dairesi"]
+                permits = [f"{district} İşyeri Açma ve Çalışma Ruhsatı"]
+                agencies = [mun_name, "Vergi Dairesi"]
                 docs = ["Kimlik", "Kira Sözleşmesi", "Vergi Levhası", "NACE Kodu Belgesi"]
                 summ = f"Bu, {district} bölgesinde bir {business_type} açmak için çevrimdışı oluşturulmuş yol haritanızdır. İşlemleri takip etmek için soldaki Gösterge Paneli'ne (Dashboard) gidin."
                 labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
             elif language == "ar":
-                permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
-                agencies = ["البلدية", "مكتب الضرائب"]
+                permits = [f"رخصة فتح وتشغيل من {district}"]
+                agencies = [mun_name, "مكتب الضرائب"]
                 docs = ["الهوية", "عقد الإيجار", "اللوحة الضريبية", "وثيقة رمز NACE"]
                 summ = f"هذه هي خريطة الطريق الآلية التي تم إنشاؤها لفتح {business_type} في منطقة {district}. اذهب إلى لوحة التحكم (Dashboard) لبدء العملية."
                 labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
             else:
-                permits = ["Workplace Operating License"]
-                agencies = ["District Municipality", "Tax Office"]
+                permits = [f"{district} Workplace Operating License"]
+                agencies = [mun_name, "Tax Office"]
                 docs = ["ID / Passport", "Lease Agreement", "Tax Plate", "NACE Code Certificate"]
                 summ = f"This is your automated roadmap to officially open a {business_type} in {district}. Go to the Dashboard on the left to start your application process."
                 labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
@@ -198,27 +207,28 @@ async def smart_router_handle(
                     agencies.extend(["Fire Department"])
 
         elif assistant_type == "student":
-            business_type = "Student"
+            is_renew = "renew" in query.lower() or "replace" in query.lower()
+            business_type = "student_renew" if is_renew else "Student"
             district = "Istanbul"
-            timeline = 30
+            timeline = 10 if is_renew else 30
             
             if language == "tr":
-                permits = ["Öğrenci Kaydı", "Öğrenci İkamet İzni"]
-                agencies = ["Öğrenci İşleri", "Göç İdaresi", "SGK"]
-                docs = ["Pasaport", "Kabul Mektubu", "Sağlık Sigortası", "Biyometrik Fotoğraf"]
-                summ = "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız. Süreci yan panelden (Dashboard) takip edebilirsiniz."
+                permits = ["Öğrenci Kimliği Yenileme"] if is_renew else ["Öğrenci Kaydı", "Öğrenci İkamet İzni"]
+                agencies = ["Öğrenci İşleri"] if is_renew else ["Öğrenci İşleri", "Göç İdaresi", "SGK"]
+                docs = ["Eski Kimlik", "Fotoğraf", "Öğrenci Belgesi"] if is_renew else ["Pasaport", "Kabul Mektubu", "Sağlık Sigortası"]
+                summ = "Kimlik yenileme işleminiz için oluşturulan hızlı yol haritası." if is_renew else "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız."
                 labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
             elif language == "ar":
-                permits = ["تسجيل الجامعة", "إقامة الطالب"]
-                agencies = ["شؤون الطلاب", "إدارة الهجرة", "SGK"]
-                docs = ["جواز السفر", "خطاب القبول", "التأمين الصحي", "صور شخصية"]
-                summ = "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب. يرجى المتابعة من لوحة التحكم."
+                permits = ["تجديد هوية الطالب"] if is_renew else ["تسجيل الجامعة", "إقامة الطالب"]
+                agencies = ["شؤون الطلاب"] if is_renew else ["شؤون الطلاب", "إدارة الهجرة", "SGK"]
+                docs = ["الهوية القديمة", "صور شخصية", "شهادة طالب"] if is_renew else ["جواز السفر", "خطاب القبول", "التأمين الصحي"]
+                summ = "خريطة طريق سريعة لتجديد هويتك." if is_renew else "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب."
                 labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
             else:
-                permits = ["University Registration", "Student Residence Permit"]
-                agencies = ["Student Affairs", "Migration Directorate (Göç İdaresi)", "SGK"]
-                docs = ["Passport", "Acceptance Letter", "Health Insurance", "Biometric Photos"]
-                summ = "Your automated roadmap for completing university registration and obtaining your Student Residence Permit. Follow the steps in the Dashboard."
+                permits = ["Student ID Renewal"] if is_renew else ["University Registration", "Student Residence Permit"]
+                agencies = ["Student Affairs"] if is_renew else ["Student Affairs", "Migration Directorate (Göç İdaresi)", "SGK"]
+                docs = ["Old/Damaged ID", "Recent Photos", "Student Certificate"] if is_renew else ["Passport", "Acceptance Letter", "Health Insurance"]
+                summ = "Quick roadmap for your ID renewal process." if is_renew else "Your automated roadmap for completing university registration and obtaining your Student Residence Permit."
                 labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
 
         elif assistant_type == "lawyer":

@@ -428,12 +428,29 @@ def _steps_lawyer(lang):
               {"en":"Submit documents to court, registry, or relevant institutions.","tr":"Belgeleri mahkemeye, sicile veya ilgili kurumlara sunun.","ar":"تقديم المستندات إلى المحكمة أو السجل أو المؤسسات ذات الصلة."}[lang]),
     ]
 
+def _steps_student_renew(lang):
+    return [
+        (1,  {"en":"Obtain Student Certificate","tr":"Öğrenci Belgesi Al","ar":"الحصول على شهادة طالب"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Get an updated active student certificate from e-Devlet or your university portal.","tr":"e-Devlet veya öğrenci portalından güncel öğrenci belgesi alın.","ar":"احصل على شهادة بنشاط من بوابة الجامعة."}[lang]),
+        (2,  {"en":"Prepare Photos & Documents","tr":"Fotoğraf ve Belgeleri Hazırla","ar":"تجهيز الصور والمستندات"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Prepare 2 biometric photos, your old/damaged ID (if any), and passport.","tr":"2 adet biyometrik fotoğraf, eski/hasarlı kimlik ve pasaport hazırlayın.","ar":"جهز صورتين، الهوية القديمة، وجواز السفر."}[lang]),
+        (3,  {"en":"Visit Student Affairs (Öğrenci İşleri)","tr":"Öğrenci İşlerine Git","ar":"زيارة شؤون الطلاب"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Submit your request in person to the university student affairs office.","tr":"Üniversitenizin öğrenci işlerine şahsen başvurun.","ar":"قدم طلبك شخصياً في شؤون الطلاب."}[lang]),
+        (4,  {"en":"Receive New ID","tr":"Yeni Kimliği Teslim Al","ar":"استلام الهوية الجديدة"}[lang],
+              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
+              {"en":"Collect your newly printed ID card from the faculty office or via mail.","tr":"Yeni basılan kimlik kartınızı fakülte ofisinden veya postayla alın.","ar":"استلم بطاقتك المطبوعة حديثاً."}[lang]),
+    ]
+
 _BUILDERS = {
     "food":    _steps_food,
     "retail":  _steps_retail,
     "service": _steps_service,
     "general": _steps_general,
     "student": _steps_student,
+    "student_renew": _steps_student_renew,
     "lawyer":  _steps_lawyer,
 }
 
