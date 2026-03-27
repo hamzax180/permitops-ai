@@ -430,18 +430,18 @@ def _steps_lawyer(lang):
 
 def _steps_student_renew(lang):
     return [
-        (1,  {"en":"Obtain Student Certificate","tr":"Öğrenci Belgesi Al","ar":"الحصول على شهادة طالب"}[lang],
+        (1,  {"en":"Purchase Health Insurance (Yabancı Sağlık Sigortası)","tr":"Yabancı Sağlık Sigortası Yaptır","ar":"شراء التأمين الصحي"}[lang],
+              {"en":"Agent/Human","tr":"Ajan/İnsan","ar":"وكيل/بشري"}[lang],
+              {"en":"Renew your foreigner health insurance to cover the new permit period (1-2 years).","tr":"Yeni izin dönemini (1-2 yıl) kapsayan yabancı sağlık sigortanızı yenileyin.","ar":"جدد التأمين الصحي الخاص بالأجانب لتغطية فترة التصريح الجديدة."}[lang]),
+        (2,  {"en":"Notarize Lease Agreement / Dormitory Doc","tr":"Kira/Yurt Belgesini Noter Onaylı Yap","ar":"توثيق عقد الإيجار / السكن"}[lang],
               {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
-              {"en":"Get an updated active student certificate from e-Devlet or your university portal.","tr":"e-Devlet veya öğrenci portalından güncel öğrenci belgesi alın.","ar":"احصل على شهادة بنشاط من بوابة الجامعة."}[lang]),
-        (2,  {"en":"Prepare Photos & Documents","tr":"Fotoğraf ve Belgeleri Hazırla","ar":"تجهيز الصور والمستندات"}[lang],
+              {"en":"Provide a notarized rental agreement or an official dormitory certificate for your current address.","tr":"Güncel adresiniz için noter onaylı kira sözleşmesi veya yurt belgesi sağlayın.","ar":"تقديم عقد إيجار موثق أو شهادة سكن رسمية لعناونك الحالي."}[lang]),
+        (3,  {"en":"Online Extension Application (e-İkamet)","tr":"e-İkamet Uzatma Başvurusu Yap","ar":"تقديم طلب التمديد عبر الإنترنت"}[lang],
+              {"en":"Agent","tr":"Ajan","ar":"وكيل"}[lang],
+              {"en":"Apply via e-ikamet.goc.gov.tr for an 'Extension' before your current card expires.","tr":"Mevcut kartınızın süresi dolmadan e-ikamet.goc.gov.tr üzerinden 'Uzatma' başvurusu yapın.","ar":"قدم طلب تمديد عبر e-ikamet.goc.gov.tr قبل انتهاء صلاحية بطاقتك الحالية."}[lang]),
+        (4,  {"en":"Submit to International Office / Göç İdaresi","tr":"Belgeleri Teslim Et","ar":"تقديم المستندات"}[lang],
               {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
-              {"en":"Prepare 2 biometric photos, your old/damaged ID (if any), and passport.","tr":"2 adet biyometrik fotoğraf, eski/hasarlı kimlik ve pasaport hazırlayın.","ar":"جهز صورتين، الهوية القديمة، وجواز السفر."}[lang]),
-        (3,  {"en":"Visit Student Affairs (Öğrenci İşleri)","tr":"Öğrenci İşlerine Git","ar":"زيارة شؤون الطلاب"}[lang],
-              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
-              {"en":"Submit your request in person to the university student affairs office.","tr":"Üniversitenizin öğrenci işlerine şahsen başvurun.","ar":"قدم طلبك شخصياً في شؤون الطلاب."}[lang]),
-        (4,  {"en":"Receive New ID","tr":"Yeni Kimliği Teslim Al","ar":"استلام الهوية الجديدة"}[lang],
-              {"en":"Human","tr":"İnsan","ar":"بشري"}[lang],
-              {"en":"Collect your newly printed ID card from the faculty office or via mail.","tr":"Yeni basılan kimlik kartınızı fakülte ofisinden veya postayla alın.","ar":"استلم بطاقتك المطبوعة حديثاً."}[lang]),
+              {"en":"Bring your pink folder (Insurance, Contract, Student Cert, Photos, and Receipt) to your university or Göç İdaresi.","tr":"Pembe dosyanızı (Sigorta, Sözleşme, Öğrenci Belgesi, Fotoğraflar ve Dekont) teslim edin.","ar":"أحضر المجلد الوردي (التأمين، العقد، شهادة الطالب، الصور، والإيصال) إلى الجامعة أو إدارة الهجرة."}[lang]),
     ]
 
 _BUILDERS = {

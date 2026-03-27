@@ -213,22 +213,22 @@ async def smart_router_handle(
             timeline = 10 if is_renew else 30
             
             if language == "tr":
-                permits = ["Öğrenci Kimliği Yenileme"] if is_renew else ["Öğrenci Kaydı", "Öğrenci İkamet İzni"]
-                agencies = ["Öğrenci İşleri"] if is_renew else ["Öğrenci İşleri", "Göç İdaresi", "SGK"]
-                docs = ["Eski Kimlik", "Fotoğraf", "Öğrenci Belgesi"] if is_renew else ["Pasaport", "Kabul Mektubu", "Sağlık Sigortası"]
-                summ = "Kimlik yenileme işleminiz için oluşturulan hızlı yol haritası." if is_renew else "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız."
+                permits = ["Öğrenci İkamet İzni Uzatması"] if is_renew else ["Öğrenci Kaydı", "Öğrenci İkamet İzni"]
+                agencies = ["Göç İdaresi", "Noter", "Sigorta Şirketi"] if is_renew else ["Öğrenci İşleri", "Göç İdaresi", "SGK"]
+                docs = ["Sağlık Sigortası", "Noter Onaylı Kira Sözleşmesi", "Öğrenci Belgesi", "Biyometrik Fotoğraf"] if is_renew else ["Pasaport", "Kabul Mektubu", "Sağlık Sigortası"]
+                summ = "İkamet izni (Kimlik) uzatma işleminiz için sigorta ve kira sözleşmesi adımlarını içeren yol haritası." if is_renew else "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız."
                 labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
             elif language == "ar":
-                permits = ["تجديد هوية الطالب"] if is_renew else ["تسجيل الجامعة", "إقامة الطالب"]
-                agencies = ["شؤون الطلاب"] if is_renew else ["شؤون الطلاب", "إدارة الهجرة", "SGK"]
-                docs = ["الهوية القديمة", "صور شخصية", "شهادة طالب"] if is_renew else ["جواز السفر", "خطاب القبول", "التأمين الصحي"]
-                summ = "خريطة طريق سريعة لتجديد هويتك." if is_renew else "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب."
+                permits = ["تمديد إقامة الطالب"] if is_renew else ["تسجيل الجامعة", "إقامة الطالب"]
+                agencies = ["إدارة الهجرة", "العدل (النوتر)", "شركة التأمين"] if is_renew else ["شؤون الطلاب", "إدارة الهجرة", "SGK"]
+                docs = ["التأمين الصحي", "عقد إيجار موثق", "شهادة طالب", "صور شخصية"] if is_renew else ["جواز السفر", "خطاب القبول", "التأمين الصحي"]
+                summ = "خريطة طريق تجديد الإقامة (الكملك) التي تتضمن خطوات التأمين وعقد السكن." if is_renew else "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب."
                 labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
             else:
-                permits = ["Student ID Renewal"] if is_renew else ["University Registration", "Student Residence Permit"]
-                agencies = ["Student Affairs"] if is_renew else ["Student Affairs", "Migration Directorate (Göç İdaresi)", "SGK"]
-                docs = ["Old/Damaged ID", "Recent Photos", "Student Certificate"] if is_renew else ["Passport", "Acceptance Letter", "Health Insurance"]
-                summ = "Quick roadmap for your ID renewal process." if is_renew else "Your automated roadmap for completing university registration and obtaining your Student Residence Permit."
+                permits = ["Student Residence Permit Extension"] if is_renew else ["University Registration", "Student Residence Permit"]
+                agencies = ["Migration Office (Göç İdaresi)", "Notary Public", "Insurance Provider"] if is_renew else ["Student Affairs", "Migration Directorate (Göç İdaresi)", "SGK"]
+                docs = ["Health Insurance Policiy", "Notarized Lease Agreement", "Student Certificate", "Biometric Photos"] if is_renew else ["Passport", "Acceptance Letter", "Health Insurance"]
+                summ = "Your residency (Kimlik) extension roadmap including insurance and housing contract steps." if is_renew else "Your automated roadmap for completing university registration and obtaining your Student Residence Permit."
                 labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
 
         elif assistant_type == "lawyer":
