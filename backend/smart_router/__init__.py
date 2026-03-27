@@ -131,13 +131,105 @@ async def smart_router_handle(
         return cached
 
     # ------------------------------------------------------------------
-    # 0.5. NEW CONSULTATION GUARD — before any library lookup
-    # If the query sounds like a first-time plan request ("I want to open
-    # a restaurant in Bakırköy"), send it straight to the orchestrator.
-    # Library responses are only appropriate for FAQ-style follow-ups.
+    # 0.5. NEW CONSULTATION GUARD — offline dynamic dashboard (0 tokens)
+    # If the query is an initial plan request, we bypass AI completely
+    # and generate the 14-step permit dashboard directly in Python.
     # ------------------------------------------------------------------
-    if _NEW_CONSULTATION_RE.search(query):
-        print(f"[SmartRouter] NEW CONSULTATION detected — routing to orchestrator: '{query[:60]}'")
+    if _NEW_CONSULTATION_RE.search(query) and assistant_type == "permit":
+        print(f"[SmartRouter] NEW CONSULTATION detected — generating dashboard offline (0 tokens)")
+        
+        # Determine business sub-intent
+        _, sub, _ = detect_intent(query, "permit")
+        business_type = sub.title() if sub else "Business"
+        
+        # Determine location
+        district = "Istanbul"
+        districts = ["Kadikoy", "Kadıköy", "Besiktas", "Beşiktaş", "Sisli", "Şişli", "Uskudar", "Üsküdar", "Zeytinburnu", "Bakirkoy", "Bakırköy", "Beyoglu", "Beyoğlu", "Fatih", "Sariyer", "Sarıyer"]
+        lower_q = query.lower()
+        for d in districts:
+            if d.lower() in lower_q:
+                district = d.title()
+                break
+                
+        # Build localized offline dashboard
+        from models.schemas import PermitState, CombinedPermitResult, ExecutionPlan, StepDetail, PermitPlan
+        from utils.protocol import get_localized_steps
+        from datetime import datetime
+
+        if language == "tr":
+            permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
+            agencies = ["Belediye", "Vergi Dairesi"]
+            docs = ["Kimlik", "Kira Sözleşmesi", "Vergi Levhası", "NACE Kodu Belgesi"]
+            summ = f"Bu, {district} bölgesinde bir {business_type} açmak için çevrimdışı oluşturulmuş yol haritanızdır. İşlemleri takip etmek için soldaki Gösterge Paneli'ne (Dashboard) gidin."
+            labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
+        elif language == "ar":
+            permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
+            agencies = ["البلدية", "مكتب الضرائب"]
+            docs = ["الهوية", "عقد الإيجار", "اللوحة الضريبية", "وثيقة رمز NACE"]
+            summ = f"هذه هي خريطة الطريق الآلية التي تم إنشاؤها لفتح {business_type} في منطقة {district}. اذهب إلى لوحة التحكم (Dashboard) لبدء العملية."
+            labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
+        else:
+            permits = ["Workplace Operating License"]
+            agencies = ["District Municipality", "Tax Office"]
+            docs = ["ID / Passport", "Lease Agreement", "Tax Plate", "NACE Code Certificate"]
+            summ = f"This is your automated roadmap to officially open a {business_type} in {district}. Go to the Dashboard on the left to start your application process."
+            labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
+
+        timeline = 30
+        if business_type.lower() in ["restaurant", "cafe", "bakery", "food"]:
+            timeline = 45
+            if language == "tr":
+                permits.extend(["İtfaiye Uygunluk Raporu", "Baca Uygunluğu"])
+                docs.extend(["İtfaiye Raporu"])
+                agencies.extend(["İBB İtfaiye Daire Başkanlığı"])
+            elif language == "ar":
+                permits.extend(["تقرير الإطفاء", "ملاءمة المدخنة"])
+                docs.extend(["تقرير المطافئ"])
+                agencies.extend(["إدارة الإطفاء في البلدية"])
+            else:
+                permits.extend(["Fire Safety Report", "Chimney Compliance"])
+                docs.extend(["Fire Report"])
+                agencies.extend(["Fire Department"])
+
+        step_specs = get_localized_steps(language, business_type)
+        details = []
+        steps_list = []
+        for id_val, title, resp, note in step_specs:
+            details.append(StepDetail(id=id_val, title=title, responsible=resp, status="pending", notes=note))
+            steps_list.append(title)
+            
+        combined = CombinedPermitResult(
+            permits=permits, agencies=agencies, documents=docs, steps=steps_list, 
+            timeline_days=timeline, summary=summ, location=district, business_type=business_type
+        )
+        
+        state = PermitState(
+            business_profile={"raw_query": query, "language": language},
+            combined_result=combined,
+            permit_plan=PermitPlan(permits=permits, agencies=agencies, documents=docs),
+            execution_plan=ExecutionPlan(steps=details, assigned_agents=["Planner", "Classifier"]),
+            last_updated=datetime.now()
+        )
+        
+        out_str = (
+            f"💬 {summ}\n\n"
+            f"📋 **{labels['ag']}:** {', '.join(agencies)}\n"
+            f"📄 **{labels['dc']}:** {', '.join(docs[:6])}...\n"
+            f"✅ **{labels['st']}:**\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps_list)) +
+            f"\n\n⏱️ **{labels['tm']}:** {timeline} {labels['dy']}"
+        )
+        
+        dashboard_dump = state.model_dump()
+        # Ensure datetimes are ISO for JSON
+        if hasattr(dashboard_dump.get("last_updated"), "isoformat"):
+            dashboard_dump["last_updated"] = dashboard_dump["last_updated"].isoformat()
+            
+        # Return tuple: (message, dictionary)
+        return out_str, dashboard_dump
+
+    elif _NEW_CONSULTATION_RE.search(query):
+        # We only offline-build for 'permit' type. Allow student/lawyer to pass.
+        print(f"[SmartRouter] NEW CONSULTATION - passing through to {assistant_type} orchestrator")
         return None
 
     # ------------------------------------------------------------------

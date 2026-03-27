@@ -689,19 +689,41 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         # ------------------------------------------------------------------
         if _smart_router_available and _smart_router_handle is not None and not file_obj:
             try:
-                smart_answer = await _smart_router_handle(
+                smart_result = await _smart_router_handle(
                     query=query_text,
                     assistant_type=assistant_type,
                     user_name=user.full_name if user else "",
+                    language=language,  # passes language for localized offline replies
                     gemini_model=gemini_model,
                     student_model=student_model,
                     lawyer_model=lawyer_model,
                 )
+                
+                smart_answer = None
+                offline_state = None
+                
+                if isinstance(smart_result, tuple):
+                    smart_answer, offline_state = smart_result
+                elif isinstance(smart_result, str):
+                    smart_answer = smart_result
+                
                 if smart_answer is not None:
                     assistant_msg = ChatMessage(session_id=session_id, role="assistant", content=smart_answer)
                     db.add(assistant_msg)
+                    
+                    if offline_state:
+                        # Offline dashboard generation without an AI request
+                        import json
+                        offline_state_json = json.dumps(offline_state)
+                        if db_session:
+                            db_session.dashboard_state = offline_state_json
+                        elif user:
+                            user.latest_dashboard_state = offline_state_json
+                        else:
+                            guest_dashboard_states[session_id] = offline_state_json
+                            
                     db.commit()
-                    print(f"[agent_query] SmartRouter handled query. Skipping orchestrators.")
+                    print(f"[agent_query] SmartRouter handled query. Offline State Built: {offline_state is not None}")
                     return {"role": "assistant", "content": smart_answer, "session_title": db_session.title if db_session else None}
             except Exception as sr_err:
                 print(f"[SmartRouter ERROR] {sr_err} — falling through to orchestrator")
