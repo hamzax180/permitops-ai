@@ -111,6 +111,7 @@ async def smart_router_handle(
     query: str,
     assistant_type: str = "permit",
     user_name: str = "",
+    language: str = "en",
     gemini_model=None,
     student_model=None,
     lawyer_model=None,
