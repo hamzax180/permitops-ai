@@ -713,6 +713,9 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                     
                     if offline_state:
                         # Offline dashboard generation without an AI request
+                        print("\n" + "="*70)
+                        print(f"✅ [ZERO-TOKEN OFFLINE GENERATOR] Offline Dashboard built for {assistant_type.upper()}")
+                        print("="*70 + "\n")
                         import json
                         offline_state_json = json.dumps(offline_state)
                         if db_session:
@@ -721,9 +724,12 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                             user.latest_dashboard_state = offline_state_json
                         else:
                             guest_dashboard_states[session_id] = offline_state_json
+                    else:
+                        print("\n" + "="*70)
+                        print(f"📖 [ZERO-TOKEN LIBRARY MATCH] Predefined text response served")
+                        print("="*70 + "\n")
                             
                     db.commit()
-                    print(f"[agent_query] SmartRouter handled query. Offline State Built: {offline_state is not None}")
                     return {"role": "assistant", "content": smart_answer, "session_title": db_session.title if db_session else None}
             except Exception as sr_err:
                 print(f"[SmartRouter ERROR] {sr_err} — falling through to orchestrator")
@@ -766,17 +772,25 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                         return {"content": "REDIRECT_NEW_CHAT:It looks like you're asking about a completely new topic (university search). I'll open a fresh chat for you so we can start your university roadmap from scratch! 🎓", "session_title": db_session.title if db_session else None}
                 
                 if is_direct:
-                    print(f"[agent_query] Routing directly to Gemini for follow-up/{assistant_type} question (has_state={has_state})")
+                    print("\n" + "="*70)
+                    print(f"🤖 [AI DIRECT REPLY] Using Gemini for a follow-up or specific {assistant_type} question")
+                    print("="*70 + "\n")
                     answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=is_followup_prompt, file_obj=file_obj, assistant_type=assistant_type)
                 else:
                     if assistant_type == "student":
-                        print(f"[agent_query] Routing to STUDENT Orchestrator to generate new student plan")
+                        print("\n" + "="*70)
+                        print(f"🧠 [AI ORCHESTRATOR] Routing to STUDENT LangGraph to generate plan")
+                        print("="*70 + "\n")
                         answer = await _run_with_student_agents(query_text, user, db, language, session_id)
                     elif assistant_type == "lawyer":
-                        print(f"[agent_query] Routing to LAWYER Orchestrator to generate new lawyer plan")
+                        print("\n" + "="*70)
+                        print(f"🧠 [AI ORCHESTRATOR] Routing to LAWYER LangGraph to generate plan")
+                        print("="*70 + "\n")
                         answer = await _run_with_lawyer_agents(query_text, user, db, language, session_id)
                     else:
-                        print(f"[agent_query] Routing to PERMIT Orchestrator to generate new permit plan")
+                        print("\n" + "="*70)
+                        print(f"🧠 [AI ORCHESTRATOR] Routing to PERMIT LangGraph to generate plan")
+                        print("="*70 + "\n")
                         answer = await _run_with_agents(query_text, user, db, language, session_id)
             except Exception as agent_err:
                 import traceback
@@ -785,6 +799,9 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
                 # For student queries, always try the student direct model not the permit one
                 answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=False, file_obj=file_obj, assistant_type=assistant_type)
         else:
+            print("\n" + "="*70)
+            print(f"🤖 [AI DIRECT FALLBACK] Agents down or missing, using direct Gemini API")
+            print("="*70 + "\n")
             answer = await _run_direct_gemini(query_text, user, db, language, session_id, is_followup=True, file_obj=file_obj, assistant_type=assistant_type)
         
         if True: # Always save assistant message now that we have session tracking
