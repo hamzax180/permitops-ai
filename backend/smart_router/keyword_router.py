@@ -1,0 +1,178 @@
+"""
+keyword_router.py
+-----------------
+Detects user intent using pure keyword matching — no AI required.
+Returns (intent, sub_intent, confidence) tuple.
+confidence = 1.0 for keyword match, 0.0 for no match (triggers AI fallback).
+"""
+
+import re
+from typing import Tuple, Optional
+
+# ---------------------------------------------------------------------------
+# Keyword maps — ordered from most specific to least specific
+# ---------------------------------------------------------------------------
+
+INTENT_MAP = {
+    # Generic social intents
+    "greeting": [
+        r"\b(hi|hey|hello|good morning|good afternoon|good evening|howdy|sup|yo)\b"
+    ],
+    "farewell": [
+        r"\b(bye|goodbye|see you|later|take care|cya|farewell)\b"
+    ],
+    "thanks": [
+        r"\b(thank(s| you)|thx|cheers|much appreciated|appreciate it)\b"
+    ],
+
+    # Billing intents
+    "billing.price": [
+        r"\b(price|pricing|cost|how much|fee|fees|plan|plans|subscription cost|what does it cost)\b"
+    ],
+    "billing.refund": [
+        r"\b(refund|money back|charge|overcharged|cancel and get|reimburs)\b"
+    ],
+    "billing.invoice": [
+        r"\b(invoice|receipt|billing statement|bill|payment proof)\b"
+    ],
+    "billing.subscription": [
+        r"\b(subscription|cancel|upgrade|downgrade|renew|auto.?renew)\b"
+    ],
+
+    # Support intents
+    "support.error": [
+        r"\b(error|exception|crashed|crash|500|404|bug|issue|not load|won.t load|can.t load)\b"
+    ],
+    "support.not_working": [
+        r"\b(not working|doesn.t work|broken|stopped working|won.t work|failing|fail|can.t access)\b"
+    ],
+    "support.slow": [
+        r"\b(slow|lag|laggy|loading forever|taking too long|unresponsive|hangs)\b"
+    ],
+
+    # --- Permit Agent intents ---
+    "permit.how_to_start": [
+        r"\b(how (do i|to) (start|open|begin|register|set up)|starting a business|open a business|open my business)\b"
+    ],
+    "permit.documents": [
+        r"\b(what documents|required docs|document(s)? needed|paperwork|what do i need to bring|belge)\b"
+    ],
+    "permit.restaurant": [
+        r"\b(restaurant|restoran|lokanta|dinner|dining|food permit)\b"
+    ],
+    "permit.cafe": [
+        r"\b(cafe|cafeteria|kafe|coffee shop|tea house|pastry shop)\b"
+    ],
+    "permit.clothing": [
+        r"\b(clothing|clothes|apparel|boutique|garment|shoe|giyim)\b"
+    ],
+    "permit.retail": [
+        r"\b(retail|shop|store|market|grocery|bakkal|supermarket|ma[ğg]aza|d[üu]kkan)\b"
+    ],
+    "permit.office": [
+        r"\b(office|consulting|agency|sanal ofis|ofis|b[üu]ro|headquarters)\b"
+    ],
+    "permit.barber": [
+        r"\b(barber|hair salon|beauty|kuaf[öo]r|berber|g[üu]zellik|spa)\b"
+    ],
+    "permit.gym": [
+        r"\b(gym|fitness|crossfit|spor|sports center)\b"
+    ],
+    "permit.pharmacy": [
+        r"\b(pharmacy|eczane|chemist|drug store|medicine shop)\b"
+    ],
+    "permit.bakery": [
+        r"\b(bakery|f[ıi]r[ıi]n|bread|pastanesi)\b"
+    ],
+    "permit.timeline": [
+        r"\b(how long|timeline|time frame|when will|how many days|duration|takes (how|long))\b"
+    ],
+    "permit.alcohol": [
+        r"\b(alcohol|tapdk|liquor|wine|beer|bar|spirits|drinks? permit)\b"
+    ],
+    "permit.music": [
+        r"\b(music|live music|band|entertainment permit|canl[iı] m[uü]zik)\b"
+    ],
+    "permit.steps": [
+        r"\b(steps|process|procedure|what are the steps|guide me|walk me through|14 steps)\b"
+    ],
+
+    # --- Student Agent intents ---
+    "student.renew_id": [
+        r"\b(renew (my )?(student )?(id|kimlik|card)|kimlik renew|id renewal|expired (kimlik|id|card)|replace (my )?(student )?(id|card))\b"
+    ],
+    "student.kimlik_lost": [
+        r"\b(lost (my )?(kimlik|student id|id card)|stolen (kimlik|card)|missing (kimlik|id))\b"
+    ],
+    "student.register_uni": [
+        r"\b(how (to|do i) (register|enroll|apply)|university (registration|enrollment|enrolment)|enroll (at|in)|register (at|for) (a |my )?university|yoks[i\u0131]s)\b"
+    ],
+    "student.top_universities": [
+        r"\b(top (10|ten|universities)|best university|best universities|which university|university (list|ranking)|ranked universities)\b"
+    ],
+    "student.health_insurance": [
+        r"\b(health insurance|sgk|sa\u011fl[i\u0131]k sigorta|student insurance|medical coverage|insurance (for student|plan))\b"
+    ],
+    "student.documents": [
+        r"\b(student documents|what documents for (university|uni|registration|enrollment)|required for (university|enrollment))\b"
+    ],
+    "student.residence_permit": [
+        r"\b(student (residence|ikamet)|ikamet (permit|izni)|residence permit (for student)|g[o\xf6]\xc3\xa7 idaresi)\b"
+    ],
+
+    # --- Lawyer Agent intents ---
+    "lawyer.company_formation": [
+        r"\b(form (a |my )?company|start (a |my )?company|register (a |my )?(company|business|llc|ltd)|mersis|limited \u015eirket|anonim \u015eirket|incorporate|company formation)\b"
+    ],
+    "lawyer.contract_review": [
+        r"\b(review (my )?contract|check (my )?contract|contract (clause|terms|dispute|issue)|nda|non.disclosure|service agreement|lease agreement)\b"
+    ],
+    "lawyer.employment_law": [
+        r"\b(fired|dismissed|termination|severance|notice period|k[i\u0131]dem tazminat[i\u0131]|labour law|labor law|employment (law|issue|rights)|unfair dismissal|job (rights|dispute))\b"
+    ],
+    "lawyer.residence_permit": [
+        r"\b(work permit|work visa|ikamet (ba\u015fvuru|application)|residence permit|stay in turkey legally|legal to work)\b"
+    ],
+    "lawyer.dispute": [
+        r"\b(dispute|lawsuit|sue|court|legal action|arabuluculuk|mediation|arbitration|claim against|ihtarname)\b"
+    ],
+    "lawyer.general_legal": [
+        r"\b(legal (question|advice|help|guidance)|turkish law|lawyer|attorney|need a lawyer|legal matter)\b"
+    ],
+}
+
+# ---------------------------------------------------------------------------
+# Public function
+# ---------------------------------------------------------------------------
+
+def detect_intent(
+    message: str,
+    assistant_type: str = "permit",
+) -> Tuple[Optional[str], Optional[str], float]:
+    """
+    Scan the message for keyword matches.
+
+    Returns:
+        (intent_group, sub_intent, confidence)
+        e.g. ("student", "renew_id", 1.0)
+             ("billing", "price", 1.0)
+             (None, None, 0.0)  ← triggers AI fallback
+    """
+    text = message.lower().strip()
+
+    # Walk the intent map in order
+    for intent_key, patterns in INTENT_MAP.items():
+        for pattern in patterns:
+            if re.search(pattern, text, flags=re.IGNORECASE):
+                parts = intent_key.split(".", 1)
+                group = parts[0]
+                sub = parts[1] if len(parts) > 1 else None
+
+                # Skip cross-agent domain intents unless they match the active agent
+                agent_domains = {"permit", "student", "lawyer"}
+                if group in agent_domains and group != assistant_type:
+                    continue
+
+                return group, sub, 1.0
+
+    return None, None, 0.0

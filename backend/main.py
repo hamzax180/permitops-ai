@@ -137,6 +137,17 @@ except Exception as e:
 # Global states for guests (non-persistent across restarts, keyed by session_id)
 guest_dashboard_states = {}
 
+# --- Smart Router (zero/low-token layer) ---
+try:
+    from smart_router import smart_router_handle as _smart_router_handle
+    _smart_router_available = True
+    print("[Startup] Smart Router loaded successfully")
+except Exception as _sr_err:
+    _smart_router_available = False
+    _smart_router_handle = None
+    print(f"[Startup] Smart Router unavailable: {_sr_err}")
+
+
 # Credential store — populated when user submits the e-Devlet/MERSİS modal
 # Keyed by token (authenticated) or session_id (guest)
 user_credentials_store: dict = {}
@@ -672,6 +683,29 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         user_msg = ChatMessage(session_id=session_id, role="user", content=query_text)
         db.add(user_msg)
         db.commit()
+
+        # ------------------------------------------------------------------
+        # Smart Router — attempt zero/low-token response before any AI call
+        # ------------------------------------------------------------------
+        if _smart_router_available and _smart_router_handle is not None and not file_obj:
+            try:
+                smart_answer = await _smart_router_handle(
+                    query=query_text,
+                    assistant_type=assistant_type,
+                    user_name=user.full_name if user else "",
+                    gemini_model=gemini_model,
+                    student_model=student_model,
+                    lawyer_model=lawyer_model,
+                )
+                if smart_answer is not None:
+                    assistant_msg = ChatMessage(session_id=session_id, role="assistant", content=smart_answer)
+                    db.add(assistant_msg)
+                    db.commit()
+                    print(f"[agent_query] SmartRouter handled query. Skipping orchestrators.")
+                    return {"role": "assistant", "content": smart_answer, "session_title": db_session.title if db_session else None}
+            except Exception as sr_err:
+                print(f"[SmartRouter ERROR] {sr_err} — falling through to orchestrator")
+        # ------------------------------------------------------------------
 
         if _agents_available:
             try:

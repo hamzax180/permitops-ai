@@ -1,0 +1,284 @@
+{
+  "greeting": [
+    "Hey {name}! What can I help you with today?",
+    "Hi there! Ready to help — what's on your mind?",
+    "Hello {name}! How can I assist you?",
+    "Hey! What brings you here today?",
+    "Hi! Great to have you here. What do you need help with?"
+  ],
+  "farewell": [
+    "Goodbye! Feel free to come back anytime.",
+    "Take care, {name}! Good luck with everything.",
+    "See you around! Don't hesitate to reach out if you need anything.",
+    "Bye for now! We're here whenever you need us.",
+    "Goodbye! Wishing you all the best."
+  ],
+  "thanks": [
+    "You're welcome! Let me know if there's anything else I can help with.",
+    "Happy to help! Is there anything else on your mind?",
+    "Anytime! Don't hesitate to ask if you need more info.",
+    "Glad I could help! Anything else?",
+    "No problem at all! Feel free to ask away."
+  ],
+
+  "billing": {
+    "price": [
+      "Our plans start at a flat monthly fee — reply 'pricing' for the full breakdown.",
+      "Pricing depends on your plan tier. Want me to walk you through the options?",
+      "We have flexible plans for individuals and businesses. What are you looking for?",
+      "Our subscription costs vary by plan — want me to compare them for you?",
+      "The cost depends on which features you need. I can walk you through each plan if you'd like!"
+    ],
+    "refund": [
+      "Refunds are typically processed within 5 business days to your original payment method.",
+      "We process refunds within 5 working days. Got a specific order or invoice I can look into?",
+      "Our refund policy covers requests made within 14 days of the charge. Would you like me to initiate one?",
+      "Refunds go back to your original payment method within 5 business days — no worries there.",
+      "Happy to help with a refund. Can you share your account email so I can pull up the details?"
+    ],
+    "invoice": [
+      "You can download invoices from your account dashboard under Billing > Invoices.",
+      "Invoices are emailed automatically after every charge. Need a copy resent?",
+      "All your invoices are in the Billing section of your dashboard.",
+      "We email PDF invoices after every payment. Let me know if you need a duplicate.",
+      "Your invoice history lives in your account dashboard. Want me to guide you there?"
+    ],
+    "subscription": [
+      "You can manage, upgrade, or cancel your subscription from the Account Settings page.",
+      "Subscription changes take effect immediately. What would you like to do — upgrade, downgrade, or cancel?",
+      "You're in control — subscriptions can be changed anytime from your account.",
+      "To cancel, just head to Account > Subscription and hit 'Cancel Plan'. Want to keep it and just downgrade instead?",
+      "Your plan renews monthly. Want me to check when the next charge is?"
+    ]
+  },
+
+  "support": {
+    "error": [
+      "Sounds like a technical hiccup! Could you share a screenshot or the exact error message?",
+      "Let me look into that — what error are you seeing and on which page?",
+      "Sorry about that! Can you tell me what you were trying to do when the error appeared?",
+      "Errors can usually be fixed quickly. What does the message say?",
+      "That doesn't sound right. What browser or device are you using?"
+    ],
+    "not_working": [
+      "Sorry to hear something's not working. What feature is affected?",
+      "That's not right! Tell me which part isn't behaving and I'll dig in.",
+      "Let me help get that sorted — what exactly isn't working for you?",
+      "Is this happening every time, or just occasionally? That'll help me narrow it down.",
+      "Thanks for flagging that! Can you walk me through what you did before it stopped working?"
+    ],
+    "slow": [
+      "Sorry for the slow experience! Try refreshing the page or clearing your browser cache.",
+      "Performance issues can be caused by a few things — are you on a slow connection or a shared network?",
+      "Try a hard refresh (Ctrl+Shift+R) — that usually clears things up.",
+      "Is it slow on all pages or just one specific section?",
+      "We'll look into it. In the meantime, try a different browser to see if it helps."
+    ]
+  },
+
+  "permit": {
+    "how_to_start": [
+      "To open a business in Istanbul you'll need to register with your district municipality first. What type of business are you planning?",
+      "Great question! The first step is getting your Tax ID (Vergi Numaras\u0131). What district are you in?",
+      "Starting a business in Istanbul involves about 14 legal steps. Want me to walk you through them based on your business type?",
+      "The process begins with choosing your legal structure (Ltd. \u015eirket or A\u015e). What industry are you going into?",
+      "First things first — do you have a specific district in Istanbul in mind? That affects which municipality handles your permits."
+    ],
+    "documents": [
+      "Standard documents include: ID/Passport, Lease Agreement, Tax Plate, and NACE code. Is your business a restaurant, retail, or office?",
+      "You'll need your ID, a signed lease, and your NACE registration. Want me to tailor the full list to your business type?",
+      "The required documents depend on your business type. For a restaurant, add the \u0130tfaiye report and Baca certificate on top of the standard set.",
+      "Core documents are: passport/ID, notarized lease, NACE code, and Tax ID. Need the full list?",
+      "Document requirements vary by business type and district. Tell me your business type and I'll give you the exact checklist."
+    ],
+    "restaurant": [
+      "For a restaurant you'll need the \u0130tfaiye Uygunluk Raporu (fire safety) and Baca Uygunlu\u011fu (chimney inspection). Shall I walk you through all 14 steps?",
+      "Restaurants in Istanbul also require a TAPDK licence if you serve alcohol. Want the full permit roadmap?",
+      "The toughest part for restaurants is the fire and hygiene inspections — expect 45\u201390 days total. Want to start the process?",
+      "A restaurant permit in Istanbul requires fire compliance, municipal hygiene inspection, and a trade registry entry. Ready for the step-by-step?",
+      "Restaurants with live music also need a Canl\u0131 M\u00fczik \u0130zni. Do you plan to have music?"
+    ],
+    "timeline": [
+      "Permit timelines in Istanbul range from 15 days (simple office) to 90 days (restaurant with alcohol). What's your business type?",
+      "Most retail permits are done in 2\u20134 weeks. Restaurants take longer due to fire and hygiene inspections \u2014 usually 45\u201390 days.",
+      "Timeline depends heavily on your business type and district. A standard office can be approved in as little as 15 days.",
+      "Expect 45\u201390 days if you're opening a restaurant or cafe. Retail and service businesses are usually 15\u201330 days.",
+      "The slowest part is municipal inspections, which can add 2\u20134 weeks. What type of business are you opening?"
+    ],
+    "alcohol": [
+      "An alcohol licence (TAPDK Belgesi) is issued by the Ministry of Agriculture and takes 4\u20138 weeks on its own.",
+      "You'll need both a TAPDK licence and a Canl\u0131 M\u00fczik \u0130zni if you want music. Want me to include those in your roadmap?",
+      "TAPDK approval is separate from your main business permit and adds significant time. Plan for 6\u201312 weeks total.",
+      "Selling alcohol requires a TAPDK Belgesi — this is non-negotiable and must be displayed at your premises.",
+      "Alcohol licensing in Turkey is handled federally. Even if your municipality approves everything else, you still need TAPDK separately."
+    ],
+    "music": [
+      "Live music requires a Canl\u0131 M\u00fczik \u0130zni from your district municipality. It's applied for separately from your general business permit.",
+      "For recorded background music you may not need a special permit, but live performances always require a Canl\u0131 M\u00fczik \u0130zni.",
+      "The live music permit is tied to your specific venue address. Moving locations means reapplying.",
+      "Canl\u0131 M\u00fczik \u0130zni approval typically takes 2\u20134 weeks from the municipality. Want to start that process?",
+      "Some districts have noise ordinances that affect late-night live music. Which district are you in?"
+    ],
+    "steps": [
+      "There are 14 key legal steps to open a business in Istanbul: Tax ID, legal type, company name, NACE code, articles of association, address, notarization, capital deposit, trade registry, bank account, tax office, municipal forms, accountant, and launch. Want details on any step?",
+      "The 14-step process starts with your Tax ID and ends with your operating permit. Which step are you on?",
+      "Want me to generate the full 14-step roadmap tailored to your business type and district?",
+      "The critical steps are Tax ID, Trade Registry, and Municipal Permit. Everything else builds on those three.",
+      "Step 1 is always the Tax ID (Vergi Numaras\u0131). Have you done that yet?"
+    ],
+    "cafe": [
+      "A cafe has the same fire compliance requirements as a restaurant \u2014 you need an \u0130tfaiye report and Baca certificate even without a full kitchen. Want the checklist?",
+      "Cafes serving pastries or light food fall under municipal hygiene rules. Expect 30\u201360 days for full approval.",
+      "If your cafe serves alcohol, a TAPDK Belgesi is mandatory regardless of size. Want that included in your roadmap?",
+      "For a small cafe without a full kitchen the process is faster \u2014 usually 30\u201345 days. What district are you in?",
+      "Cafes also need a G\u0131da Sicil Belgesi (Food Registry) from the municipality. Want to see the full document list?"
+    ],
+    "clothing": [
+      "Clothing stores need an \u0130\u015fyeri A\u00e7ma ve \u00c7al\u0131\u015fma Ruhsat\u0131 from the district municipality. Fire requirements are less strict than F&B businesses.",
+      "A clothing store permit is one of the simpler ones \u2014 expect 15\u201330 days once your Trade Registry and NACE code are in order.",
+      "Retail clothing shops don't need an \u0130tfaiye report unless the space exceeds a certain size threshold. What's your store's approximate m\u00b2?",
+      "For a clothing store, your NACE code will be 4771 (Retail sale of clothing). Want me to walk through the documents needed?",
+      "Retail permits are primarily handled at the district municipality. Trade registry and tax registration are prerequisites. Want the full checklist?"
+    ],
+    "retail": [
+      "Retail businesses in Istanbul need an \u0130\u015fyeri A\u00e7ma ve \u00c7al\u0131\u015fma Ruhsat\u0131 \u2014 the process is straightforward and usually takes 15\u201330 days.",
+      "General retail doesn't trigger the \u0130tfaiye inspection unless you stock flammable materials or exceed the size threshold. What type of products are you selling?",
+      "For any retail operation you'll need: Tax ID, Trade Registry, NACE code, signed lease, and the municipal operating licence. Want to dig into any of these?",
+      "Retail permits in Istanbul are handled at your district belediye. Which district are you planning to open in?",
+      "Your NACE code is the most important classification for retail permits \u2014 it determines your tax and regulatory obligations. Do you know your product category?"
+    ],
+    "office": [
+      "Office and consultancy businesses have the simplest permit requirements in Istanbul \u2014 mainly the \u0130\u015fyeri A\u00e7ma Ruhsat\u0131 and basic tax registration. Expect 10\u201320 days.",
+      "An office permit doesn't need an \u0130tfaiye report in most cases. Your main requirements are Trade Registry, NACE code, lease, and municipal licence.",
+      "For a service-based office (consulting, tech, marketing), the NACE code determines your classification. Want help picking the right one?",
+      "Office permits are the fastest to get \u2014 usually 2 weeks. The limiting factor is Trade Registry processing time.",
+      "Co-working spaces used as a registered address may require a 'sanal ofis' agreement. Is this for a physical desk or just a registered address?"
+    ],
+    "barber": [
+      "A barber shop (berber) needs an \u0130\u015fyeri A\u00e7ma Ruhsat\u0131 plus a GSM (Gayresi\u0127h\u00ee M\u00fcessese) certificate for personal hygiene businesses in Istanbul.",
+      "For a barber or hair salon, you\u2019ll also need proof that the owner or manager holds a professional berber certificate (kalfal\u0131k/ustal\u0131k belgesi).",
+      "Barbershops fall under the 'personal care services' category \u2014 NACE code 9602. This affects your municipal inspections.",
+      "The  certificate for a barber shop involves a municipal hygiene inspection. Expect 2\u20134 weeks for that alone.",
+      "Hair salons and barbershops must display their professional certificate and \u0130\u015fyeri Ruhsat\u0131 visibly at the premises. Want the full checklist?"
+    ],
+    "gym": [
+      "A gym or fitness center needs an \u0130\u015fyeri A\u00e7ma Ruhsat\u0131 plus a Spor Salonu compliance check from the local Sports Directorate (Gen\u00e7lik ve Spor \u0130l M\u00fcd\u00fcrl\u00fc\u011f\u00fc).",
+      "Gyms over a certain m\u00b2 may require a fire safety (\u0130tfaiye) inspection. What's the planned size of your facility?",
+      "For a gym, you\u2019ll need at least one certified sports trainer on staff before the licence is issued.",
+      "NACE code for gyms and fitness centers is 9311 or 9312. This affects your insurance and regulatory requirements.",
+      "Fitness centers in Istanbul must also register with the Ministry of Youth and Sports \u2014 this runs parallel to the municipal permit."
+    ],
+    "pharmacy": [
+      "Opening a pharmacy (eczane) requires approval from the Turkish Pharmacists Association (TEB) in addition to the standard municipal permit.",
+      "Pharmacy licences are regulated at the provincial level \u2014 the \u0130l Sa\u011fl\u0131k M\u00fcd\u00fcrl\u00fc\u011f\u00fc (Provincial Health Directorate) is your primary contact.",
+      "There are strict geographical quotas for pharmacies in Turkey \u2014 you can only open one within defined population ratios per district.",
+      "A pharmacist's licence (eczac\u0131 ruhsatnamesi) is mandatory and must be displayed. The municipality permit comes after TEB approval.",
+      "The pharmacy permit process involves TEB, Provincial Health Directorate, and the district municipality \u2014 plan for 3\u20136 months in total."
+    ],
+    "bakery": [
+      "A bakery (f\u0131r\u0131n) needs an \u0130\u015fyeri A\u00e7ma Ruhsat\u0131, a G\u0131da Sicil Belgesi, and a Baca Uygunlu\u011fu certificate for the chimney/oven flue.",
+      "Bakeries with production kitchens are subject to the same hygiene inspections as restaurants \u2014 expect 30\u201360 days.",
+      "For a retail bakery selling pre-made items with no on-site baking, the requirements are similar to a standard food retail store.",
+      "The chimney/flue compliance (Baca Uygunlu\u011fu) is a key step for bakeries \u2014 inspected by both the municipality and fire department.",
+      "Bakeries producing bread for wholesale also need an \u0130l G\u0131da ve Tar\u0131m M\u00fcd\u00fcrl\u00fc\u011f\u00fc registration. Is this for retail or wholesale production?"
+    ]
+  },
+
+
+  "student": {
+    "renew_id": [
+      "To renew your Student ID (Kimlik), visit your university's Student Affairs office with your current ID, a passport photo, and your enrollment certificate.",
+      "Kimlik renewal is handled at Student Affairs. Bring a current photo, your expired card, and proof of enrollment. Need the step-by-step guide?",
+      "Whether your Kimlik is expired, damaged, or lost \u2014 start at the Student Affairs office. Want me to tailor the steps to your situation?",
+      "For a lost Student ID you'll also need a police report (kay\u0131p belgesi) before visiting Student Affairs.",
+      "Kimlik renewals usually take 3\u20135 business days. Got your enrollment certificate ready?"
+    ],
+    "register_uni": [
+      "University registration in Turkey starts on the Y\u00d6KS\u0130S portal. Do you know which university you're enrolling in?",
+      "The main steps are: Y\u00d6KS\u0130S portal \u2192 document upload \u2192 in-person enrollment day \u2192 Student Affairs. Want me to tailor this to a specific university?",
+      "Registering at a Turkish university? You'll need your acceptance letter, passport, health insurance, and apostilled diploma. Shall I list all the steps?",
+      "Enrollment periods vary by university \u2014 most run in September and February. Which university are you joining?",
+      "For transfer students, registration also involves credit transfer approval from your faculty. Want the full transfer checklist?"
+    ],
+    "top_universities": [
+      "Turkey's top universities include Bo\u011fazi\u00e7i, METU, ITU, Ko\u00e7, and Sabanc\u0131. Reply with a university name and I'll give you its full registration guide!",
+      "The most competitive universities in Turkey are Bo\u011fazi\u00e7i, METU, and Ko\u00e7. Want details on any of them?",
+      "Top picks for international students include Bo\u011fazi\u00e7i, Bilkent, Ko\u00e7, and Sabanc\u0131 \u2014 all offer English-taught programs. Interested in any?",
+      "Turkey has excellent universities! Bo\u011fazi\u00e7i and METU are top-ranked. What field are you studying?",
+      "Here are the top 5: Bo\u011fazi\u00e7i, METU, ITU, Ko\u00e7 University, Sabanc\u0131 University. Want registration steps for one of them?"
+    ],
+    "health_insurance": [
+      "International students in Turkey must have health insurance \u2014 either the state SGK plan or a private policy. Want help choosing?",
+      "You can apply for SGK student health insurance at the Social Security Institution office. Need the document list?",
+      "SGK student insurance costs around 500 TL/month and covers basic healthcare. Private insurance gives broader coverage.",
+      "Health insurance is mandatory for your residence permit application. Don't skip this step!",
+      "Most universities have a health center on campus covered by SGK. Want to know how to enroll?"
+    ],
+    "documents": [
+      "For university registration you'll need: passport, acceptance letter, apostilled high school diploma, health insurance, and biometric photos.",
+      "Standard student documents are: passport, acceptance letter, health insurance proof, and 4 biometric photos. Some universities also need bank statements.",
+      "Your full document checklist: passport (valid 6+ months), acceptance letter, health insurance, apostilled diploma, biometric photos, and online application confirmation.",
+      "Don't forget to apostille your diploma before arriving \u2014 Turkish universities require it for foreign qualifications.",
+      "Need the document checklist for a specific university? Tell me the name and I'll tailor it."
+    ],
+    "residence_permit": [
+      "As a student in Turkey you need a Student Residence Permit (ikamet) within 30 days of arriving. Have you started the application on the G\u00f6\u00e7 \u0130daresi portal?",
+      "Student residence permits are applied for online at goc.gov.tr. You'll need your passport, enrollment certificate, health insurance, and address document.",
+      "The ikamet application takes about 3\u20134 weeks. Book your appointment early \u2014 slots fill up fast in September!",
+      "For your residence permit you'll need proof of accommodation (rental contract or dormitory letter). Got that sorted?",
+      "Missing your ikamet appointment can cause problems \u2014 apply as soon as you have your enrollment certificate!"
+    ],
+    "kimlik_lost": [
+      "For a lost Student ID, first go to the nearest police station and get a loss declaration (kay\u0131p belgesi), then head to Student Affairs.",
+      "Lost your Kimlik? Don't worry \u2014 get a police report first, then visit Student Affairs with your enrollment certificate and a photo.",
+      "A lost Kimlik requires a police report (kay\u0131p belgesi) before Student Affairs can issue a replacement.",
+      "The replacement process for a lost ID is: 1. Police report, 2. Student Affairs with photo + enrollment proof, 3. Wait 3\u20135 days.",
+      "Police reports for lost IDs are usually issued same-day at any police station. After that, Student Affairs takes care of the rest."
+    ]
+  },
+
+  "lawyer": {
+    "company_formation": [
+      "Forming a company in Turkey involves: choose type (Ltd/A\u015e) \u2192 notarise articles \u2192 Trade Registry \u2192 tax office \u2192 open a bank account. Want the full breakdown?",
+      "A Limited \u015eirket (Ltd.) requires at least 10,000 TL share capital and one director. Shall I walk you through all the legal steps?",
+      "Company formation in Turkey takes about 3\u20137 business days through the MERS\u0130S online portal \u2014 want me to guide you step by step?",
+      "The most common company type for foreigners in Turkey is the Ltd. \u015eirket. It's flexible and has no maximum shareholder limit.",
+      "Before registering, you'll need your articles of association notarized and your share capital deposited in a bank. Want the full checklist?"
+    ],
+    "contract_review": [
+      "I can help you understand a contract. Could you tell me what type it is \u2014 employment, lease, service, or NDA?",
+      "Contract issues in Turkey are governed by the Turkish Code of Obligations. What's the nature of the contract dispute?",
+      "For a contract review, share the key clauses you're concerned about and I'll explain your rights under Turkish law.",
+      "Turkish contract law requires written form for certain agreements (like real estate). What type of contract are you dealing with?",
+      "I can flag risky clauses in your contract. What's the subject matter \u2014 service agreement, employment, or lease?"
+    ],
+    "employment_law": [
+      "Under Turkish Labour Law (4857), employees are entitled to notice pay and severance after one year of service. What's your specific situation?",
+      "Unfair dismissal claims in Turkey must be filed within 1 month. Has your employer given you a written termination notice?",
+      "Employment disputes are handled by Labour Courts (\u0130\u015f Mahkemesi). Want the step-by-step process for filing a claim?",
+      "Turkish law requires written employment contracts for foreign nationals. Has yours been signed and registered?",
+      "Severance pay (k\u0131dem tazminat\u0131) in Turkey is calculated as 30 days' pay per year of service. Want to estimate yours?"
+    ],
+    "residence_permit": [
+      "A work permit in Turkey is applied for by your employer via the \u00c7al\u0131\u015fma ve Sosyal G\u00fcvenlik Bakanl\u0131\u011f\u0131 online portal. Has your employer started the process?",
+      "For a residence permit (ikamet), you apply online via the Directorate General of Migration Management. Want the document checklist?",
+      "Work permits in Turkey are employer-sponsored \u2014 you can't apply independently. Is your employer aware of this?",
+      "The work permit process takes 4\u20138 weeks from application to approval. Your employer handles the submission.",
+      "If your work permit application is approved, you'll automatically be eligible for a residence permit. Make sure your health insurance is in place."
+    ],
+    "dispute": [
+      "Legal disputes in Turkey can be resolved through negotiation, mediation (zorunlu arabuluculuk), or court. What type of dispute is it?",
+      "Commercial disputes in Turkey must go through mandatory mediation before entering court. Has mediation been attempted?",
+      "For contract disputes, the first step is a written notice (ihtarname) to the other party. Would you like help drafting one?",
+      "Turkey's courts are organized by subject \u2014 commercial, civil, criminal. What's the nature of your case?",
+      "Mediation in Turkey is fast \u2014 usually resolved in 3 sessions. Want to know how to initiate it?"
+    ],
+    "general_legal": [
+      "I specialize in Turkish law \u2014 contracts, company formation, employment, and permits. What's your legal question?",
+      "Happy to help with any Turkish legal matter. Could you give me a bit more context on your situation?",
+      "Turkish law can be complex \u2014 I'm here to simplify it. What do you need guidance on?",
+      "Whether it's a contract, company registration, or employment issue \u2014 I've got you covered. What's the question?",
+      "I can advise on Turkish commercial, employment, and immigration law. What's your situation?"
+    ]
+  }
+}
