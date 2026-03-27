@@ -644,7 +644,7 @@ async def agent_query(request: Request, db: Session = Depends(get_db)):
         language = body.get("language", "en")
         session_id = body.get("context", {}).get("session_id", "default-session")
         assistant_type = body.get("assistant_type", "permit")
-        # Token might be passed in URL instead of body for JSON requests, handle it below.
+        print(f"\n[AI Advisor] New Request: '{query_text[:40]}...' (Type: {assistant_type}, Lang: {language})")
     
     if request.query_params.get("token"):
         token = request.query_params.get("token")

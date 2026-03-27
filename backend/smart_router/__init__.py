@@ -74,7 +74,8 @@ _NEW_CONSULTATION_PATTERNS = [
     # Naked location changes mid-session ("cafe in besiktas")
     r"\b(cafe|kafe|restaurant|restoran|retail|office|ofis|pharmacy|eczane|bakery|f[ıi]r[ıi]n|barber|berber|gym|spor|shop|store|company|ma[ğg]aza|d[üu]kkan) (in|at) \b",
     # ID Renewal / Replacement
-    r"\b(renew|replace) (my )?(kimlik|id|student id)\b",
+    # ID Renewal / Replacement
+    r"\b(renew|replace).{1,15}(id|kimlik|student id)\b",
 ]
 _NEW_CONSULTATION_RE = re.compile(
     "|".join(_NEW_CONSULTATION_PATTERNS), flags=re.IGNORECASE

@@ -151,21 +151,24 @@ def detect_intent(
 ) -> Tuple[Optional[str], Optional[str], float]:
     """
     Scan the message for keyword matches.
-
-    Returns:
-        (intent_group, sub_intent, confidence)
-        e.g. ("student", "renew_id", 1.0)
-             ("billing", "price", 1.0)
-             (None, None, 0.0)  ← triggers AI fallback
     """
     text = message.lower().strip()
 
     # Walk the intent map in priority order: active assistant domains first!
+    # Penalize billing/support if it hijacks domain keywords.
     sorted_intents = sorted(
         INTENT_MAP.items(),
         key=lambda item: 0 if item[0].startswith(f"{assistant_type}.") else 1
     )
+    
+    # 1. Check for very specific intent matches first (e.g. renew id)
+    # 2. Prevent billing from matching if 'id' or 'kimlik' is present in student context
     for intent_key, patterns in sorted_intents:
+        # Hijack Prevention: if student assistant and we see 'renew id', don't let billing win
+        if assistant_type == "student" and intent_key == "billing.subscription":
+            if re.search(r"\b(id|kimlik)\b", text):
+                continue
+
         for pattern in patterns:
             if re.search(pattern, text, flags=re.IGNORECASE):
                 parts = intent_key.split(".", 1)
