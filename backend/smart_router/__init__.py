@@ -217,19 +217,19 @@ async def smart_router_handle(
                 permits = ["Öğrenci İkamet İzni Uzatması"] if is_renew else ["Öğrenci Kaydı", "Öğrenci İkamet İzni"]
                 agencies = ["Göç İdaresi", "Noter", "Sigorta Şirketi"] if is_renew else ["Öğrenci İşleri", "Göç İdaresi", "SGK"]
                 docs = ["Sağlık Sigortası", "Noter Onaylı Kira Sözleşmesi", "Öğrenci Belgesi", "Biyometrik Fotoğraf"] if is_renew else ["Pasaport", "Kabul Mektubu", "Sağlık Sigortası"]
-                summ = "İkamet izni (Kimlik) uzatma işleminiz için sigorta ve kira sözleşmesi adımlarını içeren yol haritası." if is_renew else "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız."
+                summ = "İlk olarak, mevcut kimlik kartınızın süresi doldu mu yoksa dilediğiniz zaman mı yenilemek istiyorsunuz? İkamet uzatma işleminiz için sigorta ve kira sözleşmesi adımlarını içeren yol haritası aşağıdadır." if is_renew else "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız."
                 labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
             elif language == "ar":
                 permits = ["تمديد إقامة الطالب"] if is_renew else ["تسجيل الجامعة", "إقامة الطالب"]
                 agencies = ["إدارة الهجرة", "العدل (النوتر)", "شركة التأمين"] if is_renew else ["شؤون الطلاب", "إدارة الهجرة", "SGK"]
                 docs = ["التأمين الصحي", "عقد إيجار موثق", "شهادة طالب", "صور شخصية"] if is_renew else ["جواز السفر", "خطاب القبول", "التأمين الصحي"]
-                summ = "خريطة طريق تجديد الإقامة (الكملك) التي تتضمن خطوات التأمين وعقد السكن." if is_renew else "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب."
+                summ = "أولاً، هل انتهت صلاحية هويتك الحالية أم أنها ستنتهي قريباً؟ إليك خريطة الطريق لتجديد الإقامة التي تشمل خطوات التأمين وعقد السكن." if is_renew else "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب."
                 labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
             else:
                 permits = ["Student Residence Permit Extension"] if is_renew else ["University Registration", "Student Residence Permit"]
                 agencies = ["Migration Office (Göç İdaresi)", "Notary Public", "Insurance Provider"] if is_renew else ["Student Affairs", "Migration Directorate (Göç İdaresi)", "SGK"]
                 docs = ["Health Insurance Policiy", "Notarized Lease Agreement", "Student Certificate", "Biometric Photos"] if is_renew else ["Passport", "Acceptance Letter", "Health Insurance"]
-                summ = "Your residency (Kimlik) extension roadmap including insurance and housing contract steps." if is_renew else "Your automated roadmap for completing university registration and obtaining your Student Residence Permit."
+                summ = "First, is your current ID card already expired, or are you just planning to renew it early? Below is your residency (Kimlik) extension roadmap including insurance and housing steps." if is_renew else "Your automated roadmap for completing university registration and obtaining your Student Residence Permit."
                 labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
 
         elif assistant_type == "lawyer":
