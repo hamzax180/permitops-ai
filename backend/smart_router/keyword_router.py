@@ -160,8 +160,12 @@ def detect_intent(
     """
     text = message.lower().strip()
 
-    # Walk the intent map in order
-    for intent_key, patterns in INTENT_MAP.items():
+    # Walk the intent map in priority order: active assistant domains first!
+    sorted_intents = sorted(
+        INTENT_MAP.items(),
+        key=lambda item: 0 if item[0].startswith(f"{assistant_type}.") else 1
+    )
+    for intent_key, patterns in sorted_intents:
         for pattern in patterns:
             if re.search(pattern, text, flags=re.IGNORECASE):
                 parts = intent_key.split(".", 1)

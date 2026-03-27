@@ -1,8 +1,4 @@
 {
-  "305a0b3e32421956c46e772f9c1f190c": {
-    "response": "Har",
-    "ts": 1774642037.3291895
-  },
   "917266d6f86dd347f3a72c9588492c9d": {
     "response": "To provide tailored",
     "ts": 1774644670.425097
@@ -10,5 +6,17 @@
   "13c08e79bebd4e26d94f8dcd1d2e8e35": {
     "response": "Cafes serving pastries or light food fall under municipal hygiene rules. Expect 30–60 days for full approval.",
     "ts": 1774644702.0150895
+  },
+  "997fdad604ac72de34d9523a74be6d4a": {
+    "response": "Subscription changes take effect immediately. What would you like to do — upgrade, downgrade, or cancel?",
+    "ts": 1774646061.7658966
+  },
+  "10aec35353f9c4096a71c38654c3d402": {
+    "response": "To cancel, just head to Account > Subscription and hit 'Cancel Plan'. Want to keep it and just downgrade instead?",
+    "ts": 1774646074.896147
+  },
+  "363c3d6f38234ade2a660d768e710223": {
+    "response": "To cancel, just head to Account > Subscription and hit 'Cancel Plan'. Want to keep it and just downgrade instead?",
+    "ts": 1774646093.1648686
   }
 }
