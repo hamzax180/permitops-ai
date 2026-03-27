@@ -839,16 +839,31 @@ async def get_chat_history(session_id: str, token: str, db: Session = Depends(ge
     return [{"role": m.role, "content": m.content, "id": m.id} for m in messages]
 
 @app.delete("/chat/history/{session_id}")
-async def clear_chat_history(session_id: str, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
-    # Ensure user owns the session
-    session = db.query(ChatSession).filter(ChatSession.id == session_id, ChatSession.user_id == user.id).first()
-    if not session:
-        raise HTTPException(status_code=403, detail="Access denied")
-        
-    db.query(ChatMessage).filter(ChatMessage.session_id == session_id).delete()
-    db.query(ChatSession).filter(ChatSession.id == session_id).delete()
-    db.commit()
+async def clear_chat_history(session_id: str, token: Optional[str] = None, db: Session = Depends(get_db)):
+    # 1. Clear out any purely in-memory guest states that didn't reach the DB
+    if session_id in guest_dashboard_states:
+        del guest_dashboard_states[session_id]
+    if session_id in guest_sessions:
+        del guest_sessions[session_id]
+
+    user = None
+    if token:
+        try:
+            user = await get_current_user(token, db)
+        except Exception:
+            pass
+
+    # 2. Check the Database
+    session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
+    if session:
+        # If it DOES exist in DB, verify ownership
+        if not user or session.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Access denied")
+            
+        db.query(ChatMessage).filter(ChatMessage.session_id == session_id).delete()
+        db.query(ChatSession).filter(ChatSession.id == session_id).delete()
+        db.commit()
+
     return {"status": "success"}
 
 
