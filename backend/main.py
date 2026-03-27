@@ -843,8 +843,6 @@ async def clear_chat_history(session_id: str, token: Optional[str] = None, db: S
     # 1. Clear out any purely in-memory guest states that didn't reach the DB
     if session_id in guest_dashboard_states:
         del guest_dashboard_states[session_id]
-    if session_id in guest_sessions:
-        del guest_sessions[session_id]
 
     user = None
     if token:
