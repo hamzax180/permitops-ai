@@ -135,61 +135,114 @@ async def smart_router_handle(
     # If the query is an initial plan request, we bypass AI completely
     # and generate the 14-step permit dashboard directly in Python.
     # ------------------------------------------------------------------
-    if _NEW_CONSULTATION_RE.search(query) and assistant_type == "permit":
-        print(f"[SmartRouter] NEW CONSULTATION detected — generating dashboard offline (0 tokens)")
+    if _NEW_CONSULTATION_RE.search(query):
+        print(f"[SmartRouter] NEW CONSULTATION detected — generating dashboard offline (0 tokens) for {assistant_type}")
         
-        # Determine business sub-intent
-        _, sub, _ = detect_intent(query, "permit")
-        business_type = sub.title() if sub else "Business"
-        
-        # Determine location
-        district = "Istanbul"
-        districts = ["Kadikoy", "Kadıköy", "Besiktas", "Beşiktaş", "Sisli", "Şişli", "Uskudar", "Üsküdar", "Zeytinburnu", "Bakirkoy", "Bakırköy", "Beyoglu", "Beyoğlu", "Fatih", "Sariyer", "Sarıyer"]
-        lower_q = query.lower()
-        for d in districts:
-            if d.lower() in lower_q:
-                district = d.title()
-                break
-                
-        # Build localized offline dashboard
         from models.schemas import PermitState, CombinedPermitResult, ExecutionPlan, StepDetail, PermitPlan
         from utils.protocol import get_localized_steps
         from datetime import datetime
 
-        if language == "tr":
-            permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
-            agencies = ["Belediye", "Vergi Dairesi"]
-            docs = ["Kimlik", "Kira Sözleşmesi", "Vergi Levhası", "NACE Kodu Belgesi"]
-            summ = f"Bu, {district} bölgesinde bir {business_type} açmak için çevrimdışı oluşturulmuş yol haritanızdır. İşlemleri takip etmek için soldaki Gösterge Paneli'ne (Dashboard) gidin."
-            labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
-        elif language == "ar":
-            permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
-            agencies = ["البلدية", "مكتب الضرائب"]
-            docs = ["الهوية", "عقد الإيجار", "اللوحة الضريبية", "وثيقة رمز NACE"]
-            summ = f"هذه هي خريطة الطريق الآلية التي تم إنشاؤها لفتح {business_type} في منطقة {district}. اذهب إلى لوحة التحكم (Dashboard) لبدء العملية."
-            labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
-        else:
-            permits = ["Workplace Operating License"]
-            agencies = ["District Municipality", "Tax Office"]
-            docs = ["ID / Passport", "Lease Agreement", "Tax Plate", "NACE Code Certificate"]
-            summ = f"This is your automated roadmap to officially open a {business_type} in {district}. Go to the Dashboard on the left to start your application process."
-            labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
+        dashboard_dump = None
+        out_str = None
+        
+        if assistant_type == "permit":
+            # Determine business sub-intent
+            _, sub, _ = detect_intent(query, "permit")
+            business_type = sub.title() if sub else "Business"
+            
+            # Determine location
+            district = "Istanbul"
+            districts = ["Kadikoy", "Kadıköy", "Besiktas", "Beşiktaş", "Sisli", "Şişli", "Uskudar", "Üsküdar", "Zeytinburnu", "Bakirkoy", "Bakırköy", "Beyoglu", "Beyoğlu", "Fatih", "Sariyer", "Sarıyer"]
+            lower_q = query.lower()
+            for d in districts:
+                if d.lower() in lower_q:
+                    district = d.title()
+                    break
 
-        timeline = 30
-        if business_type.lower() in ["restaurant", "cafe", "bakery", "food"]:
-            timeline = 45
             if language == "tr":
-                permits.extend(["İtfaiye Uygunluk Raporu", "Baca Uygunluğu"])
-                docs.extend(["İtfaiye Raporu"])
-                agencies.extend(["İBB İtfaiye Daire Başkanlığı"])
+                permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
+                agencies = ["Belediye", "Vergi Dairesi"]
+                docs = ["Kimlik", "Kira Sözleşmesi", "Vergi Levhası", "NACE Kodu Belgesi"]
+                summ = f"Bu, {district} bölgesinde bir {business_type} açmak için çevrimdışı oluşturulmuş yol haritanızdır. İşlemleri takip etmek için soldaki Gösterge Paneli'ne (Dashboard) gidin."
+                labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
             elif language == "ar":
-                permits.extend(["تقرير الإطفاء", "ملاءمة المدخنة"])
-                docs.extend(["تقرير المطافئ"])
-                agencies.extend(["إدارة الإطفاء في البلدية"])
+                permits = ["İşyeri Açma ve Çalışma Ruhsatı"]
+                agencies = ["البلدية", "مكتب الضرائب"]
+                docs = ["الهوية", "عقد الإيجار", "اللوحة الضريبية", "وثيقة رمز NACE"]
+                summ = f"هذه هي خريطة الطريق الآلية التي تم إنشاؤها لفتح {business_type} في منطقة {district}. اذهب إلى لوحة التحكم (Dashboard) لبدء العملية."
+                labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
             else:
-                permits.extend(["Fire Safety Report", "Chimney Compliance"])
-                docs.extend(["Fire Report"])
-                agencies.extend(["Fire Department"])
+                permits = ["Workplace Operating License"]
+                agencies = ["District Municipality", "Tax Office"]
+                docs = ["ID / Passport", "Lease Agreement", "Tax Plate", "NACE Code Certificate"]
+                summ = f"This is your automated roadmap to officially open a {business_type} in {district}. Go to the Dashboard on the left to start your application process."
+                labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
+
+            timeline = 30
+            if business_type.lower() in ["restaurant", "cafe", "bakery", "food"]:
+                timeline = 45
+                if language == "tr":
+                    permits.extend(["İtfaiye Uygunluk Raporu", "Baca Uygunluğu"])
+                    docs.extend(["İtfaiye Raporu"])
+                    agencies.extend(["İBB İtfaiye Daire Başkanlığı"])
+                elif language == "ar":
+                    permits.extend(["تقرير الإطفاء", "ملاءمة المدخنة"])
+                    docs.extend(["تقرير المطافئ"])
+                    agencies.extend(["إدارة الإطفاء في البلدية"])
+                else:
+                    permits.extend(["Fire Safety Report", "Chimney Compliance"])
+                    docs.extend(["Fire Report"])
+                    agencies.extend(["Fire Department"])
+
+        elif assistant_type == "student":
+            business_type = "Student"
+            district = "Istanbul"
+            timeline = 30
+            
+            if language == "tr":
+                permits = ["Öğrenci Kaydı", "Öğrenci İkamet İzni"]
+                agencies = ["Öğrenci İşleri", "Göç İdaresi", "SGK"]
+                docs = ["Pasaport", "Kabul Mektubu", "Sağlık Sigortası", "Biyometrik Fotoğraf"]
+                summ = "Üniversite kayıt ve öğrenci kimliği işlemleriniz için oluşturulan adım adım yol haritanız. Süreci yan panelden (Dashboard) takip edebilirsiniz."
+                labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
+            elif language == "ar":
+                permits = ["تسجيل الجامعة", "إقامة الطالب"]
+                agencies = ["شؤون الطلاب", "إدارة الهجرة", "SGK"]
+                docs = ["جواز السفر", "خطاب القبول", "التأمين الصحي", "صور شخصية"]
+                summ = "خريطة الطريق الآلية لاستكمال التسجيل الجامعي وإقامة الطالب. يرجى المتابعة من لوحة التحكم."
+                labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
+            else:
+                permits = ["University Registration", "Student Residence Permit"]
+                agencies = ["Student Affairs", "Migration Directorate (Göç İdaresi)", "SGK"]
+                docs = ["Passport", "Acceptance Letter", "Health Insurance", "Biometric Photos"]
+                summ = "Your automated roadmap for completing university registration and obtaining your Student Residence Permit. Follow the steps in the Dashboard."
+                labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
+
+        elif assistant_type == "lawyer":
+            business_type = "Lawyer"
+            district = "Turkey"
+            timeline = 15
+            
+            if language == "tr":
+                permits = ["Hukuki İşlem"]
+                agencies = ["Noter", "Mahkeme / Adliye"]
+                docs = ["Kimlik", "Sözleşme / Evrak", "Vekaletname"]
+                summ = "Hukuki süreciniz için hazırladığımız çözüm adımları. Görüşmeyi başlatmak veya belgeleri yüklemek için Dashboard panelini kullanabilirsiniz."
+                labels = {"ag":"Kurumlar", "dc":"Gerekli Belgeler", "st":"Adımlar", "tm":"Süre", "dy":"gün"}
+            elif language == "ar":
+                permits = ["الإجراء القانوني"]
+                agencies = ["كاتب العدل", "المحكمة"]
+                docs = ["الهوية", "العقد / المستندات", "توكيل قانوني"]
+                summ = "خطوات العملية القانونية الخاصة بك. يمكنك استخدام لوحة التحكم لبدء التشاور أو رفع المستندات."
+                labels = {"ag":"المؤسسات", "dc":"المستندات المطلوبة", "st":"الخطوات", "tm":"الجدول الزمني", "dy":"يوم"}
+            else:
+                permits = ["Legal Procedure"]
+                agencies = ["Notary Public", "Courthouse"]
+                docs = ["ID Card", "Contracts / Evidence", "Power of Attorney"]
+                summ = "Here are the outlined steps for your legal procedure. Please use the Dashboard to upload documents or execute actions."
+                labels = {"ag":"Institutions/Agencies", "dc":"Required Docs", "st":"Action Steps", "tm":"Timeline", "dy":"days"}
+        else:
+            return None
 
         step_specs = get_localized_steps(language, business_type)
         details = []
@@ -226,11 +279,6 @@ async def smart_router_handle(
             
         # Return tuple: (message, dictionary)
         return out_str, dashboard_dump
-
-    elif _NEW_CONSULTATION_RE.search(query):
-        # We only offline-build for 'permit' type. Allow student/lawyer to pass.
-        print(f"[SmartRouter] NEW CONSULTATION - passing through to {assistant_type} orchestrator")
-        return None
 
     # ------------------------------------------------------------------
     # 2. Keyword match → predefined response (0 tokens)
